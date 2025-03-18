@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smile - The Curse</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rubik Glitch', sans-serif;
+        }
+
+        body {
+            background: black;
+            color: red;
+            text-align: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: -1;
+        }
+
+        .container {
+            position: relative;
+            top: 10%;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 80px;
+            text-shadow: 0px 0px 10px red;
+            animation: flicker 0.2s infinite;
+        }
+
+        p {
+            font-size: 18px;
+            color: white;
+            margin-bottom: 20px;
+            opacity: 0.8;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        button {
+            background: red;
+            border: none;
+            padding: 15px 30px;
+            color: black;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: black;
+            color: red;
+            border: 2px solid red;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .smile {
+            position: absolute;
+            font-size: 40px;
+            color: red;
+            opacity: 0.3;
+            animation: smileFlicker 3s infinite alternate;
+        }
+
+        @keyframes smileFlicker {
+            0% { opacity: 0.1; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .quote {
+            font-size: 24px;
+            color: white;
+            font-style: italic;
+            opacity: 0.7;
+            margin-top: 30px;
+            animation: quoteFlicker 5s infinite;
+        }
+
+        @keyframes quoteFlicker {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="container">
+        <h1>SMILE - THE CURSE</h1>
+        <p><b>Eine Kooperation mit dem gruseligen Film *Smile* – Betrete die düstere Welt des Fluchs.</b></p>
+        
+        <p><b>Niemand weiß, wann es beginnt. Aber wenn du es siehst, ist es bereits zu spät.</b></p>
+        
+        <h2>🩸 DIE GESCHICHTE 🩸</h2>
+        <p>In der düsteren Welt von *Smile - The Curse* bist du der einzige Überlebende eines mysteriösen Vorfalls. Du wurdest von einer unbekannten Entität verfolgt – eine Entität, die das Lächeln als Mittel zur Kontrolle verwendet. Sie sieht dich, wenn du es am wenigsten erwartest, und du wirst ein Teil des Spiels, ohne es zu wollen. Wenn du lächelst, bist du in ihrem Besitz.</p>
+
+        <p>Dies ist die düstere Fortsetzung der Ereignisse, die du aus dem Film *Smile* kennst. Der Fluch, der in den Gesichtern der Opfer lebt, wird dich auch in dieser neuen, interaktiven Horror-Erfahrung verfolgen. Wie im Film *Smile* beginnst du eine Reise, die dich tief in den Wahnsinn treibt – doch dieses Mal kannst du nicht einfach weglaufen. Du musst dich der dunklen Wahrheit stellen, die hinter dem Lächeln steckt.</p>
+
+        <h2>⚠️ SPIELMECHANIK ⚠️</h2>
+        <p>**Psychologischer Horror trifft auf interaktive Spielmechanik:** Du musst dich in der Dunkelheit zurechtfinden und dabei immer die Gefahr im Nacken spüren. Wie im Film *Smile* wird die Grenze zwischen Realität und Wahnsinn immer dünner.</p>
+        <p>**Die Smile-Entität:** Sie wird dich durch das Spiel verfolgen. Immer wieder taucht sie auf, wo du es nicht erwartest, immer mit einem Lächeln im Gesicht. Es ist deine Aufgabe herauszufinden, was sie will, um den Fluch zu brechen – aber Vorsicht, jedes Wissen wird dich weiter in den Wahnsinn treiben.</p>
+        <p>**Angst & Panik:** Je mehr du in Panik gerätst, desto mehr wird die Entität dich finden. Aber du kannst nicht entkommen – sie weiß immer, wo du bist. Sie hört dich. Sie sieht dich.</p>
+        <p>**Albtraumhafte Realität:** Türen verschließen sich. Lichter flackern. Und du siehst Dinge, die nicht da sind. Aber je mehr du lächelst, desto realer wird der Horror.</p>
+
+        <h2>💀 WAS DU TUN MUSST 💀</h2>
+        <p>Es gibt nur einen Weg, dem Fluch zu entkommen: Du musst die Geheimnisse des Smile-Fluchs entschlüsseln, aber umso mehr du davon entdeckst, desto gefährlicher wird es. Du bist jetzt der Mittelpunkt des Spiels – der einzige Mensch, der noch die Möglichkeit hat, der Entität zu entkommen.</p>
+
+        <p>Doch sei vorsichtig: Du bist nicht alleine. Und du wirst nie wissen, ob der nächste Blick in den Spiegel dich schon in den Wahnsinn treibt.</p>
+
+        <p class="quote">„Wenn du siehst, was du nicht sehen solltest, wirst du niemals entkommen.“ – *Smile*</p>
+        
+        <button id="downloadBtn">Betritt die Dunkelheit</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Smile-Gesichter zufällig hinzufügen
+            for (let i = 0; i < 5; i++) {
+                let smile = document.createElement("div");
+                smile.innerHTML = ":)";
+                smile.classList.add("smile");
+                smile.style.left = Math.random() * 100 + "vw";
+                smile.style.top = Math.random() * 100 + "vh";
+                document.body.appendChild(smile);
+            }
+
+            // Filmzitate zufällig einblenden
+            setInterval(function () {
+                const quotes = [
+                    "„Du kannst nicht fliehen, du kannst nur lächeln.“ – *Smile*",
+                    "„Die Dunkelheit kommt, egal wie sehr du versuchst, sie zu verstecken.“ – *Smile*",
+                    "„Du wirst nie wissen, ob du ein Opfer oder der Jäger bist.“ – *Smile*"
+                ];
+                const quoteElement = document.querySelector(".quote");
+                quoteElement.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+            }, 10000);
+
+            // Button-Klick für Download
+            document.getElementById("downloadBtn").addEventListener("click", function () {
+                alert("Bald wirst du es sehen... Bleib dran.");
+            });
+        });
+    </script>
+</body>
+</html>
