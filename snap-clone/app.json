@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "SnapClone",
+    "slug": "snap-clone",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#FFFC00"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yourname.snapclone",
+      "infoPlist": {
+        "NSCameraUsageDescription": "SnapClone braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
+        "NSMicrophoneUsageDescription": "SnapClone braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
+      }
+    },
+    "android": {
+      "package": "com.yourname.snapclone",
+      "permissions": ["CAMERA", "RECORD_AUDIO"]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SnapClone braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
+          "microphonePermission": "SnapClone braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
+        }
+      ]
+    ]
+  }
+}

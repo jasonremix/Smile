@@ -1,0 +1,138 @@
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useAuth } from "../../context/AuthContext";
+import { colors } from "../../theme/colors";
+
+export default function LoginScreen({ navigation }) {
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setError("");
+    if (!email || !password) {
+      setError("Bitte E-Mail und Passwort eingeben.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email.trim(), password);
+    } catch (e) {
+      setError(mapAuthError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Text style={styles.logo}>👻 SnapClone</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="E-Mail"
+        placeholderTextColor={colors.textMuted}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Passwort"
+        placeholderTextColor={colors.textMuted}
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+        {loading ? (
+          <ActivityIndicator color={colors.background} />
+        ) : (
+          <Text style={styles.buttonText}>Anmelden</Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+        <Text style={styles.link}>Noch kein Konto? Registrieren</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
+  );
+}
+
+function mapAuthError(e) {
+  switch (e.code) {
+    case "auth/invalid-email":
+      return "Ungueltige E-Mail-Adresse.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "E-Mail oder Passwort ist falsch.";
+    default:
+      return "Anmeldung fehlgeschlagen. Bitte erneut versuchen.";
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+  logo: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: colors.primary,
+    textAlign: "center",
+    marginBottom: 48,
+  },
+  input: {
+    backgroundColor: colors.surface,
+    color: colors.text,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 14,
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: 24,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  buttonText: {
+    color: "#000",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  link: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 20,
+  },
+  error: {
+    color: colors.danger,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+});
