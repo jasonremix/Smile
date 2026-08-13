@@ -5,6 +5,7 @@ import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
+import StatusStrip from "../components/StatusStrip";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { useUnreadChats } from "../hooks/useUnreadChats";
@@ -117,6 +118,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       <MomentsTray navigation={navigation} />
+      <StatusStrip navigation={navigation} />
 
       <NataScoreCard
         score={user?.nataScore ?? 0}

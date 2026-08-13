@@ -77,6 +77,16 @@ service cloud.firestore {
           || (request.resource.data.referralCount is int
               && request.resource.data.referralCount >= 0
               && request.resource.data.referralCount <= resource.data.get('referralCount', 0) + 1)
+        )
+        // "Was ist gerade los" - reiner Text-Status ohne Standort (kein
+        // GPS-Zugriff im Client verbaut). Nur kurze Texte, kein beliebiger
+        // Payload.
+        && (
+          !('status' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.status == null
+          || (request.resource.data.status.text is string
+              && request.resource.data.status.text.size() > 0
+              && request.resource.data.status.text.size() <= 60)
         );
 
       allow delete: if isOwner(userId);

@@ -5,15 +5,19 @@ import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
 import SettingsRow from "../components/SettingsRow";
+import StatusEditor from "../components/StatusEditor";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { listenUserPosts } from "../services/postService";
+import { clearStatus, isStatusActive, setStatus } from "../services/userService";
 import { colors } from "../theme/colors";
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
   const isModal = navigation.canGoBack();
   const [posts, setPosts] = useState([]);
+  const [statusEditorVisible, setStatusEditorVisible] = useState(false);
+  const activeStatus = isStatusActive(user?.status) ? user.status : null;
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -57,6 +61,14 @@ export default function ProfileScreen({ navigation }) {
               {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
             </View>
             <Text style={styles.username}>@{user?.username}</Text>
+
+            <TouchableOpacity style={styles.statusRow} onPress={() => setStatusEditorVisible(true)}>
+              <Icon name="sparkle" size={13} color={colors.primaryLight} />
+              <Text style={styles.statusText} numberOfLines={1}>
+                {activeStatus ? activeStatus.text : "Was ist gerade los?"}
+              </Text>
+            </TouchableOpacity>
+
             {user?.betaTesterNumber ? (
               <View style={styles.testerBadge}>
                 <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
@@ -103,6 +115,14 @@ export default function ProfileScreen({ navigation }) {
           </View>
         }
         ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beitraege.</Text>}
+      />
+
+      <StatusEditor
+        visible={statusEditorVisible}
+        onClose={() => setStatusEditorVisible(false)}
+        currentText={activeStatus?.text}
+        onSave={(text) => setStatus(user.uid, text)}
+        onClear={() => clearStatus(user.uid)}
       />
     </View>
   );
@@ -163,6 +183,22 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 15,
     marginBottom: 8,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 14,
+    maxWidth: "90%",
+  },
+  statusText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "600",
   },
   testerBadge: {
     backgroundColor: colors.surfaceLight,
