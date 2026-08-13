@@ -21,7 +21,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn();
 
+      // "verified" darf beim Erstellen des eigenen Profils nie mitgeschickt
+      // werden - sonst koennte sich jede Person durch einen manipulierten
+      // Signup-Request selbst den Verifizierungs-Haken geben. Der Status
+      // wird ausschliesslich per Admin-Zugriff (auszerhalb der Client-Regeln)
+      // gesetzt.
       allow create: if isOwner(userId)
+        && !('verified' in request.resource.data)
         && request.resource.data.uid == userId
         && request.resource.data.nataScore == 0
         && request.resource.data.username is string
