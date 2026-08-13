@@ -10,8 +10,10 @@ import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import CameraScreen from "../screens/CameraScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
+import CommentsScreen from "../screens/CommentsScreen";
 import CompleteProfileScreen from "../screens/CompleteProfileScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
+import CreatePostScreen from "../screens/CreatePostScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
@@ -78,6 +80,16 @@ export default function RootNavigator() {
             name="Chats"
             component={ChatListScreen}
             options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+          <Stack.Screen
+            name="CreatePost"
+            component={CreatePostScreen}
+            options={{ headerShown: false, presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="Comments"
+            component={CommentsScreen}
+            options={{ headerShown: false, presentation: "modal" }}
           />
           <Stack.Screen
             name="SnapPreview"

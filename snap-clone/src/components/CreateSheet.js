@@ -4,14 +4,13 @@ import Icon from "./Icon";
 import { colors } from "../theme/colors";
 
 const OPTIONS = [
-  { id: "camera", label: "Kamera", subtitle: "Foto oder Video an Connections senden", icon: "camera", intent: undefined },
-  { id: "moment", label: "Moment teilen", subtitle: "24 Stunden sichtbar", icon: "moment", intent: "story" },
+  { id: "post", label: "Beitrag", subtitle: "Text mit deinen Connections teilen", icon: "document", screen: "CreatePost" },
+  { id: "camera", label: "Kamera", subtitle: "Foto oder Video an Connections senden", icon: "camera", screen: "Camera" },
+  { id: "moment", label: "Moment teilen", subtitle: "24 Stunden sichtbar", icon: "moment", screen: "Camera", intent: "story" },
 ];
 
-// Zentraler Erstellen-Einstieg als Bottom-Sheet statt fuenf einzelner
-// Buttons - haelt die Hauptnavigation ruhig und reduziert "Erstellen" auf
-// die zwei tatsaechlich vorhandenen Aktionen (kein vorgetaeuschtes
-// "Beitrag"-Feature, das es noch nicht gibt).
+// Zentraler Erstellen-Einstieg als Bottom-Sheet statt mehrerer verstreuter
+// Buttons - haelt die Hauptnavigation ruhig.
 export default function CreateSheet({ visible, onClose, navigation }) {
   const translateY = useRef(new Animated.Value(300)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -34,7 +33,7 @@ export default function CreateSheet({ visible, onClose, navigation }) {
 
   const handleSelect = (option) => {
     onClose();
-    navigation.navigate("Camera", option.intent ? { intent: option.intent } : undefined);
+    navigation.navigate(option.screen, option.intent ? { intent: option.intent } : undefined);
   };
 
   return (

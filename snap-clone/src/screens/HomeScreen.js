@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AchievementRow from "../components/AchievementRow";
 import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
+import PostCard from "../components/PostCard";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { useUnreadChats } from "../hooks/useUnreadChats";
-import { listenIncomingRequests } from "../services/friendService";
+import { listenFriends, listenIncomingRequests } from "../services/friendService";
+import { listenFeed, listenFollowingFeed } from "../services/postService";
 import { listenScoreEventsSince } from "../services/userService";
 import { colors } from "../theme/colors";
 
@@ -26,6 +28,9 @@ export default function HomeScreen({ navigation }) {
   const { unreadCount } = useUnreadChats();
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [weeklyEvents, setWeeklyEvents] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [feedTab, setFeedTab] = useState("forYou"); // "forYou" | "following"
+  const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     const unsubscribe = listenIncomingRequests(user.uid, setIncomingRequests);
@@ -36,6 +41,19 @@ export default function HomeScreen({ navigation }) {
     const unsubscribe = listenScoreEventsSince(user.uid, startOfWeek(), setWeeklyEvents);
     return unsubscribe;
   }, [user.uid]);
+
+  useEffect(() => {
+    const unsubscribe = listenFriends(user.uid, setFriends);
+    return unsubscribe;
+  }, [user.uid]);
+
+  useEffect(() => {
+    const unsubscribe =
+      feedTab === "forYou"
+        ? listenFeed(setPosts)
+        : listenFollowingFeed(friends.map((f) => f.uid), setPosts);
+    return unsubscribe;
+  }, [feedTab, friends]);
 
   const weeklyPoints = useMemo(
     () => weeklyEvents.reduce((sum, e) => sum + (e.amount || 0), 0),
@@ -60,8 +78,8 @@ export default function HomeScreen({ navigation }) {
     ]).start(() => setBooVisible(false));
   };
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+  const ListHeader = (
+    <View>
       <View style={styles.topRow}>
         <Text style={styles.brand}>Nata</Text>
         <TouchableOpacity style={styles.messagesButton} onPress={() => navigation.navigate("Chats")}>
@@ -139,7 +157,48 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.quickActionText}>Feedback{"\n"}geben</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      <View style={styles.feedTabRow}>
+        <TouchableOpacity
+          style={[styles.feedTab, feedTab === "forYou" && styles.feedTabActive]}
+          onPress={() => setFeedTab("forYou")}
+        >
+          <Text style={[styles.feedTabText, feedTab === "forYou" && styles.feedTabTextActive]}>
+            Fuer dich
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.feedTab, feedTab === "following" && styles.feedTabActive]}
+          onPress={() => setFeedTab("following")}
+        >
+          <Text style={[styles.feedTabText, feedTab === "following" && styles.feedTabTextActive]}>
+            Following
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      data={posts}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <PostCard post={item} navigation={navigation} />}
+      ListHeaderComponent={ListHeader}
+      ListEmptyComponent={
+        <View style={styles.feedEmpty}>
+          <Icon name="document" size={26} color={colors.textMuted} />
+          <Text style={styles.feedEmptyText}>
+            {feedTab === "forYou"
+              ? "Noch keine Beitraege."
+              : "Deine Connections haben noch nichts gepostet."}
+          </Text>
+        </View>
+      }
+    />
   );
 }
 
@@ -279,6 +338,40 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 11,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  feedTabRow: {
+    flexDirection: "row",
+    marginTop: 28,
+    marginBottom: 14,
+    gap: 8,
+  },
+  feedTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  feedTabActive: {
+    backgroundColor: colors.primary,
+  },
+  feedTabText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  feedTabTextActive: {
+    color: colors.text,
+  },
+  feedEmpty: {
+    alignItems: "center",
+    marginTop: 30,
+    paddingHorizontal: 20,
+  },
+  feedEmptyText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    marginTop: 10,
     textAlign: "center",
   },
 });

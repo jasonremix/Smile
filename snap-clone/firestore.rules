@@ -115,6 +115,13 @@ service cloud.firestore {
         allow update: if false;
       }
 
+      // Gemerkte Beitraege - rein privat, nur die eigene Person sieht/aendert
+      // ihre eigene Liste.
+      match /savedPosts/{postId} {
+        allow read, create, delete: if isOwner(userId);
+        allow update: if false;
+      }
+
       match /stories/{storyId} {
         // Eigene Storys immer sichtbar; sonst nur laut gewaehlter Sichtbarkeit:
         // "friends" braucht eine bestehende Freundschaft, "custom" braucht
@@ -264,6 +271,51 @@ service cloud.firestore {
         && request.resource.data.message.size() > 0
         && request.resource.data.message.size() <= 2000;
       allow read, update, delete: if false;
+    }
+
+    // Beitraege im Home-Feed. MVP-Entscheidung: Lesbar fuer alle
+    // angemeldeten Nutzer (wie "Entdecken"/Profile), nicht nur Connections -
+    // "Fuer dich" braucht eine gewisse Reichweite ueber die eigene
+    // Connections-Liste hinaus. likeCount/commentCount sind ohne Cloud
+    // Function nicht perfekt faelschungssicher, deshalb wie bei nataScore
+    // auf einen plausiblen Sprung von maximal +-1 pro Schreibvorgang begrenzt.
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.likeCount == 0
+        && request.resource.data.commentCount == 0;
+      allow update: if isSignedIn()
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+            && (request.resource.data.likeCount == resource.data.likeCount + 1
+                || request.resource.data.likeCount == resource.data.likeCount - 1))
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
+            && request.resource.data.commentCount == resource.data.commentCount + 1)
+        );
+      allow delete: if isOwner(resource.data.authorId);
+
+      // Existenz des Dokuments (id = Nutzer-uid) bedeutet "geliked" - kein
+      // Inhalt noetig, deshalb reicht create/delete durch die liked Person.
+      match /likes/{uid} {
+        allow read: if isSignedIn();
+        allow create, delete: if isOwner(uid);
+        allow update: if false;
+      }
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 300;
+        allow delete: if isOwner(resource.data.authorId);
+        allow update: if false;
+      }
     }
   }
 }

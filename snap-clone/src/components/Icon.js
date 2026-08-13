@@ -301,6 +301,30 @@ const GLYPHS = {
     </>
   ),
   moment: (c) => <Ring top={3} left={3} size={18} color={c} />,
+  bookmark: (c) => (
+    <>
+      <Box top={4} left={6} width={12} height={15} color={c} radius={1.5} openBottom />
+      <Bar top={16.5} left={6.7} width={7.5} color={c} rotate={55} />
+      <Bar top={16.5} left={9.8} width={7.5} color={c} rotate={-55} />
+    </>
+  ),
+  heart: (c) => (
+    <>
+      <View
+        style={{
+          position: "absolute",
+          top: 8.5,
+          left: 6,
+          width: 12,
+          height: 12,
+          backgroundColor: c,
+          transform: [{ rotate: "45deg" }],
+        }}
+      />
+      <View style={{ position: "absolute", top: 5, left: 3, width: 9, height: 9, borderRadius: 4.5, backgroundColor: c }} />
+      <View style={{ position: "absolute", top: 5, left: 12, width: 9, height: 9, borderRadius: 4.5, backgroundColor: c }} />
+    </>
+  ),
   grid: (c) => (
     <>
       <Box top={3} left={3} width={7} height={7} color={c} radius={1.5} />
