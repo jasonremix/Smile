@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   plusText: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "800",
     fontSize: 12,
     lineHeight: 14,

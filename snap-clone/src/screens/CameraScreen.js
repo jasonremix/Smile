@@ -27,7 +27,7 @@ export default function CameraScreen({ navigation, route }) {
     return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>
-          SnapClone braucht Zugriff auf Kamera und Mikrofon, um Snaps aufzunehmen.
+          Nata braucht Zugriff auf Kamera und Mikrofon, um Snaps aufzunehmen.
         </Text>
         <TouchableOpacity
           style={styles.permissionButton}
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   permissionButtonText: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "700",
   },
   topBar: {

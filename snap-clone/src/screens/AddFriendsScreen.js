@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceLight,
   },
   addButtonText: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "700",
     fontSize: 13,
   },

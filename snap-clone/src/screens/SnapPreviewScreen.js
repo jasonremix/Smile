@@ -103,7 +103,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
         {isStory ? (
           <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={sending}>
             {sending ? (
-              <ActivityIndicator color="#000" />
+              <ActivityIndicator color={colors.text} />
             ) : (
               <Text style={styles.sendButtonText}>An meine Story posten ➤</Text>
             )}
@@ -137,7 +137,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
               disabled={selected.length === 0 || sending}
             >
               {sending ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color={colors.text} />
               ) : (
                 <Text style={styles.sendButtonText}>
                   Senden {selected.length > 0 ? `(${selected.length})` : ""} ➤
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   timerTextActive: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "700",
   },
   recipientsPanel: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   checkmark: {
-    color: "#000",
+    color: colors.text,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   sendButtonText: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "700",
     fontSize: 15,
   },

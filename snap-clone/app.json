@@ -1,34 +1,47 @@
 {
   "expo": {
-    "name": "SnapClone",
+    "name": "Nata",
     "slug": "snap-clone",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "backgroundColor": "#FFFC00"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#0d0d0d",
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourname.snapclone",
+      "bundleIdentifier": "com.natainc.nata",
       "infoPlist": {
-        "NSCameraUsageDescription": "SnapClone braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
-        "NSMicrophoneUsageDescription": "SnapClone braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
+        "NSCameraUsageDescription": "Nata braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
+        "NSMicrophoneUsageDescription": "Nata braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
       }
     },
     "android": {
-      "package": "com.yourname.snapclone",
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "package": "com.natainc.nata",
+      "permissions": ["CAMERA", "RECORD_AUDIO"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d0d0d"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "SnapClone braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
-          "microphonePermission": "SnapClone braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
+          "cameraPermission": "Nata braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
+          "microphonePermission": "Nata braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
+          "backgroundColor": "#0d0d0d"
         }
       ]
     ],

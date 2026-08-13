@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sendButtonText: {
-    color: "#000",
+    color: colors.text,
     fontSize: 16,
     fontWeight: "700",
   },

@@ -74,7 +74,7 @@ export function AuthProvider({ children }) {
 }
 
 function randomAvatarColor() {
-  const palette = ["#FFFC00", "#1E90FF", "#FF3B30", "#2ecc71", "#a55eea", "#ff9f43"];
+  const palette = ["#A855F7", "#7C3AED", "#C084FC", "#F472B6", "#38BDF8", "#34D399"];
   return palette[Math.floor(Math.random() * palette.length)];
 }
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -8,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
@@ -47,7 +49,11 @@ export default function SignupScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.logo}>👻 Konto erstellen</Text>
+        <View style={styles.header}>
+          <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
+          <Text style={styles.logo}>Konto erstellen</Text>
+          <Text style={styles.greeting}>👻 Schön, dass du zu Nata kommst!</Text>
+        </View>
 
         <TextInput
           style={styles.input}
@@ -86,7 +92,7 @@ export default function SignupScreen({ navigation }) {
 
         <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
           {loading ? (
-            <ActivityIndicator color={colors.background} />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <Text style={styles.buttonText}>Registrieren</Text>
           )}
@@ -124,12 +130,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 48,
   },
+  header: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  ghost: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    marginBottom: 12,
+  },
   logo: {
     fontSize: 28,
     fontWeight: "800",
     color: colors.primary,
     textAlign: "center",
-    marginBottom: 40,
+  },
+  greeting: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: "center",
   },
   input: {
     backgroundColor: colors.surface,
@@ -148,7 +169,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "700",
     fontSize: 16,
   },

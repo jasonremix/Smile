@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -40,7 +41,11 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.logo}>👻 SnapClone</Text>
+      <View style={styles.header}>
+        <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
+        <Text style={styles.logo}>Nata</Text>
+        <Text style={styles.greeting}>👻 Hey, schön dass du wieder da bist!</Text>
+      </View>
 
       <TextInput
         style={styles.input}
@@ -64,7 +69,7 @@ export default function LoginScreen({ navigation }) {
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? (
-          <ActivityIndicator color={colors.background} />
+          <ActivityIndicator color={colors.text} />
         ) : (
           <Text style={styles.buttonText}>Anmelden</Text>
         )}
@@ -97,12 +102,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 32,
   },
+  header: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  ghost: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    marginBottom: 12,
+  },
   logo: {
     fontSize: 34,
     fontWeight: "800",
     color: colors.primary,
     textAlign: "center",
-    marginBottom: 48,
+  },
+  greeting: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: "center",
   },
   input: {
     backgroundColor: colors.surface,
@@ -121,7 +141,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: {
-    color: "#000",
+    color: colors.text,
     fontWeight: "700",
     fontSize: 16,
   },
