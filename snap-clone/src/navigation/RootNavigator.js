@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import ChatScreen from "../screens/ChatScreen";
+import CompleteProfileScreen from "../screens/CompleteProfileScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
@@ -38,7 +39,7 @@ const navTheme = {
 };
 
 export default function RootNavigator() {
-  const { user, initializing } = useAuth();
+  const { user, initializing, needsProfileSetup } = useAuth();
 
   if (initializing) {
     return (
@@ -50,7 +51,9 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer theme={navTheme}>
-      {user ? (
+      {needsProfileSetup ? (
+        <CompleteProfileScreen />
+      ) : user ? (
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={MainTabNavigator} options={{ headerShown: false }} />
           <Stack.Screen

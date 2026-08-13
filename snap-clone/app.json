@@ -3,6 +3,7 @@
     "name": "Nata",
     "slug": "snap-clone",
     "version": "1.0.0",
+    "privacy": "unlisted",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",

@@ -21,12 +21,16 @@ export function AuthProvider({ children }) {
 
   const [authUser, setAuthUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setAuthUser(firebaseUser);
-      if (!firebaseUser) setProfile(null);
+      if (!firebaseUser) {
+        setProfile(null);
+        setProfileLoaded(false);
+      }
       if (initializing) setInitializing(false);
     });
     return unsubscribe;
@@ -34,8 +38,10 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!authUser) return;
+    setProfileLoaded(false);
     const unsubscribe = onSnapshot(doc(db, "users", authUser.uid), (snap) => {
-      if (snap.exists()) setProfile(snap.data());
+      setProfile(snap.exists() ? snap.data() : null);
+      setProfileLoaded(true);
     });
     return unsubscribe;
   }, [authUser]);
@@ -44,30 +50,57 @@ export function AuthProvider({ children }) {
   // (username, avatarColor, nataScore), damit Screens nur eine Quelle brauchen.
   const user = authUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
 
+  // Falls die Firestore-Profildoc trotz vorhandenem Auth-Account fehlt (z.B.
+  // weil der Schreibvorgang direkt nach der Kontoerstellung an einer Race
+  // Condition mit dem noch nicht bereiten Auth-Token gescheitert ist), landet
+  // der Account sonst dauerhaft unbrauchbar und unsichtbar in der Suche.
+  const needsProfileSetup = !!authUser && profileLoaded && !profile;
+
   const login = (email, password) =>
     signInWithEmailAndPassword(auth, email, password);
 
-  const signup = async (username, displayName, email, password) => {
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(credential.user, { displayName });
-
-    await setDoc(doc(db, "users", credential.user.uid), {
-      uid: credential.user.uid,
+  async function createProfileDoc(uid, username, displayName, email) {
+    const data = {
+      uid,
       username: username.toLowerCase(),
       displayName,
       email,
       avatarColor: randomAvatarColor(),
       nataScore: 0,
       createdAt: serverTimestamp(),
-    });
+    };
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await setDoc(doc(db, "users", uid), data);
+        return;
+      } catch (e) {
+        if (attempt === maxAttempts) throw e;
+        await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+  }
 
+  const signup = async (username, displayName, email, password) => {
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(credential.user, { displayName });
+    await createProfileDoc(credential.user.uid, username, displayName, email);
     return credential;
+  };
+
+  // Reparatur-Weg fuer Accounts, die needsProfileSetup treffen - gleiches
+  // Schema wie signup(), nur ohne erneute Kontoerstellung.
+  const completeProfile = async (username, displayName) => {
+    await updateProfile(auth.currentUser, { displayName });
+    await createProfileDoc(authUser.uid, username, displayName, authUser.email);
   };
 
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, initializing, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ user, initializing, needsProfileSetup, login, signup, completeProfile, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
