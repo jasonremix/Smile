@@ -8,7 +8,9 @@
     "splash": {
       "backgroundColor": "#FFFC00"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.yourname.snapclone",
@@ -29,6 +31,18 @@
           "microphonePermission": "SnapClone braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "546cbf7f-7cae-4df0-87a7-62ec0ee16bc6"
+      }
+    },
+    "owner": "nata-inc",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/546cbf7f-7cae-4df0-87a7-62ec0ee16bc6"
+    }
   }
 }
