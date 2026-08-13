@@ -2,6 +2,7 @@ import { Video } from "expo-av";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -69,6 +70,10 @@ export default function SnapPreviewScreen({ route, navigation }) {
       navigation.popToTop();
     } catch (e) {
       setSending(false);
+      Alert.alert(
+        "Senden fehlgeschlagen",
+        "Der Upload hat nicht geklappt. Bitte pruefe deine Internetverbindung und versuch's erneut."
+      );
     }
   };
 
