@@ -8,6 +8,7 @@ import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import ChatScreen from "../screens/ChatScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
+import FeedbackScreen from "../screens/FeedbackScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import FriendsScreen from "../screens/FriendsScreen";
 import LegalScreen from "../screens/LegalScreen";
@@ -139,6 +140,15 @@ export default function RootNavigator() {
             name="GroupChat"
             component={GroupChatScreen}
             options={{
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="Feedback"
+            component={FeedbackScreen}
+            options={{
+              title: "Feedback geben",
               headerStyle: { backgroundColor: colors.surface },
               headerTintColor: colors.text,
             }}

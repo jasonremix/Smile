@@ -1,5 +1,6 @@
 import React from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import BetaBadge from "../components/BetaBadge";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
 
@@ -51,6 +52,14 @@ export default function ProfileScreen({ navigation }) {
           onPress={() => navigation.navigate("Legal")}
         >
           <Text style={styles.actionButtonText}>📄 Datenschutz & Nutzungsbedingungen</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, styles.feedbackButton]}
+          onPress={() => navigation.navigate("Feedback")}
+        >
+          <Text style={styles.actionButtonText}>💬 Feedback geben</Text>
+          <BetaBadge style={styles.feedbackBadge} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -142,6 +151,15 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: colors.text,
     fontSize: 15,
+  },
+  feedbackButton: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  feedbackBadge: {
+    marginLeft: 2,
   },
   logoutButton: {
     marginTop: 12,
