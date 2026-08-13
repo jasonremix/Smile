@@ -115,8 +115,15 @@ service cloud.firestore {
         && request.resource.data.viewDuration >= 1
         && request.resource.data.viewDuration <= 10
         && isFriendOf(request.resource.data.recipientId);
+      // replayUsed darf nur von der empfangenden Person und nur einmal von
+      // false/undefined auf true gesetzt werden - nie zurueck, damit das
+      // "einmal erneut ansehen" wirklich nur einmal moeglich ist.
       allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewed', 'viewedAt']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewed', 'viewedAt', 'replayUsed'])
+        && (
+          !('replayUsed' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.replayUsed == true
+        );
       allow delete: if isSignedIn() &&
         (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId);
     }

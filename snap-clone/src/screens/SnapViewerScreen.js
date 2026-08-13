@@ -8,27 +8,34 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import BetaBadge from "../components/BetaBadge";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { reportContent } from "../services/moderationService";
-import { deleteSnap, markSnapViewed } from "../services/snapService";
+import { deleteSnap, markSnapReplayed, markSnapViewed } from "../services/snapService";
 import { colors } from "../theme/colors";
 
 export default function SnapViewerScreen({ route, navigation }) {
   const { snap } = route.params;
   const { user } = useAuth();
+  const [round, setRound] = useState(0); // 0 = erste Ansicht, 1 = Replay
   const [secondsLeft, setSecondsLeft] = useState(snap.viewDuration || 5);
+  const [phase, setPhase] = useState("viewing"); // "viewing" | "replayPrompt"
   const [reporting, setReporting] = useState(false);
   const closed = useRef(false);
+  const replayUsedRef = useRef(!!snap.replayUsed);
 
   useEffect(() => {
-    markSnapViewed(snap.id, user.uid);
+    if (round === 0) {
+      markSnapViewed(snap.id, user.uid);
+    }
 
+    setSecondsLeft(snap.viewDuration || 5);
     const interval = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(interval);
-          closeSnap();
+          handleViewEnd();
           return 0;
         }
         return s - 1;
@@ -36,7 +43,15 @@ export default function SnapViewerScreen({ route, navigation }) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [round]);
+
+  const handleViewEnd = () => {
+    if (replayUsedRef.current) {
+      closeSnap();
+    } else {
+      setPhase("replayPrompt");
+    }
+  };
 
   const closeSnap = () => {
     if (closed.current) return;
@@ -44,11 +59,29 @@ export default function SnapViewerScreen({ route, navigation }) {
     deleteSnap(snap.id).finally(() => navigation.goBack());
   };
 
+  const handleReplay = () => {
+    replayUsedRef.current = true;
+    setPhase("viewing");
+    setRound((r) => r + 1);
+    markSnapReplayed(snap.id).catch(() => {
+      // Best effort - lokal ist das Replay in dieser Sitzung trotzdem verbraucht.
+    });
+  };
+
+  const handleTap = () => {
+    if (phase === "replayPrompt") {
+      closeSnap();
+    } else {
+      handleViewEnd();
+    }
+  };
+
   return (
-    <TouchableWithoutFeedback onPress={closeSnap}>
+    <TouchableWithoutFeedback onPress={handleTap}>
       <View style={styles.container}>
         {snap.mediaType === "video" ? (
           <Video
+            key={round}
             source={{ uri: snap.mediaUrl }}
             style={styles.media}
             resizeMode="cover"
@@ -64,11 +97,25 @@ export default function SnapViewerScreen({ route, navigation }) {
             <TouchableOpacity style={styles.reportButton} onPress={() => setReporting(true)}>
               <Text style={styles.reportIcon}>⋯</Text>
             </TouchableOpacity>
-            <View style={styles.timerBadge}>
-              <Text style={styles.timerText}>{secondsLeft}</Text>
-            </View>
+            {phase === "viewing" ? (
+              <View style={styles.timerBadge}>
+                <Text style={styles.timerText}>{secondsLeft}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
+
+        {phase === "replayPrompt" ? (
+          <View style={styles.replayOverlay}>
+            <BetaBadge style={styles.replayBadge} />
+            <TouchableOpacity style={styles.replayButton} onPress={handleReplay}>
+              <Text style={styles.replayButtonText}>🔁 Nochmal ansehen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.doneButton} onPress={closeSnap}>
+              <Text style={styles.doneButtonText}>Fertig</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         <ReportModal
           visible={reporting}
@@ -140,5 +187,34 @@ const styles = StyleSheet.create({
   timerText: {
     color: colors.primary,
     fontWeight: "700",
+  },
+  replayOverlay: {
+    position: "absolute",
+    bottom: 80,
+    width: "100%",
+    alignItems: "center",
+  },
+  replayBadge: {
+    marginBottom: 10,
+  },
+  replayButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 24,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  replayButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  doneButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+  },
+  doneButtonText: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 14,
   },
 });

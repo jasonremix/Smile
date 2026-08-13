@@ -95,6 +95,13 @@ export async function markSnapViewed(snapId, viewerId) {
   }
 }
 
+// Verbraucht das einmalige Replay eines Snaps. Die Firestore-Regel laesst
+// dieses Feld nur von false/undefined auf true zu, nie zurueck - ein
+// zweites Replay ist damit auch bei einem erneuten App-Start ausgeschlossen.
+export async function markSnapReplayed(snapId) {
+  await updateDoc(doc(db, "snaps", snapId), { replayUsed: true });
+}
+
 // Nach dem Ansehen wird der Snap (wie in Snapchat ueblich) geloescht.
 export async function deleteSnap(snapId) {
   await deleteDoc(doc(db, "snaps", snapId));
