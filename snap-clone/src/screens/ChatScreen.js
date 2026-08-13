@@ -17,10 +17,12 @@ import {
   isStreakActive,
   listenChat,
   listenMessages,
+  markChatRead,
   sendMessage,
   setTypingStatus,
 } from "../services/chatService";
 import { blockUser, reportContent } from "../services/moderationService";
+import { getActiveChatId, setActiveChatId } from "../state/activeChat";
 import { colors } from "../theme/colors";
 
 const TYPING_TIMEOUT_MS = 3000;
@@ -94,6 +96,8 @@ export default function ChatScreen({ route, navigation }) {
         setChatId(id);
       }
       chatIdRef.current = id;
+      setActiveChatId(id);
+      markChatRead(id, user.uid).catch(() => {});
       unsubscribeMessages = listenMessages(id, setMessages);
       unsubscribeChat = listenChat(id, (chat) => {
         setStreakCount(chat && isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0);
@@ -108,8 +112,16 @@ export default function ChatScreen({ route, navigation }) {
       if (isTypingRef.current && chatIdRef.current) {
         setTypingStatus(chatIdRef.current, user.uid, false).catch(() => {});
       }
+      if (getActiveChatId() === chatIdRef.current) setActiveChatId(null);
     };
   }, []);
+
+  // Neue Nachrichten, die eintrudeln, waehrend man den Chat bereits offen
+  // hat, sollen ihn nicht ungelesen erscheinen lassen.
+  useEffect(() => {
+    if (!chatId || messages.length === 0) return;
+    markChatRead(chatId, user.uid).catch(() => {});
+  }, [messages, chatId]);
 
   const handleChangeText = (value) => {
     setText(value);

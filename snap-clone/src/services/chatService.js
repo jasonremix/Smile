@@ -139,6 +139,13 @@ export async function setTypingStatus(chatId, uid, isTyping) {
   await setDoc(doc(db, "chats", chatId), { typing: { [uid]: isTyping } }, { merge: true });
 }
 
+// Merkt sich, bis wann eine Person einen Chat zuletzt gelesen hat - damit
+// laesst sich clientseitig ein "ungelesen"-Badge berechnen, ohne Push-
+// Benachrichtigungen (die einen bezahlten Firebase-Plan brauchen wuerden).
+export async function markChatRead(chatId, uid) {
+  await setDoc(doc(db, "chats", chatId), { lastReadAt: { [uid]: serverTimestamp() } }, { merge: true });
+}
+
 export function listenChat(chatId, callback) {
   return onSnapshot(doc(db, "chats", chatId), (snap) => {
     callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);

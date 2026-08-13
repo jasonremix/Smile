@@ -5,6 +5,7 @@ import CameraScreen from "../screens/CameraScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import StoriesScreen from "../screens/StoriesScreen";
 import { colors } from "../theme/colors";
+import { useUnreadChats } from "../hooks/useUnreadChats";
 
 const Tab = createBottomTabNavigator();
 
@@ -13,6 +14,8 @@ function TabIcon({ emoji, focused }) {
 }
 
 export default function MainTabNavigator() {
+  const { unreadCount } = useUnreadChats();
+
   return (
     <Tab.Navigator
       initialRouteName="Camera"
@@ -26,7 +29,11 @@ export default function MainTabNavigator() {
       <Tab.Screen
         name="Chats"
         component={ChatListScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="💬" focused={focused} /> }}
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💬" focused={focused} />,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.primary },
+        }}
       />
       <Tab.Screen
         name="Camera"

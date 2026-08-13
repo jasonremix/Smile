@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import { useAuth } from "../context/AuthContext";
-import { isStreakActive, listenChats } from "../services/chatService";
+import { isStreakActive } from "../services/chatService";
 import { listenGroups } from "../services/groupService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { listenIncomingSnaps } from "../services/snapService";
 import { colors } from "../theme/colors";
+import { isChatUnread, useUnreadChats } from "../hooks/useUnreadChats";
 
 function toMillis(timestamp) {
   return timestamp?.toMillis ? timestamp.toMillis() : 0;
@@ -14,18 +15,16 @@ function toMillis(timestamp) {
 
 export default function ChatListScreen({ navigation }) {
   const { user } = useAuth();
-  const [chats, setChats] = useState([]);
+  const { chats } = useUnreadChats();
   const [groups, setGroups] = useState([]);
   const [incomingSnaps, setIncomingSnaps] = useState([]);
   const [blocked, setBlocked] = useState([]);
 
   useEffect(() => {
-    const unsubChats = listenChats(user.uid, setChats);
     const unsubGroups = listenGroups(user.uid, setGroups);
     const unsubSnaps = listenIncomingSnaps(user.uid, setIncomingSnaps);
     const unsubBlocked = listenBlockedUsers(user.uid, setBlocked);
     return () => {
-      unsubChats();
       unsubGroups();
       unsubSnaps();
       unsubBlocked();
@@ -55,6 +54,7 @@ export default function ChatListScreen({ navigation }) {
           isMine: chat.lastSenderId === user.uid,
           updatedAtMs: toMillis(chat.updatedAt),
           streakCount: isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0,
+          unread: isChatUnread(chat, user.uid),
         };
       });
 
@@ -114,6 +114,7 @@ export default function ChatListScreen({ navigation }) {
             lastMessage={item.lastMessage}
             isMine={item.isMine}
             streakCount={item.streakCount}
+            unread={item.unread}
             onPress={() =>
               item.type === "group"
                 ? navigation.navigate("GroupChat", { groupId: item.groupId, groupName: item.groupName })

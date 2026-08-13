@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import NewMessageBanner from "../components/NewMessageBanner";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import ChatScreen from "../screens/ChatScreen";
@@ -21,6 +22,7 @@ import StoryViewerScreen from "../screens/StoryViewerScreen";
 import { colors } from "../theme/colors";
 import AuthNavigator from "./AuthNavigator";
 import MainTabNavigator from "./MainTabNavigator";
+import { navigationRef } from "./navigationRef";
 
 const Stack = createNativeStackNavigator();
 
@@ -50,7 +52,8 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
+      {user && !needsProfileSetup ? <NewMessageBanner /> : null}
       {needsProfileSetup ? (
         <CompleteProfileScreen />
       ) : user ? (
