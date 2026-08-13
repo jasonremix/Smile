@@ -27,8 +27,8 @@ export default function ProfileScreen({ navigation }) {
       <Text style={styles.username}>@{user?.username}</Text>
 
       <View style={styles.scoreCard}>
-        <Text style={styles.scoreLabel}>Snap-Score</Text>
-        <Text style={styles.scoreValue}>{user?.snapScore ?? 0}</Text>
+        <Text style={styles.scoreLabel}>Nata Score</Text>
+        <Text style={styles.scoreValue}>{user?.nataScore ?? 0}</Text>
       </View>
 
       <TouchableOpacity

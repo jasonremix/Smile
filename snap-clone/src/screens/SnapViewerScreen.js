@@ -1,16 +1,18 @@
 import { Video } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { useAuth } from "../context/AuthContext";
 import { deleteSnap, markSnapViewed } from "../services/snapService";
 import { colors } from "../theme/colors";
 
 export default function SnapViewerScreen({ route, navigation }) {
   const { snap } = route.params;
+  const { user } = useAuth();
   const [secondsLeft, setSecondsLeft] = useState(snap.viewDuration || 5);
   const closed = useRef(false);
 
   useEffect(() => {
-    markSnapViewed(snap.id);
+    markSnapViewed(snap.id, user.uid);
 
     const interval = setInterval(() => {
       setSecondsLeft((s) => {

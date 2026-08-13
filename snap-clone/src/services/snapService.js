@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../config/firebase";
+import { bumpNataScore } from "./userService";
 
 const SNAP_LIFETIME_MS = 24 * 60 * 60 * 1000; // Snap verschwindet spaetestens nach 24h ungeoeffnet
 
@@ -44,6 +45,9 @@ export async function sendSnap({ senderId, senderName, recipientIds, localUri, m
   );
 
   await Promise.all(writes);
+
+  // Nata Score: +1 pro verschicktem Snap (wie beim Senden gewohnt).
+  await bumpNataScore(senderId, recipientIds.length);
 }
 
 export function listenIncomingSnaps(uid, callback) {
@@ -62,8 +66,12 @@ export function listenIncomingSnaps(uid, callback) {
   });
 }
 
-export async function markSnapViewed(snapId) {
+export async function markSnapViewed(snapId, viewerId) {
   await updateDoc(doc(db, "snaps", snapId), { viewed: true, viewedAt: serverTimestamp() });
+  // Nata Score: +1 fuers Ansehen, genau wie beim Verschicken.
+  if (viewerId) {
+    await bumpNataScore(viewerId, 1);
+  }
 }
 
 // Nach dem Ansehen wird der Snap (wie in Snapchat ueblich) geloescht.

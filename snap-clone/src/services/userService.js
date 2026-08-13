@@ -6,8 +6,8 @@ export async function getUserProfile(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
-export async function bumpSnapScore(uid, amount = 1) {
+export async function bumpNataScore(uid, amount = 1) {
   await updateDoc(doc(db, "users", uid), {
-    snapScore: increment(amount),
+    nataScore: increment(amount),
   });
 }

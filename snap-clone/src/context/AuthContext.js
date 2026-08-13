@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
   }, [authUser]);
 
   // "user" kombiniert die Firebase-Auth-Identitaet mit dem Firestore-Profil
-  // (username, avatarColor, snapScore), damit Screens nur eine Quelle brauchen.
+  // (username, avatarColor, nataScore), damit Screens nur eine Quelle brauchen.
   const user = authUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
 
   const login = (email, password) =>
@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
       displayName,
       email,
       avatarColor: randomAvatarColor(),
-      snapScore: 0,
+      nataScore: 0,
       createdAt: serverTimestamp(),
     });
 

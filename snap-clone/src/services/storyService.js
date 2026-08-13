@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../config/firebase";
+import { bumpNataScore } from "./userService";
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
@@ -36,6 +37,9 @@ export async function postStory({ uid, displayName, avatarColor, localUri, media
     createdAt: serverTimestamp(),
     expiresAtMs: Date.now() + STORY_LIFETIME_MS,
   });
+
+  // Nata Score: +1 fuers Teilen einer Story.
+  await bumpNataScore(uid, 1);
 }
 
 // Beobachtet alle Storys von Freunden (inkl. eigener) ueber eine collectionGroup-Abfrage.
