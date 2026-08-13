@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
 
@@ -19,28 +19,51 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.closeText}>✕</Text>
       </TouchableOpacity>
 
-      <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-        <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+          <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+        </View>
 
-      <Text style={styles.displayName}>{user?.displayName}</Text>
-      <Text style={styles.username}>@{user?.username}</Text>
+        <Text style={styles.displayName}>{user?.displayName}</Text>
+        <Text style={styles.username}>@{user?.username}</Text>
 
-      <View style={styles.scoreCard}>
-        <Text style={styles.scoreLabel}>Nata Score</Text>
-        <Text style={styles.scoreValue}>{user?.nataScore ?? 0}</Text>
-      </View>
+        <View style={styles.scoreCard}>
+          <Text style={styles.scoreLabel}>Nata Score</Text>
+          <Text style={styles.scoreValue}>{user?.nataScore ?? 0}</Text>
+        </View>
 
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => navigation.navigate("Friends")}
-      >
-        <Text style={styles.actionButtonText}>👥 Freunde verwalten</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate("Friends")}
+        >
+          <Text style={styles.actionButtonText}>👥 Freunde verwalten</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Abmelden</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate("BlockedUsers")}
+        >
+          <Text style={styles.actionButtonText}>🚫 Blockierte Nutzer</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate("Legal")}
+        >
+          <Text style={styles.actionButtonText}>📄 Datenschutz & Nutzungsbedingungen</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Abmelden</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteAccountButton}
+          onPress={() => navigation.navigate("DeleteAccount")}
+        >
+          <Text style={styles.deleteAccountText}>Konto löschen</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
@@ -49,14 +72,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scroll: {
     alignItems: "center",
     paddingTop: 80,
     paddingHorizontal: 24,
+    paddingBottom: 48,
   },
   closeButton: {
     position: "absolute",
     top: 56,
     left: 16,
+    zIndex: 1,
   },
   closeText: {
     color: colors.text,
@@ -117,8 +144,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   logoutButton: {
-    marginTop: "auto",
-    marginBottom: 32,
+    marginTop: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,
   },
@@ -126,5 +152,15 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontWeight: "600",
     fontSize: 15,
+  },
+  deleteAccountButton: {
+    marginTop: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 32,
+  },
+  deleteAccountText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    textDecorationLine: "underline",
   },
 });

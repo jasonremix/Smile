@@ -4,8 +4,11 @@ import React from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
+import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import ChatScreen from "../screens/ChatScreen";
+import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import FriendsScreen from "../screens/FriendsScreen";
+import LegalScreen from "../screens/LegalScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
@@ -87,6 +90,33 @@ export default function RootNavigator() {
             name="Profile"
             component={ProfileScreen}
             options={{ headerShown: false, presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="BlockedUsers"
+            component={BlockedUsersScreen}
+            options={{
+              title: "Blockierte Nutzer",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="DeleteAccount"
+            component={DeleteAccountScreen}
+            options={{
+              title: "Konto löschen",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="Legal"
+            component={LegalScreen}
+            options={{
+              title: "Rechtliches",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
           />
         </Stack.Navigator>
       ) : (

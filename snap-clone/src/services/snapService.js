@@ -16,19 +16,21 @@ import { bumpNataScore } from "./userService";
 
 const SNAP_LIFETIME_MS = 24 * 60 * 60 * 1000; // Snap verschwindet spaetestens nach 24h ungeoeffnet
 
-async function uploadMedia(localUri, folder) {
+async function uploadMedia(localUri, folder, uid, mediaType) {
   const response = await fetch(localUri);
   const blob = await response.blob();
-  const filename = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e6)}.jpg`;
+  const extension = mediaType === "video" ? "mp4" : "jpg";
+  const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
+  const filename = `${folder}/${uid}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${extension}`;
   const storageRef = ref(storage, filename);
-  await uploadBytes(storageRef, blob);
+  await uploadBytes(storageRef, blob, { contentType });
   return getDownloadURL(storageRef);
 }
 
 // Verschickt einen Snap an mehrere Freunde. Fuer jeden Empfaenger wird ein
 // eigenes Dokument angelegt, damit "gesehen"-Status pro Person getrennt ist.
 export async function sendSnap({ senderId, senderName, recipientIds, localUri, mediaType, viewDuration }) {
-  const mediaUrl = await uploadMedia(localUri, "snaps");
+  const mediaUrl = await uploadMedia(localUri, "snaps", senderId, mediaType);
 
   const writes = recipientIds.map((recipientId) =>
     addDoc(collection(db, "snaps"), {

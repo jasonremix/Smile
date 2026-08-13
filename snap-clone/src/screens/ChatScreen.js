@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -9,8 +10,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { getOrCreateChat, listenMessages, sendMessage } from "../services/chatService";
+import { blockUser, reportContent } from "../services/moderationService";
 import { colors } from "../theme/colors";
 
 export default function ChatScreen({ route, navigation }) {
@@ -19,10 +22,51 @@ export default function ChatScreen({ route, navigation }) {
   const [chatId, setChatId] = useState(initialChatId);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [reportTarget, setReportTarget] = useState(null);
   const listRef = useRef(null);
 
+  const openChatMenu = () => {
+    Alert.alert(otherUser.name, "Was möchtest du tun?", [
+      {
+        text: "Nutzer melden",
+        onPress: () => setReportTarget({ type: "user" }),
+      },
+      {
+        text: "Nutzer blockieren",
+        style: "destructive",
+        onPress: confirmBlockUser,
+      },
+      { text: "Abbrechen", style: "cancel" },
+    ]);
+  };
+
+  const confirmBlockUser = () => {
+    Alert.alert(
+      "Blockieren",
+      `${otherUser.name} blockieren? Ihr seid danach keine Freunde mehr und seht euch gegenseitig nicht mehr.`,
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Blockieren",
+          style: "destructive",
+          onPress: async () => {
+            await blockUser(user.uid, { uid: otherUser.id, displayName: otherUser.name });
+            navigation.goBack();
+          },
+        },
+      ]
+    );
+  };
+
   useLayoutEffect(() => {
-    navigation.setOptions({ title: otherUser.name });
+    navigation.setOptions({
+      title: otherUser.name,
+      headerRight: () => (
+        <TouchableOpacity onPress={openChatMenu} style={{ paddingHorizontal: 8 }}>
+          <Text style={{ color: colors.text, fontSize: 20 }}>⋯</Text>
+        </TouchableOpacity>
+      ),
+    });
   }, [navigation, otherUser]);
 
   useEffect(() => {
@@ -53,6 +97,11 @@ export default function ChatScreen({ route, navigation }) {
     await sendMessage(id, user.uid, trimmed);
   };
 
+  const handleLongPressMessage = (message) => {
+    if (message.senderId === user.uid) return; // eigene Nachrichten nicht meldbar
+    setReportTarget({ type: "message", messageId: message.id });
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -69,9 +118,13 @@ export default function ChatScreen({ route, navigation }) {
           const isMine = item.senderId === user.uid;
           return (
             <View style={[styles.bubbleRow, isMine ? styles.rowRight : styles.rowLeft]}>
-              <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onLongPress={() => handleLongPressMessage(item)}
+                style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}
+              >
                 <Text style={styles.bubbleText}>{item.text}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           );
         }}
@@ -90,6 +143,21 @@ export default function ChatScreen({ route, navigation }) {
           <Text style={styles.sendButtonText}>➤</Text>
         </TouchableOpacity>
       </View>
+
+      <ReportModal
+        visible={!!reportTarget}
+        onClose={() => setReportTarget(null)}
+        title={reportTarget?.type === "message" ? "Nachricht melden" : `${otherUser.name} melden`}
+        onSubmit={(reason) =>
+          reportContent({
+            reporterId: user.uid,
+            targetType: reportTarget.type,
+            targetId: reportTarget.messageId,
+            targetUserId: otherUser.id,
+            reason,
+          })
+        }
+      />
     </KeyboardAvoidingView>
   );
 }

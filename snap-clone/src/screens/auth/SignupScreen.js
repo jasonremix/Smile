@@ -101,6 +101,13 @@ export default function SignupScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={styles.link}>Bereits registriert? Anmelden</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate("Legal")}>
+          <Text style={styles.legalLink}>
+            Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen und
+            Datenschutzerklärung.
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -177,6 +184,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: "center",
     marginTop: 20,
+  },
+  legalLink: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 16,
+    fontSize: 12,
+    textDecorationLine: "underline",
   },
   error: {
     color: colors.danger,

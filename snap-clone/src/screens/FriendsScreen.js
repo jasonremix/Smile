@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import {
   acceptFriendRequest,
@@ -7,23 +8,58 @@ import {
   listenFriends,
   listenIncomingRequests,
 } from "../services/friendService";
+import { blockUser, listenBlockedUsers, reportContent } from "../services/moderationService";
 import { colors } from "../theme/colors";
 
 export default function FriendsScreen({ navigation }) {
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [blocked, setBlocked] = useState([]);
+  const [reportTarget, setReportTarget] = useState(null);
 
   useEffect(() => {
     const unsubFriends = listenFriends(user.uid, setFriends);
     const unsubRequests = listenIncomingRequests(user.uid, setRequests);
+    const unsubBlocked = listenBlockedUsers(user.uid, setBlocked);
     return () => {
       unsubFriends();
       unsubRequests();
+      unsubBlocked();
     };
   }, [user.uid]);
 
+  const blockedIds = useMemo(() => new Set(blocked.map((b) => b.uid)), [blocked]);
+  const visibleRequests = requests.filter((r) => !blockedIds.has(r.from));
+
   const currentUserForAccept = { uid: user.uid, displayName: user.displayName, username: user.username };
+
+  const handleLongPressFriend = (friend) => {
+    Alert.alert(friend.displayName, "Was möchtest du tun?", [
+      { text: "Melden", onPress: () => setReportTarget(friend) },
+      {
+        text: "Blockieren",
+        style: "destructive",
+        onPress: () => confirmBlock(friend),
+      },
+      { text: "Abbrechen", style: "cancel" },
+    ]);
+  };
+
+  const confirmBlock = (friend) => {
+    Alert.alert(
+      "Blockieren",
+      `${friend.displayName} blockieren? Ihr seid danach keine Freunde mehr und seht euch gegenseitig nicht mehr.`,
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Blockieren",
+          style: "destructive",
+          onPress: () => blockUser(user.uid, friend),
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -34,10 +70,10 @@ export default function FriendsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {requests.length > 0 ? (
+      {visibleRequests.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Freundschaftsanfragen</Text>
-          {requests.map((req) => (
+          {visibleRequests.map((req) => (
             <View key={req.id} style={styles.requestRow}>
               <Text style={styles.requestName}>{req.fromDisplayName}</Text>
               <View style={styles.requestActions}>
@@ -67,6 +103,7 @@ export default function FriendsScreen({ navigation }) {
           <TouchableOpacity
             style={styles.friendRow}
             onPress={() => navigation.navigate("Chat", { chatId: null, otherUser: { id: item.uid, name: item.displayName } })}
+            onLongPress={() => handleLongPressFriend(item)}
           >
             <Text style={styles.friendName}>{item.displayName}</Text>
             <Text style={styles.friendUsername}>@{item.username}</Text>
@@ -76,6 +113,27 @@ export default function FriendsScreen({ navigation }) {
           <Text style={styles.emptyText}>
             Du hast noch keine Freunde. Tippe auf "Hinzufuegen", um jemanden zu finden.
           </Text>
+        }
+      />
+
+      <TouchableOpacity
+        style={styles.blockedLink}
+        onPress={() => navigation.navigate("BlockedUsers")}
+      >
+        <Text style={styles.blockedLinkText}>Blockierte Nutzer verwalten</Text>
+      </TouchableOpacity>
+
+      <ReportModal
+        visible={!!reportTarget}
+        onClose={() => setReportTarget(null)}
+        title={reportTarget ? `${reportTarget.displayName} melden` : "Melden"}
+        onSubmit={(reason) =>
+          reportContent({
+            reporterId: user.uid,
+            targetType: "user",
+            targetUserId: reportTarget.uid,
+            reason,
+          })
         }
       />
     </View>
@@ -168,5 +226,14 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textMuted,
     marginTop: 20,
+  },
+  blockedLink: {
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  blockedLinkText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    textDecorationLine: "underline",
   },
 });

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import { useAuth } from "../context/AuthContext";
 import { listenChats } from "../services/chatService";
+import { listenBlockedUsers } from "../services/moderationService";
 import { listenIncomingSnaps } from "../services/snapService";
 import { colors } from "../theme/colors";
 
@@ -10,20 +11,31 @@ export default function ChatListScreen({ navigation }) {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
   const [incomingSnaps, setIncomingSnaps] = useState([]);
+  const [blocked, setBlocked] = useState([]);
 
   useEffect(() => {
     const unsubChats = listenChats(user.uid, setChats);
     const unsubSnaps = listenIncomingSnaps(user.uid, setIncomingSnaps);
+    const unsubBlocked = listenBlockedUsers(user.uid, setBlocked);
     return () => {
       unsubChats();
       unsubSnaps();
+      unsubBlocked();
     };
   }, [user.uid]);
+
+  const blockedIds = useMemo(() => new Set(blocked.map((b) => b.uid)), [blocked]);
 
   const otherParticipant = (chat) => {
     const otherId = chat.participants.find((id) => id !== user.uid);
     return { id: otherId, name: chat.participantNames?.[otherId] || "Unbekannt" };
   };
+
+  const visibleChats = chats.filter((chat) => {
+    const other = otherParticipant(chat);
+    return !blockedIds.has(other.id);
+  });
+  const visibleSnaps = incomingSnaps.filter((snap) => !blockedIds.has(snap.senderId));
 
   return (
     <View style={styles.container}>
@@ -34,10 +46,10 @@ export default function ChatListScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {incomingSnaps.length > 0 ? (
+      {visibleSnaps.length > 0 ? (
         <View style={styles.snapsSection}>
           <Text style={styles.sectionTitle}>Neue Snaps</Text>
-          {incomingSnaps.map((snap) => (
+          {visibleSnaps.map((snap) => (
             <TouchableOpacity
               key={snap.id}
               style={styles.snapRow}
@@ -52,7 +64,7 @@ export default function ChatListScreen({ navigation }) {
       ) : null}
 
       <FlatList
-        data={chats}
+        data={visibleChats}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           const other = otherParticipant(item);

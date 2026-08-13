@@ -6,53 +6,133 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId;
-      allow delete: if false;
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.nataScore == 0
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 20
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 40;
+
+      // Manipulationsschutz auf Basis reiner Firestore-Regeln hat Grenzen:
+      // nataScore darf sich pro Schreibvorgang nur um einen kleinen,
+      // plausiblen Betrag aendern statt auf beliebige Werte gesetzt zu
+      // werden. Wirklich serverseitig garantiert faelschungssicher wird der
+      // Score erst mit einer Cloud Function statt Client-Schreibzugriff
+      // (siehe Roadmap: Push-Benachrichtigungen/Content-Moderation brauchen
+      // ohnehin Cloud Functions - dort dann nataScore mit umziehen).
+      allow update: if isOwner(userId)
+        && (
+          !('nataScore' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.nataScore >= resource.data.nataScore
+              && request.resource.data.nataScore <= resource.data.nataScore + 5)
+        )
+        && (
+          !('username' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.username is string
+              && request.resource.data.username.size() >= 3
+              && request.resource.data.username.size() <= 20)
+        )
+        && (
+          !('displayName' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.displayName is string
+              && request.resource.data.displayName.size() >= 1
+              && request.resource.data.displayName.size() <= 40)
+        );
+
+      allow delete: if isOwner(userId);
 
       match /friends/{friendId} {
-        allow read: if isSignedIn() && request.auth.uid == userId;
-        allow write: if isSignedIn() &&
-          (request.auth.uid == userId || request.auth.uid == friendId);
+        allow read: if isOwner(userId);
+        allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
+      }
+
+      // Wer blockiert wurde, steht hier - nur der blockierende Nutzer selbst
+      // darf seine eigene Liste sehen/aendern.
+      match /blocked/{blockedUid} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && blockedUid != userId;
+        allow delete: if isOwner(userId);
+        allow update: if false;
       }
 
       match /stories/{storyId} {
         allow read: if isSignedIn();
-        allow create: if isSignedIn() && request.auth.uid == userId;
-        allow update: if isSignedIn(); // erlaubt anderen Nutzern, sich als "viewer" einzutragen
-        allow delete: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isOwner(userId)
+          && request.resource.data.ownerId == userId
+          && request.resource.data.mediaUrl is string;
+        // Erlaubt anderen Nutzern, sich als "viewer" einzutragen - dabei darf
+        // sich ausschliesslich das viewers-Feld aendern.
+        allow update: if isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers']);
+        allow delete: if isOwner(userId);
       }
     }
 
     match /friendRequests/{requestId} {
       allow read: if isSignedIn() &&
         (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.from;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.to;
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.from
+        && request.resource.data.to != request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && request.auth.uid == resource.data.to
+        && request.resource.data.status in ['accepted', 'declined'];
       allow delete: if false;
     }
 
     match /snaps/{snapId} {
       allow read: if isSignedIn() &&
         (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId);
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.senderId
+        && request.resource.data.recipientId is string
+        && request.resource.data.mediaUrl is string
+        && request.resource.data.viewDuration >= 1
+        && request.resource.data.viewDuration <= 10;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewed', 'viewedAt']);
       allow delete: if isSignedIn() &&
         (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId);
     }
 
     match /chats/{chatId} {
-      allow read, update, delete: if isSignedIn() && request.auth.uid in resource.data.participants;
-      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow read, delete: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() == 2;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'participantNames']);
 
       match /messages/{messageId} {
         allow read: if isSignedIn() &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.senderId
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
         allow update, delete: if false;
       }
+    }
+
+    // Meldungen sind ausschliesslich per create durch die meldende Person
+    // erreichbar - Einsicht/Bearbeitung nur ueber die Firebase-Konsole bzw.
+    // spaeter eine Admin-Cloud-Function, nie ueber die Client-App.
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.reporterId;
+      allow read, update, delete: if false;
     }
   }
 }

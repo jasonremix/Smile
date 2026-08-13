@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { searchUsersByUsername, sendFriendRequest } from "../services/friendService";
+import { listenBlockedUsers } from "../services/moderationService";
 import { colors } from "../theme/colors";
 
 export default function AddFriendsScreen() {
@@ -18,6 +19,14 @@ export default function AddFriendsScreen() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sentTo, setSentTo] = useState([]);
+  const [blockedIds, setBlockedIds] = useState(new Set());
+
+  useEffect(() => {
+    const unsubscribe = listenBlockedUsers(user.uid, (blocked) =>
+      setBlockedIds(new Set(blocked.map((b) => b.uid)))
+    );
+    return unsubscribe;
+  }, [user.uid]);
 
   const handleSearch = async (value) => {
     setTerm(value);
@@ -28,7 +37,7 @@ export default function AddFriendsScreen() {
     setLoading(true);
     try {
       const found = await searchUsersByUsername(value, user.uid);
-      setResults(found);
+      setResults(found.filter((u) => !blockedIds.has(u.uid)));
     } finally {
       setLoading(false);
     }

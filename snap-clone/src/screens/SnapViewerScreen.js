@@ -1,7 +1,16 @@
 import { Video } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
-import { Image, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
+import { reportContent } from "../services/moderationService";
 import { deleteSnap, markSnapViewed } from "../services/snapService";
 import { colors } from "../theme/colors";
 
@@ -9,6 +18,7 @@ export default function SnapViewerScreen({ route, navigation }) {
   const { snap } = route.params;
   const { user } = useAuth();
   const [secondsLeft, setSecondsLeft] = useState(snap.viewDuration || 5);
+  const [reporting, setReporting] = useState(false);
   const closed = useRef(false);
 
   useEffect(() => {
@@ -50,10 +60,30 @@ export default function SnapViewerScreen({ route, navigation }) {
 
         <View style={styles.topBar}>
           <Text style={styles.sender}>{snap.senderName}</Text>
-          <View style={styles.timerBadge}>
-            <Text style={styles.timerText}>{secondsLeft}</Text>
+          <View style={styles.topBarRight}>
+            <TouchableOpacity style={styles.reportButton} onPress={() => setReporting(true)}>
+              <Text style={styles.reportIcon}>⋯</Text>
+            </TouchableOpacity>
+            <View style={styles.timerBadge}>
+              <Text style={styles.timerText}>{secondsLeft}</Text>
+            </View>
           </View>
         </View>
+
+        <ReportModal
+          visible={reporting}
+          onClose={() => setReporting(false)}
+          title="Snap melden"
+          onSubmit={(reason) =>
+            reportContent({
+              reporterId: user.uid,
+              targetType: "snap",
+              targetId: snap.id,
+              targetUserId: snap.senderId,
+              reason,
+            })
+          }
+        />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -80,6 +110,24 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
+  },
+  topBarRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  reportButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  reportIcon: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
   timerBadge: {
     width: 30,

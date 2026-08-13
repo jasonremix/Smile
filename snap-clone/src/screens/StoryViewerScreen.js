@@ -1,7 +1,16 @@
 import { Video } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
-import { Image, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
+import { reportContent } from "../services/moderationService";
 import { markStoryViewed } from "../services/storyService";
 import { colors } from "../theme/colors";
 
@@ -11,6 +20,7 @@ export default function StoryViewerScreen({ route, navigation }) {
   const { group } = route.params;
   const { user } = useAuth();
   const [index, setIndex] = useState(0);
+  const [reporting, setReporting] = useState(false);
   const timerRef = useRef(null);
 
   const items = group.items;
@@ -61,10 +71,18 @@ export default function StoryViewerScreen({ route, navigation }) {
       </View>
 
       <View style={styles.header}>
-        <View style={[styles.avatar, { backgroundColor: group.avatarColor || colors.primary }]}>
-          <Text style={styles.avatarText}>{(group.ownerName || "?").charAt(0).toUpperCase()}</Text>
+        <View style={styles.headerLeft}>
+          <View style={[styles.avatar, { backgroundColor: group.avatarColor || colors.primary }]}>
+            <Text style={styles.avatarText}>{(group.ownerName || "?").charAt(0).toUpperCase()}</Text>
+          </View>
+          <Text style={styles.ownerName}>{group.ownerName}</Text>
         </View>
-        <Text style={styles.ownerName}>{group.ownerName}</Text>
+
+        {group.ownerId !== user.uid ? (
+          <TouchableOpacity style={styles.reportButton} onPress={() => setReporting(true)}>
+            <Text style={styles.reportIcon}>⋯</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {current.mediaType === "video" ? (
@@ -89,6 +107,21 @@ export default function StoryViewerScreen({ route, navigation }) {
           <View style={styles.tapZoneRight} />
         </TouchableWithoutFeedback>
       </View>
+
+      <ReportModal
+        visible={reporting}
+        onClose={() => setReporting(false)}
+        title="Story melden"
+        onSubmit={(reason) =>
+          reportContent({
+            reporterId: user.uid,
+            targetType: "story",
+            targetId: current.id,
+            targetUserId: group.ownerId,
+            reason,
+          })
+        }
+      />
     </View>
   );
 }
@@ -125,9 +158,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 60,
     left: 16,
+    right: 16,
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     zIndex: 2,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 32,
@@ -145,6 +184,19 @@ const styles = StyleSheet.create({
   ownerName: {
     color: "#fff",
     fontWeight: "600",
+  },
+  reportButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reportIcon: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
   tapZones: {
     ...StyleSheet.absoluteFillObject,
