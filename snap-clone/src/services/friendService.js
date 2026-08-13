@@ -14,23 +14,40 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 
-// Sucht Nutzer anhand des Benutzernamens (Praefix-Suche).
+// Sucht Nutzer per Praefix - sowohl ueber den Benutzernamen als auch den
+// Anzeigenamen, damit man mit beidem faendig wird. Firestore kann kein ODER
+// ueber zwei verschiedene Range-Filter in einer Abfrage, daher zwei separate
+// Abfragen parallel und die Treffer clientseitig zusammenfuehren.
 export async function searchUsersByUsername(searchTerm, currentUid) {
   const term = searchTerm.trim().toLowerCase();
   if (!term) return [];
 
   const usersRef = collection(db, "users");
-  const q = query(
+  const usernameQuery = query(
     usersRef,
     orderBy("username"),
     where("username", ">=", term),
     where("username", "<=", term + ""),
     limit(20)
   );
-  const snap = await getDocs(q);
-  return snap.docs
-    .map((d) => d.data())
-    .filter((u) => u.uid !== currentUid);
+  const displayNameQuery = query(
+    usersRef,
+    orderBy("displayNameLower"),
+    where("displayNameLower", ">=", term),
+    where("displayNameLower", "<=", term + ""),
+    limit(20)
+  );
+
+  const [usernameSnap, displayNameSnap] = await Promise.all([
+    getDocs(usernameQuery),
+    getDocs(displayNameQuery),
+  ]);
+
+  const results = new Map();
+  for (const d of [...usernameSnap.docs, ...displayNameSnap.docs]) {
+    results.set(d.data().uid, d.data());
+  }
+  return Array.from(results.values()).filter((u) => u.uid !== currentUid);
 }
 
 export async function sendFriendRequest(fromUser, toUser) {

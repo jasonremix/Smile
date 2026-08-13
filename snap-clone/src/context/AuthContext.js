@@ -64,6 +64,9 @@ export function AuthProvider({ children }) {
       uid,
       username: username.toLowerCase(),
       displayName,
+      // Normalisierte Kleinschreibung, damit die Freunde-Suche unabhaengig
+      // von Gross-/Kleinschreibung auch ueber den Anzeigenamen funktioniert.
+      displayNameLower: displayName.toLowerCase(),
       email,
       avatarColor: randomAvatarColor(),
       nataScore: 0,
@@ -84,6 +87,12 @@ export function AuthProvider({ children }) {
   const signup = async (username, displayName, email, password) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(credential.user, { displayName });
+    // Direkt nach der Kontoerstellung hat die Firestore-SDK-Instanz (vor allem
+    // unter React Native mit AsyncStorage-Persistenz) das neue Auth-Token noch
+    // nicht zwingend uebernommen - ein sofortiger Schreibvorgang schlaegt dann
+    // mit permission-denied fehl, obwohl serverseitig alles erlaubt waere.
+    // Ein erzwungener Token-Refresh vor dem Schreiben behebt das zuverlaessig.
+    await credential.user.getIdToken(true);
     await createProfileDoc(credential.user.uid, username, displayName, email);
     return credential;
   };
@@ -92,6 +101,7 @@ export function AuthProvider({ children }) {
   // Schema wie signup(), nur ohne erneute Kontoerstellung.
   const completeProfile = async (username, displayName) => {
     await updateProfile(auth.currentUser, { displayName });
+    await auth.currentUser.getIdToken(true);
     await createProfileDoc(authUser.uid, username, displayName, authUser.email);
   };
 

@@ -52,7 +52,7 @@ export default function AddFriendsScreen() {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Nach Benutzername suchen..."
+        placeholder="Anzeigename oder Benutzername suchen..."
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
         value={term}
