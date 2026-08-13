@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AchievementRow from "../components/AchievementRow";
 import NataScoreCard from "../components/NataScoreCard";
 import VerifiedBadge from "../components/VerifiedBadge";
@@ -40,6 +40,24 @@ export default function HomeScreen({ navigation }) {
     [weeklyEvents]
   );
 
+  // Kleines, unaufdringliches Easter Egg - laenger auf den Avatar druecken.
+  const [booVisible, setBooVisible] = useState(false);
+  const avatarScale = useRef(new Animated.Value(1)).current;
+  const booOpacity = useRef(new Animated.Value(0)).current;
+
+  const handleAvatarLongPress = () => {
+    setBooVisible(true);
+    Animated.sequence([
+      Animated.spring(avatarScale, { toValue: 1.25, useNativeDriver: true, friction: 3 }),
+      Animated.spring(avatarScale, { toValue: 1, useNativeDriver: true, friction: 3 }),
+    ]).start();
+    Animated.sequence([
+      Animated.timing(booOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.delay(900),
+      Animated.timing(booOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(() => setBooVisible(false));
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.greetingRow}>
@@ -50,12 +68,20 @@ export default function HomeScreen({ navigation }) {
           </View>
           <Text style={styles.subGreeting}>Schoen, dass du da bist.</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}
-          onPress={() => navigation.navigate("Profile")}
-        >
-          <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-        </TouchableOpacity>
+        <View>
+          {booVisible ? (
+            <Animated.Text style={[styles.booText, { opacity: booOpacity }]}>👻 Boo!</Animated.Text>
+          ) : null}
+          <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
+            <TouchableOpacity
+              style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}
+              onPress={() => navigation.navigate("Profile")}
+              onLongPress={handleAvatarLongPress}
+            >
+              <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </View>
 
       <NataScoreCard
@@ -150,6 +176,15 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     justifyContent: "center",
     alignItems: "center",
+  },
+  booText: {
+    position: "absolute",
+    top: -26,
+    right: 0,
+    color: colors.primaryLight,
+    fontSize: 13,
+    fontWeight: "800",
+    zIndex: 2,
   },
   avatarText: {
     color: "#000",
