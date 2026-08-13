@@ -61,7 +61,7 @@ export async function sendGroupMessage(groupId, senderId, senderName, text) {
     updatedAt: serverTimestamp(),
   });
 
-  await bumpNataScore(senderId, 1, "Nachricht gesendet");
+  await bumpNataScore(senderId, 3, "Nachricht gesendet");
 }
 
 export function listenGroupMessages(groupId, callback) {

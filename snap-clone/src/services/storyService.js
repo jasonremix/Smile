@@ -51,8 +51,8 @@ export async function postStory({
     expiresAtMs: Date.now() + STORY_LIFETIME_MS,
   });
 
-  // Nata Score: +1 fuers Teilen einer Story.
-  await bumpNataScore(uid, 1, "Story gepostet");
+  // Nata Score: +4 fuers Teilen eines Moments.
+  await bumpNataScore(uid, 4, "Moment geteilt");
 }
 
 // Beobachtet alle Storys von Freunden (inkl. eigener) ueber eine collectionGroup-Abfrage.

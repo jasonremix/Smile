@@ -134,7 +134,7 @@ export async function sendMessage(chatId, senderId, text) {
     { merge: true }
   );
 
-  await bumpNataScore(senderId, 1, "Nachricht gesendet");
+  await bumpNataScore(senderId, 3, "Nachricht gesendet");
 }
 
 // "Tippt..."-Status pro Nutzer als verschachteltes Feld auf dem Chat-Dokument

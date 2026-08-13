@@ -27,7 +27,7 @@ export async function createPost({ authorId, authorName, authorAvatarColor, auth
     commentCount: 0,
     createdAt: serverTimestamp(),
   });
-  await bumpNataScore(authorId, 2, "Beitrag gepostet");
+  await bumpNataScore(authorId, 6, "Beitrag gepostet");
   return postRef.id;
 }
 

@@ -1,9 +1,13 @@
-// Level-Kurve fuer den Nata Score: quadratisch wachsende Schwellen, damit
-// fruehe Level schnell und spaetere Level spuerbar schwerer erreichbar sind.
+// Level-Kurve fuer den Nata Score: Level 1-4 in gleichmaessig kleinen
+// Schritten (schnell erreichbar), danach quadratisch wachsende Schwellen,
+// damit es spuerbar schwerer wird weiterzuleveln.
 // Bewusst rein auf Aktionen bezogen (nicht auf die Person) - siehe
 // ACHIEVEMENTS-Texte, die immer "du hast X gemacht" statt "du bist X" sagen.
 function thresholdForLevel(level) {
-  return 25 * (level - 1) * (level - 1);
+  const n = Math.max(0, level - 1);
+  if (n <= 3) return 20 * n;
+  const extra = n - 3;
+  return 60 + 30 * extra * extra;
 }
 
 export function getLevelInfo(score) {
