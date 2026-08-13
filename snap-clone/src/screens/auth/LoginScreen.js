@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.header}>
         <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
         <Text style={styles.logo}>Nata</Text>
-        <Text style={styles.greeting}>👻 Hey, schön dass du wieder da bist!</Text>
+        <Text style={styles.greeting}>Hey, schön dass du wieder da bist!</Text>
       </View>
 
       <TextInput

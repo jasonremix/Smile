@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { leaveGroup, listenGroupMessages, sendGroupMessage } from "../services/groupService";
 import { colors } from "../theme/colors";
@@ -104,7 +105,7 @@ export default function GroupChatScreen({ route, navigation }) {
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-          <Text style={styles.sendButtonText}>➤</Text>
+          <Icon name="send" size={16} color={colors.text} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -174,10 +175,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-  },
-  sendButtonText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700",
   },
 });

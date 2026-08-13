@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../components/Icon";
 import QRCodeView from "../components/QRCodeView";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
@@ -23,10 +24,11 @@ export default function QRCodeScreen({ navigation }) {
       <View style={styles.qrWrapper}>
         <QRCodeView value={qrValue} size={230} />
       </View>
-      <Text style={styles.hint}>Andere koennen diesen Code scannen, um dich direkt als Freund hinzuzufuegen.</Text>
+      <Text style={styles.hint}>Andere koennen diesen Code scannen, um sich direkt mit dir zu verbinden.</Text>
 
       <TouchableOpacity style={styles.scanButton} onPress={() => navigation.navigate("ScanQR")}>
-        <Text style={styles.scanButtonText}>📷 Code scannen</Text>
+        <Icon name="camera" size={16} color={colors.text} style={styles.scanIcon} />
+        <Text style={styles.scanButtonText}>Code scannen</Text>
       </TouchableOpacity>
     </View>
   );
@@ -84,10 +86,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scanButton: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 14,
+  },
+  scanIcon: {
+    marginRight: 8,
   },
   scanButtonText: {
     color: colors.text,

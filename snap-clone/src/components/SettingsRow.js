@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Icon from "./Icon";
 import { colors } from "../theme/colors";
 
 // Minimalistische Einstellungs-Zeile: kein Rahmen, weicher Schatten statt
@@ -11,7 +12,7 @@ export default function SettingsRow({ icon, label, onPress, badge, tint = colors
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={[styles.iconCircle, { backgroundColor: `${tint}22` }]}>
-        <Text style={styles.icon}>{icon}</Text>
+        <Icon name={icon} size={17} color={tint} />
       </View>
       <Text style={styles.label}>{label}</Text>
       {badge}

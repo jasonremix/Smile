@@ -1,11 +1,12 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../components/Icon";
 import { colors } from "../theme/colors";
 
 function InfoRow({ icon, title, text }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowIcon}>{icon}</Text>
+      <Icon name={icon} size={20} color={colors.primaryLight} style={styles.rowIcon} />
       <View style={{ flex: 1 }}>
         <Text style={styles.rowTitle}>{title}</Text>
         <Text style={styles.rowText}>{text}</Text>
@@ -20,24 +21,24 @@ export default function PrivacyScreen({ navigation }) {
       <Text style={styles.header}>Privatsphäre</Text>
 
       <InfoRow
-        icon="👥"
-        title="Storys"
-        text="Beim Posten kannst du jedes Mal wählen: sichtbar für alle Freunde oder nur für einzeln ausgewählte Personen."
+        icon="moment"
+        title="Moments"
+        text="Beim Posten kannst du jedes Mal wählen: sichtbar für alle Connections oder nur für einzeln ausgewählte Personen."
       />
       <InfoRow
-        icon="📸"
+        icon="camera"
         title="Snaps"
-        text="Snaps kannst du nur an Freunde schicken, und nur du und die Empfänger*innen können sie sehen."
+        text="Snaps kannst du nur an Connections schicken, und nur du und die Empfänger*innen können sie sehen."
       />
       <InfoRow
-        icon="🚫"
+        icon="block"
         title="Blockieren"
-        text="Blockierte Personen sehen dich nicht mehr und du siehst sie nicht mehr - auch bestehende Freundschaften werden dabei beendet."
+        text="Blockierte Personen sehen dich nicht mehr und du siehst sie nicht mehr - auch bestehende Connections werden dabei beendet."
       />
       <InfoRow
-        icon="🚩"
+        icon="flag"
         title="Melden"
-        text="Nutzer, Snaps, Storys und Nachrichten kannst du jederzeit melden - das ist nur für dich und uns sichtbar."
+        text="Nutzer, Snaps, Moments und Nachrichten kannst du jederzeit melden - das ist nur für dich und uns sichtbar."
       />
 
       <TouchableOpacity
@@ -77,7 +78,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   rowIcon: {
-    fontSize: 22,
     marginRight: 14,
   },
   rowTitle: {

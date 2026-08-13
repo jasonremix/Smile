@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -49,7 +50,7 @@ export default function FriendsScreen({ navigation }) {
   const confirmBlock = (friend) => {
     Alert.alert(
       "Blockieren",
-      `${friend.displayName} blockieren? Ihr seid danach keine Freunde mehr und seht euch gegenseitig nicht mehr.`,
+      `${friend.displayName} blockieren? Ihr seid danach keine Connections mehr und seht euch gegenseitig nicht mehr.`,
       [
         { text: "Abbrechen", style: "cancel" },
         {
@@ -64,20 +65,21 @@ export default function FriendsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.header}>Freunde</Text>
+        <Text style={styles.header}>Connections</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => navigation.navigate("Discovery")} style={styles.headerActionButton}>
-            <Text style={styles.addIcon}>🔎</Text>
+            <Icon name="search" size={19} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("AddFriends")}>
-            <Text style={styles.addIcon}>➕ Hinzufuegen</Text>
+          <TouchableOpacity style={styles.addRow} onPress={() => navigation.navigate("AddFriends")}>
+            <Icon name="plus" size={16} color={colors.primary} />
+            <Text style={styles.addIcon}>Hinzufuegen</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {visibleRequests.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Freundschaftsanfragen</Text>
+          <Text style={styles.sectionTitle}>Verbindungsanfragen</Text>
           {visibleRequests.map((req) => (
             <View key={req.id} style={styles.requestRow}>
               <Text style={styles.requestName}>{req.fromDisplayName}</Text>
@@ -100,7 +102,7 @@ export default function FriendsScreen({ navigation }) {
         </View>
       ) : null}
 
-      <Text style={styles.sectionTitle}>Meine Freunde</Text>
+      <Text style={styles.sectionTitle}>Meine Connections</Text>
       <FlatList
         data={friends}
         keyExtractor={(item) => item.uid}
@@ -115,9 +117,14 @@ export default function FriendsScreen({ navigation }) {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            Du hast noch keine Freunde. Tippe auf "Hinzufuegen", um jemanden zu finden.
-          </Text>
+          <View style={styles.emptyState}>
+            <Icon name="people" size={30} color={colors.textMuted} />
+            <Text style={styles.emptyTitle}>Noch keine Connections</Text>
+            <Text style={styles.emptyText}>Finde Menschen, mit denen du dich verbinden moechtest.</Text>
+            <TouchableOpacity style={styles.emptyButton} onPress={() => navigation.navigate("Discovery")}>
+              <Text style={styles.emptyButtonText}>Menschen entdecken</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -170,9 +177,15 @@ const styles = StyleSheet.create({
   headerActionButton: {
     marginRight: 18,
   },
+  addRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   addIcon: {
     color: colors.primary,
     fontWeight: "600",
+    fontSize: 13,
   },
   section: {
     marginBottom: 20,
@@ -235,9 +248,33 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
   },
+  emptyState: {
+    alignItems: "center",
+    marginTop: 30,
+    paddingHorizontal: 16,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 14,
+  },
   emptyText: {
     color: colors.textMuted,
-    marginTop: 20,
+    marginTop: 6,
+    textAlign: "center",
+  },
+  emptyButton: {
+    marginTop: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+  },
+  emptyButtonText: {
+    color: colors.primaryLight,
+    fontWeight: "700",
+    fontSize: 13,
   },
   blockedLink: {
     paddingVertical: 16,

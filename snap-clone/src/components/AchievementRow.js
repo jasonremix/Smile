@@ -1,5 +1,6 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Icon from "./Icon";
 import { getAchievementsProgress } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
 
@@ -12,7 +13,7 @@ export default function AchievementRow({ score }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {achievements.map((a) => (
           <View key={a.id} style={[styles.badge, !a.unlocked && styles.badgeLocked]}>
-            <Text style={[styles.icon, !a.unlocked && styles.iconLocked]}>{a.icon}</Text>
+            <Icon name={a.icon} size={22} color={a.unlocked ? colors.primaryLight : colors.textMuted} style={styles.icon} />
             <Text style={[styles.badgeTitle, !a.unlocked && styles.textLocked]}>{a.title}</Text>
           </View>
         ))}
@@ -48,11 +49,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   icon: {
-    fontSize: 24,
     marginBottom: 6,
-  },
-  iconLocked: {
-    opacity: 0.6,
   },
   badgeTitle: {
     color: colors.text,

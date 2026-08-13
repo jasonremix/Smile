@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { deleteAccount } from "../services/accountService";
 import { colors } from "../theme/colors";
@@ -26,7 +27,7 @@ export default function DeleteAccountScreen() {
 
     Alert.alert(
       "Konto wirklich löschen?",
-      "Das kann nicht rückgängig gemacht werden. Dein Profil, deine Freundschaften, Storys und Chats werden entfernt.",
+      "Das kann nicht rückgängig gemacht werden. Dein Profil, deine Connections, Moments und Chats werden entfernt.",
       [
         { text: "Abbrechen", style: "cancel" },
         {
@@ -58,9 +59,12 @@ export default function DeleteAccountScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.warning}>⚠️ Diese Aktion ist endgültig</Text>
+      <View style={styles.warningRow}>
+        <Icon name="warning" size={18} color={colors.danger} />
+        <Text style={styles.warning}>Diese Aktion ist endgültig</Text>
+      </View>
       <Text style={styles.text}>
-        Dein Nata-Konto, dein Profil, deine Freundschaften, Storys, Snaps und Chats werden
+        Dein Nata-Konto, dein Profil, deine Connections, Moments, Snaps und Chats werden
         unwiderruflich gelöscht. Das kann nicht rückgängig gemacht werden.
       </Text>
 
@@ -93,11 +97,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: 24,
   },
+  warningRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
   warning: {
     color: colors.danger,
     fontSize: 18,
     fontWeight: "800",
-    marginBottom: 12,
   },
   text: {
     color: colors.textMuted,

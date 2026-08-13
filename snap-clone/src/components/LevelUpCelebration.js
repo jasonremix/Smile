@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
+import Icon from "./Icon";
 import { useAuth } from "../context/AuthContext";
 import { getLevelInfo } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
@@ -55,9 +56,9 @@ export default function LevelUpCelebration() {
   return (
     <Animated.View pointerEvents="none" style={[styles.overlay, { opacity }]}>
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
-        <Text style={styles.emoji}>🎉</Text>
+        <Icon name="sparkle" size={34} color={colors.primaryLight} style={styles.emoji} />
         <Text style={styles.title}>Level {celebrationLevel}!</Text>
-        <Text style={styles.subtitle}>Weiter so 👻</Text>
+        <Text style={styles.subtitle}>Weiter so</Text>
       </Animated.View>
     </Animated.View>
   );
@@ -87,7 +88,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   emoji: {
-    fontSize: 44,
     marginBottom: 8,
   },
   title: {

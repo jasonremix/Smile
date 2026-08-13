@@ -111,7 +111,7 @@ export default function StoryViewerScreen({ route, navigation }) {
       <ReportModal
         visible={reporting}
         onClose={() => setReporting(false)}
-        title="Story melden"
+        title="Moment melden"
         onSubmit={(reason) =>
           reportContent({
             reporterId: user.uid,

@@ -27,11 +27,11 @@ export function getLevelInfo(score) {
 }
 
 export const ACHIEVEMENTS = [
-  { id: "level_2", icon: "✨", title: "Level 2", description: "Level 2 erreicht.", requiredLevel: 2 },
-  { id: "level_3", icon: "🔥", title: "Level 3", description: "Level 3 erreicht.", requiredLevel: 3 },
-  { id: "level_5", icon: "⭐️", title: "Level 5", description: "Level 5 erreicht.", requiredLevel: 5 },
-  { id: "level_8", icon: "💎", title: "Level 8", description: "Level 8 erreicht.", requiredLevel: 8 },
-  { id: "level_12", icon: "👑", title: "Level 12", description: "Level 12 erreicht.", requiredLevel: 12 },
+  { id: "level_2", icon: "sparkle", title: "Level 2", description: "Level 2 erreicht.", requiredLevel: 2 },
+  { id: "level_3", icon: "flame", title: "Level 3", description: "Level 3 erreicht.", requiredLevel: 3 },
+  { id: "level_5", icon: "star", title: "Level 5", description: "Level 5 erreicht.", requiredLevel: 5 },
+  { id: "level_8", icon: "diamond", title: "Level 8", description: "Level 8 erreicht.", requiredLevel: 8 },
+  { id: "level_12", icon: "crown", title: "Level 12", description: "Level 12 erreicht.", requiredLevel: 12 },
 ];
 
 export function getAchievementsProgress(score) {

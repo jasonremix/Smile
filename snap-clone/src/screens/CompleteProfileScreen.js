@@ -49,7 +49,7 @@ export default function CompleteProfileScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Image source={require("../../assets/icon.png")} style={styles.ghost} />
-        <Text style={styles.title}>Fast geschafft! 👻</Text>
+        <Text style={styles.title}>Fast geschafft!</Text>
         <Text style={styles.subtitle}>
           Dein Konto ist erstellt, aber dein Profil fehlt noch. Waehle einen Anzeigenamen und
           Benutzernamen, um loszulegen.

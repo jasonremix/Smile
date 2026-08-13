@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "../components/Icon";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { listenFriends } from "../services/friendService";
@@ -90,7 +91,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
         )}
 
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.closeText}>✕</Text>
+          <Icon name="close" size={16} color="#fff" />
         </TouchableOpacity>
 
         {isStory ? null : (
@@ -126,7 +127,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
                   storyVisibility === "friends" && styles.visibilityTextActive,
                 ]}
               >
-                👥 Alle Freunde
+                Alle Connections
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -142,7 +143,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
                   storyVisibility === "custom" && styles.visibilityTextActive,
                 ]}
               >
-                🔒 Nur ausgewählte
+                Nur ausgewählte
               </Text>
             </TouchableOpacity>
           </View>
@@ -169,7 +170,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
                 );
               }}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>Du hast noch keine Freunde hinzugefuegt.</Text>
+                <Text style={styles.emptyText}>Du hast noch keine Connections hinzugefuegt.</Text>
               }
             />
           </>
@@ -178,8 +179,8 @@ export default function SnapPreviewScreen({ route, navigation }) {
         <PrimaryButton
           title={
             isStory
-              ? "An meine Story posten ➤"
-              : `Senden ${selected.length > 0 ? `(${selected.length})` : ""} ➤`
+              ? "Als Moment teilen"
+              : `Senden ${selected.length > 0 ? `(${selected.length})` : ""}`
           }
           onPress={handleSend}
           disabled={sendDisabled}

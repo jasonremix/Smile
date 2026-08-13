@@ -37,7 +37,7 @@ export default function NataScoreCard({ score, weeklyPoints = 0, onPress }) {
       <View style={styles.weeklyRow}>
         <Text style={styles.weeklyText}>
           {weeklyGoalReached
-            ? "Wochenziel erreicht 🎉"
+            ? "Wochenziel erreicht"
             : `Diese Woche ${weeklyPoints} von ${WEEKLY_GOAL} Punkten`}
         </Text>
       </View>

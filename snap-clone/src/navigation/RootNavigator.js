@@ -7,17 +7,16 @@ import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
+import CameraScreen from "../screens/CameraScreen";
+import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
 import CompleteProfileScreen from "../screens/CompleteProfileScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
-import DiscoveryScreen from "../screens/DiscoveryScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
-import FriendsScreen from "../screens/FriendsScreen";
 import LegalScreen from "../screens/LegalScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
-import ProfileScreen from "../screens/ProfileScreen";
 import QRCodeScreen from "../screens/QRCodeScreen";
 import ReferralScreen from "../screens/ReferralScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
@@ -71,6 +70,16 @@ export default function RootNavigator() {
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={MainTabNavigator} options={{ headerShown: false }} />
           <Stack.Screen
+            name="Camera"
+            component={CameraScreen}
+            options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+          <Stack.Screen
+            name="Chats"
+            component={ChatListScreen}
+            options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+          <Stack.Screen
             name="SnapPreview"
             component={SnapPreviewScreen}
             options={{ headerShown: false, presentation: "fullScreenModal" }}
@@ -97,20 +106,10 @@ export default function RootNavigator() {
             name="AddFriends"
             component={AddFriendsScreen}
             options={{
-              title: "Freunde hinzufuegen",
+              title: "Verbinden",
               headerStyle: { backgroundColor: colors.surface },
               headerTintColor: colors.text,
             }}
-          />
-          <Stack.Screen
-            name="Friends"
-            component={FriendsScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{ headerShown: false, presentation: "modal" }}
           />
           <Stack.Screen
             name="BlockedUsers"
@@ -175,15 +174,6 @@ export default function RootNavigator() {
             component={ScoreHistoryScreen}
             options={{
               title: "Punkte-Historie",
-              headerStyle: { backgroundColor: colors.surface },
-              headerTintColor: colors.text,
-            }}
-          />
-          <Stack.Screen
-            name="Discovery"
-            component={DiscoveryScreen}
-            options={{
-              title: "Entdecken",
               headerStyle: { backgroundColor: colors.surface },
               headerTintColor: colors.text,
             }}

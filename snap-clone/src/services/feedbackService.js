@@ -13,7 +13,7 @@ export async function submitFeedback({ uid, displayName, category, message }) {
 }
 
 export const FEEDBACK_CATEGORIES = [
-  { id: "bug", label: "🐛 Fehler melden" },
-  { id: "idea", label: "💡 Idee / Wunsch" },
-  { id: "other", label: "💬 Sonstiges" },
+  { id: "bug", label: "Fehler melden", icon: "bug" },
+  { id: "idea", label: "Idee / Wunsch", icon: "bulb" },
+  { id: "other", label: "Sonstiges", icon: "chat" },
 ];

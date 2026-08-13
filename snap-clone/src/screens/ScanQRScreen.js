@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import React, { useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { sendFriendRequest } from "../services/friendService";
 import { getUserProfile } from "../services/userService";
@@ -81,7 +82,7 @@ export default function ScanQRScreen({ navigation }) {
         onBarcodeScanned={foundProfile ? undefined : handleBarcodeScanned}
       >
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.closeText}>✕</Text>
+          <Icon name="close" size={16} color="#fff" />
         </TouchableOpacity>
 
         <View style={styles.frameHint}>
@@ -94,7 +95,7 @@ export default function ScanQRScreen({ navigation }) {
           <View style={styles.resultCard}>
             {sent ? (
               <>
-                <Text style={styles.resultTitle}>Anfrage gesendet! 👻</Text>
+                <Text style={styles.resultTitle}>Anfrage gesendet!</Text>
                 <Text style={styles.resultSubtitle}>an {foundProfile.displayName}</Text>
                 <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
                   <Text style={styles.doneButtonText}>Fertig</Text>
@@ -166,10 +167,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  closeText: {
-    color: "#fff",
-    fontSize: 16,
   },
   frameHint: {
     flex: 1,

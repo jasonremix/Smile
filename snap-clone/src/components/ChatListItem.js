@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "./Icon";
 import { colors } from "../theme/colors";
 
 export default function ChatListItem({ name, avatarColor, lastMessage, isMine, streakCount, unread, onPress }) {
@@ -12,14 +13,15 @@ export default function ChatListItem({ name, avatarColor, lastMessage, isMine, s
         <View style={styles.nameRow}>
           <Text style={[styles.name, unread && styles.nameUnread]}>{name}</Text>
           {streakCount > 0 ? (
-            <Text style={styles.streak}>
-              🔥 {streakCount}
-            </Text>
+            <View style={styles.streakRow}>
+              <Icon name="flame" size={12} color={colors.textMuted} />
+              <Text style={styles.streak}>{streakCount}</Text>
+            </View>
           ) : null}
         </View>
         <Text numberOfLines={1} style={[styles.preview, unread && styles.previewUnread]}>
           {isMine ? "Du: " : ""}
-          {lastMessage || "Sag Hallo 👋"}
+          {lastMessage || "Neue Unterhaltung"}
         </Text>
       </View>
       {unread ? <View style={styles.unreadDot} /> : null}
@@ -63,6 +65,11 @@ const styles = StyleSheet.create({
   },
   nameUnread: {
     fontWeight: "800",
+  },
+  streakRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
   },
   streak: {
     color: colors.textMuted,

@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import BetaBadge from "../components/BetaBadge";
+import Icon from "../components/Icon";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { FEEDBACK_CATEGORIES, submitFeedback } from "../services/feedbackService";
@@ -31,7 +32,7 @@ export default function FeedbackScreen({ navigation }) {
         category,
         message: message.trim(),
       });
-      Alert.alert("Danke! 👻", "Dein Feedback ist angekommen.", [
+      Alert.alert("Danke!", "Dein Feedback ist angekommen.", [
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
@@ -60,6 +61,12 @@ export default function FeedbackScreen({ navigation }) {
             style={[styles.categoryChip, category === c.id && styles.categoryChipActive]}
             onPress={() => setCategory(c.id)}
           >
+            <Icon
+              name={c.icon}
+              size={14}
+              color={category === c.id ? colors.text : colors.textMuted}
+              style={styles.categoryIcon}
+            />
             <Text
               style={[styles.categoryText, category === c.id && styles.categoryTextActive]}
             >
@@ -119,10 +126,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categoryChip: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 11,
+  },
+  categoryIcon: {
+    marginRight: 6,
   },
   categoryChipActive: {
     backgroundColor: colors.primary,

@@ -53,7 +53,7 @@ export default function SignupScreen({ navigation }) {
         <View style={styles.header}>
           <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
           <Text style={styles.logo}>Konto erstellen</Text>
-          <Text style={styles.greeting}>👻 Schön, dass du zu Nata kommst!</Text>
+          <Text style={styles.greeting}>Schön, dass du zu Nata kommst!</Text>
         </View>
 
         <TextInput

@@ -8,7 +8,7 @@ export default function ReferralScreen() {
 
   const handleShare = () => {
     Share.share({
-      message: `Komm zu Nata! 👻 Registrier dich mit meinem Einladungscode: ${user.username}`,
+      message: `Komm zu Nata! Registrier dich mit meinem Einladungscode: ${user.username}`,
     });
   };
 
@@ -20,7 +20,7 @@ export default function ReferralScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.title}>Lade Freunde zu Nata ein</Text>
+      <Text style={styles.title}>Lade Menschen zu Nata ein</Text>
       <Text style={styles.subtitle}>
         Dein Benutzername ist gleichzeitig dein Einladungscode. Wer sich damit registriert, zaehlt als
         deine Einladung.

@@ -74,7 +74,7 @@ export default function CreateGroupScreen({ navigation }) {
           );
         }}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>Du hast noch keine Freunde hinzugefuegt.</Text>
+          <Text style={styles.emptyText}>Du hast noch keine Connections hinzugefuegt.</Text>
         }
       />
 

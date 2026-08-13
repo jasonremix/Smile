@@ -1,13 +1,12 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import React, { useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../context/AuthContext";
+import Icon from "../components/Icon";
 import { colors } from "../theme/colors";
 
 const HOLD_THRESHOLD_MS = 250;
 
 export default function CameraScreen({ navigation, route }) {
-  const { user } = useAuth();
   const intent = route.params?.intent;
   const cameraRef = useRef(null);
   const pressTimer = useRef(null);
@@ -89,25 +88,22 @@ export default function CameraScreen({ navigation, route }) {
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} flash={flash} mode="video">
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-            <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-              <Text style={styles.avatarText}>
-                {(user?.displayName || "?").charAt(0).toUpperCase()}
-              </Text>
-            </View>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+            <Icon name="close" size={16} color="#fff" />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setFlash((f) => (f === "off" ? "on" : "off"))}
             style={styles.iconButton}
           >
-            <Text style={styles.iconText}>{flash === "off" ? "⚡️" : "🔆"}</Text>
+            <Icon name={flash === "off" ? "flashOff" : "flash"} size={16} color="#fff" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.bottomBar}>
           <TouchableOpacity style={styles.sideButton} onPress={() => navigation.navigate("Chats")}>
-            <Text style={styles.sideButtonText}>💬{"\n"}Chat</Text>
+            <Icon name="chat" size={20} color="#fff" />
+            <Text style={styles.sideButtonText}>Chat</Text>
           </TouchableOpacity>
 
           <Pressable
@@ -122,7 +118,8 @@ export default function CameraScreen({ navigation, route }) {
             style={styles.sideButton}
             onPress={() => setFacing((f) => (f === "back" ? "front" : "back"))}
           >
-            <Text style={styles.sideButtonText}>🔄{"\n"}Wechseln</Text>
+            <Icon name="flip" size={20} color="#fff" />
+            <Text style={styles.sideButtonText}>Wechseln</Text>
           </TouchableOpacity>
         </View>
 
@@ -171,19 +168,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 56,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  avatarText: {
-    color: "#000",
-    fontWeight: "700",
-  },
   iconButton: {
     width: 40,
     height: 40,
@@ -191,9 +175,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  iconText: {
-    fontSize: 18,
   },
   hintContainer: {
     position: "absolute",
@@ -222,6 +203,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 11,
     textAlign: "center",
+    marginTop: 4,
   },
   shutter: {
     width: 84,

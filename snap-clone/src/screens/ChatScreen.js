@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
@@ -62,7 +63,7 @@ export default function ChatScreen({ route, navigation }) {
   const confirmBlockUser = () => {
     Alert.alert(
       "Blockieren",
-      `${otherUser.name} blockieren? Ihr seid danach keine Freunde mehr und seht euch gegenseitig nicht mehr.`,
+      `${otherUser.name} blockieren? Ihr seid danach keine Connections mehr und seht euch gegenseitig nicht mehr.`,
       [
         { text: "Abbrechen", style: "cancel" },
         {
@@ -83,9 +84,14 @@ export default function ChatScreen({ route, navigation }) {
         <View style={styles.headerTitleRow}>
           <Text style={styles.headerTitleText} numberOfLines={1}>
             {otherUser.name}
-            {streakCount > 0 ? `  🔥 ${streakCount}` : ""}
           </Text>
           {otherVerified ? <VerifiedBadge size={15} style={styles.headerBadge} /> : null}
+          {streakCount > 0 ? (
+            <View style={styles.headerStreak}>
+              <Icon name="flame" size={13} color={colors.textMuted} />
+              <Text style={styles.headerStreakText}>{streakCount}</Text>
+            </View>
+          ) : null}
         </View>
       ),
       headerRight: () => (
@@ -232,7 +238,7 @@ export default function ChatScreen({ route, navigation }) {
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-          <Text style={styles.sendButtonText}>➤</Text>
+          <Icon name="send" size={16} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -272,6 +278,17 @@ const styles = StyleSheet.create({
   },
   headerBadge: {
     marginTop: 1,
+  },
+  headerStreak: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginLeft: 2,
+  },
+  headerStreakText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
   },
   bubbleRow: {
     marginBottom: 8,
@@ -344,10 +361,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
-  },
-  sendButtonText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700",
   },
 });

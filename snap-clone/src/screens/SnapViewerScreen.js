@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import BetaBadge from "../components/BetaBadge";
+import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { reportContent } from "../services/moderationService";
@@ -109,7 +110,8 @@ export default function SnapViewerScreen({ route, navigation }) {
           <View style={styles.replayOverlay}>
             <BetaBadge style={styles.replayBadge} />
             <TouchableOpacity style={styles.replayButton} onPress={handleReplay}>
-              <Text style={styles.replayButtonText}>🔁 Nochmal ansehen</Text>
+              <Icon name="repeat" size={15} color={colors.text} style={styles.replayIcon} />
+              <Text style={styles.replayButtonText}>Nochmal ansehen</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.doneButton} onPress={closeSnap}>
               <Text style={styles.doneButtonText}>Fertig</Text>
@@ -198,11 +200,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   replayButton: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.primary,
     borderRadius: 24,
     paddingHorizontal: 28,
     paddingVertical: 14,
     marginBottom: 12,
+  },
+  replayIcon: {
+    marginRight: 8,
   },
   replayButtonText: {
     color: colors.text,

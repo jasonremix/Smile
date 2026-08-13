@@ -54,21 +54,21 @@ function PrivacyPolicy() {
       <Heading>2. Welche Daten wir verarbeiten</Heading>
       <Paragraph>
         Bei der Registrierung: E-Mail-Adresse, Benutzername, Anzeigename und ein gehashtes
-        Passwort. Bei der Nutzung: von dir aufgenommene Fotos/Videos (Snaps und Storys),
-        Chat-Nachrichten, deine Freundesliste sowie Nutzungsdaten wie deinen Nata Score.
+        Passwort. Bei der Nutzung: von dir aufgenommene Fotos/Videos (Snaps und Moments),
+        Chat-Nachrichten, deine Connections-Liste sowie Nutzungsdaten wie deinen Nata Score.
       </Paragraph>
 
       <Heading>3. Zweck und Rechtsgrundlage</Heading>
       <Paragraph>
         Wir verarbeiten diese Daten, um dir die Kernfunktionen der App bereitzustellen
         (Vertragserfüllung, Art. 6 Abs. 1 lit. b DSGVO): Konto und Login, Versenden und Anzeigen
-        von Snaps/Storys, Chat mit Freunden sowie den Freundschafts- und Blockier-Mechanismus.
+        von Snaps/Moments, Chat mit Connections sowie den Connections- und Blockier-Mechanismus.
       </Paragraph>
 
       <Heading>4. Speicherdauer</Heading>
       <Paragraph>
         Snaps werden nach dem Ansehen bzw. spätestens 24 Stunden nach dem Versenden automatisch
-        gelöscht. Storys sind 24 Stunden nach dem Posten sichtbar und werden danach automatisch
+        gelöscht. Moments sind 24 Stunden nach dem Posten sichtbar und werden danach automatisch
         entfernt. Chat-Nachrichten bleiben bestehen, bis du sie oder dein Konto löschst. Nach
         Löschung deines Kontos werden deine personenbezogenen Daten gemäß Abschnitt 7 entfernt.
       </Paragraph>
@@ -91,7 +91,7 @@ function PrivacyPolicy() {
       <Heading>7. Kontolöschung</Heading>
       <Paragraph>
         Du kannst dein Konto jederzeit direkt in der App unter Profil → Konto löschen entfernen.
-        Dabei werden dein Nutzerprofil, deine Freundschaften, Blockierungen sowie deine
+        Dabei werden dein Nutzerprofil, deine Connections, Blockierungen sowie deine
         hochgeladenen Medien gelöscht. Aus technischen Gründen kann die vollständige Löschung aus
         Backups bis zu 30 Tage dauern.
       </Paragraph>
@@ -145,7 +145,7 @@ function TermsOfService() {
 
       <Heading>5. Melden und Blockieren</Heading>
       <Paragraph>
-        Du kannst andere Nutzer sowie einzelne Snaps, Storys und Nachrichten über die
+        Du kannst andere Nutzer sowie einzelne Snaps, Moments und Nachrichten über die
         entsprechende Melden-Funktion melden und Nutzer blockieren. Gemeldete Inhalte werden von
         uns geprüft; bei Verstößen gegen diese Bedingungen können wir Inhalte entfernen oder
         Konten sperren.

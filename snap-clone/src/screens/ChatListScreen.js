@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { isStreakActive } from "../services/chatService";
 import { listenGroups } from "../services/groupService";
@@ -61,7 +62,7 @@ export default function ChatListScreen({ navigation }) {
     const groupItems = groups.map((group) => ({
       type: "group",
       id: group.id,
-      name: `👥 ${group.name}`,
+      name: group.name,
       groupId: group.id,
       groupName: group.name,
       lastMessage: group.lastMessage,
@@ -77,13 +78,16 @@ export default function ChatListScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.header}>Chat</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="back" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.header}>Nachrichten</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity onPress={openNewGroup} style={styles.headerIconButton}>
-            <Text style={styles.headerIcon}>👥➕</Text>
+            <Icon name="people" size={19} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate("AddFriends")} style={styles.headerIconButton}>
-            <Text style={styles.headerIcon}>➕</Text>
+            <Icon name="plus" size={19} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -97,7 +101,7 @@ export default function ChatListScreen({ navigation }) {
               style={styles.snapRow}
               onPress={() => navigation.navigate("SnapViewer", { snap })}
             >
-              <Text style={styles.snapIcon}>{snap.mediaType === "video" ? "🎥" : "📷"}</Text>
+              <Icon name={snap.mediaType === "video" ? "video" : "camera"} size={17} color={colors.primaryLight} style={styles.snapIcon} />
               <Text style={styles.snapSender}>{snap.senderName}</Text>
               <Text style={styles.snapCta}>Antippen zum Ansehen</Text>
             </TouchableOpacity>
@@ -123,9 +127,17 @@ export default function ChatListScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            Noch keine Unterhaltungen. Fuege Freunde hinzu, um loszulegen!
-          </Text>
+          <View style={styles.emptyState}>
+            <Icon name="chat" size={30} color={colors.textMuted} />
+            <Text style={styles.emptyTitle}>Noch keine Nachrichten</Text>
+            <Text style={styles.emptyText}>Deine Unterhaltungen erscheinen hier.</Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => navigation.navigate("Tabs", { screen: "Discovery" })}
+            >
+              <Text style={styles.emptyButtonText}>Menschen entdecken</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
     </View>
@@ -140,14 +152,17 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 12,
   },
+  backButton: {
+    marginRight: 12,
+  },
   header: {
+    flex: 1,
     color: colors.text,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "800",
   },
   headerIcons: {
@@ -155,9 +170,6 @@ const styles = StyleSheet.create({
   },
   headerIconButton: {
     marginLeft: 16,
-  },
-  headerIcon: {
-    fontSize: 18,
   },
   snapsSection: {
     paddingHorizontal: 16,
@@ -179,7 +191,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   snapIcon: {
-    fontSize: 18,
     marginRight: 10,
   },
   snapSender: {
@@ -191,10 +202,32 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 12,
   },
+  emptyState: {
+    alignItems: "center",
+    marginTop: 60,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 14,
+  },
   emptyText: {
     color: colors.textMuted,
     textAlign: "center",
-    marginTop: 40,
-    paddingHorizontal: 32,
+    marginTop: 6,
+  },
+  emptyButton: {
+    marginTop: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+  },
+  emptyButtonText: {
+    color: colors.primaryLight,
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

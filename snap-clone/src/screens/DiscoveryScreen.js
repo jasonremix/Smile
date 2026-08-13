@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { getFriendSuggestions } from "../services/discoveryService";
 import { listenFriends, sendFriendRequest } from "../services/friendService";
@@ -50,8 +51,10 @@ export default function DiscoveryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.header}>Entdecken</Text>
+
       <TouchableOpacity style={styles.qrRow} onPress={() => navigation.navigate("QRCode")}>
-        <Text style={styles.qrIcon}>▦</Text>
+        <Icon name="grid" size={20} color={colors.primary} style={styles.qrIcon} />
         <View style={styles.qrTextBlock}>
           <Text style={styles.qrTitle}>Mein Nata-Code</Text>
           <Text style={styles.qrSubtitle}>Zeigen oder scannen, um sich sofort zu vernetzen</Text>
@@ -74,7 +77,7 @@ export default function DiscoveryScreen({ navigation }) {
                 <View>
                   <Text style={styles.name}>{item.displayName}</Text>
                   <Text style={styles.mutual}>
-                    {item.mutualCount} gemeinsame{item.mutualCount === 1 ? "r Freund" : " Freunde"}
+                    {item.mutualCount} gemeinsame Connection{item.mutualCount === 1 ? "" : "s"}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -82,14 +85,14 @@ export default function DiscoveryScreen({ navigation }) {
                   onPress={() => handleAdd(item)}
                   disabled={alreadySent}
                 >
-                  <Text style={styles.addButtonText}>{alreadySent ? "Gesendet" : "Hinzufuegen"}</Text>
+                  <Text style={styles.addButtonText}>{alreadySent ? "Gesendet" : "Verbinden"}</Text>
                 </TouchableOpacity>
               </View>
             );
           }}
           ListEmptyComponent={
             <Text style={styles.emptyText}>
-              Noch keine Vorschlaege. Sobald deine Freunde mehr Freunde haben, tauchen hier Empfehlungen auf.
+              Noch keine Vorschlaege. Sobald deine Connections mehr Connections haben, tauchen hier Empfehlungen auf.
             </Text>
           }
         />
@@ -102,8 +105,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 20,
+    paddingTop: 56,
     paddingHorizontal: 16,
+  },
+  header: {
+    color: colors.text,
+    fontSize: 24,
+    fontWeight: "800",
+    marginBottom: 16,
   },
   qrRow: {
     flexDirection: "row",
@@ -115,8 +124,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   qrIcon: {
-    fontSize: 22,
-    color: colors.primary,
     marginRight: 14,
   },
   qrTextBlock: {
