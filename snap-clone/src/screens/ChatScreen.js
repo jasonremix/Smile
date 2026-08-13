@@ -12,7 +12,13 @@ import {
 } from "react-native";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
-import { getOrCreateChat, listenMessages, sendMessage } from "../services/chatService";
+import {
+  getOrCreateChat,
+  isStreakActive,
+  listenChat,
+  listenMessages,
+  sendMessage,
+} from "../services/chatService";
 import { blockUser, reportContent } from "../services/moderationService";
 import { colors } from "../theme/colors";
 
@@ -23,6 +29,7 @@ export default function ChatScreen({ route, navigation }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [reportTarget, setReportTarget] = useState(null);
+  const [streakCount, setStreakCount] = useState(0);
   const listRef = useRef(null);
 
   const openChatMenu = () => {
@@ -60,17 +67,18 @@ export default function ChatScreen({ route, navigation }) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: otherUser.name,
+      title: streakCount > 0 ? `${otherUser.name}  🔥 ${streakCount}` : otherUser.name,
       headerRight: () => (
         <TouchableOpacity onPress={openChatMenu} style={{ paddingHorizontal: 8 }}>
           <Text style={{ color: colors.text, fontSize: 20 }}>⋯</Text>
         </TouchableOpacity>
       ),
     });
-  }, [navigation, otherUser]);
+  }, [navigation, otherUser, streakCount]);
 
   useEffect(() => {
-    let unsubscribe;
+    let unsubscribeMessages;
+    let unsubscribeChat;
 
     (async () => {
       let id = chatId;
@@ -78,10 +86,16 @@ export default function ChatScreen({ route, navigation }) {
         id = await getOrCreateChat(user, { uid: otherUser.id, displayName: otherUser.name });
         setChatId(id);
       }
-      unsubscribe = listenMessages(id, setMessages);
+      unsubscribeMessages = listenMessages(id, setMessages);
+      unsubscribeChat = listenChat(id, (chat) => {
+        setStreakCount(chat && isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0);
+      });
     })();
 
-    return () => unsubscribe && unsubscribe();
+    return () => {
+      unsubscribeMessages && unsubscribeMessages();
+      unsubscribeChat && unsubscribeChat();
+    };
   }, []);
 
   const handleSend = async () => {

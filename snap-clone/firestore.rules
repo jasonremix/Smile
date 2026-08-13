@@ -126,9 +126,21 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid in request.resource.data.participants
         && request.resource.data.participants.size() == 2;
+      // streakCount/streakLastDate/streakSentToday werden clientseitig beim
+      // Snap-Versand geschrieben (siehe recordStreakSnap) - ohne Cloud
+      // Function serverseitig nicht faelschungssicher, deshalb wie bei
+      // nataScore auf einen plausiblen Sprung von maximal +1 pro Schreibvorgang
+      // begrenzt.
       allow update: if isSignedIn() && request.auth.uid in resource.data.participants
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'participantNames']);
+             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'participantNames',
+                       'streakCount', 'streakLastDate', 'streakSentToday'])
+        && (
+          !('streakCount' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.streakCount is int
+              && request.resource.data.streakCount >= 0
+              && request.resource.data.streakCount <= resource.data.get('streakCount', 0) + 1)
+        );
 
       match /messages/{messageId} {
         allow read: if isSignedIn() &&

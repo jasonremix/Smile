@@ -12,7 +12,8 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../config/firebase";
-import { bumpNataScore } from "./userService";
+import { recordStreakSnap } from "./chatService";
+import { bumpNataScore, getUserProfile } from "./userService";
 
 const SNAP_LIFETIME_MS = 24 * 60 * 60 * 1000; // Snap verschwindet spaetestens nach 24h ungeoeffnet
 
@@ -50,6 +51,24 @@ export async function sendSnap({ senderId, senderName, recipientIds, localUri, m
 
   // Nata Score: +1 pro verschicktem Snap (wie beim Senden gewohnt).
   await bumpNataScore(senderId, recipientIds.length);
+
+  // Streaks aktualisieren - darf den erfolgreichen Snap-Versand nicht
+  // nachtraeglich fehlschlagen lassen, daher pro Empfaenger einzeln
+  // abgefangen statt mit Promise.all durchgereicht.
+  await Promise.all(
+    recipientIds.map(async (recipientId) => {
+      try {
+        const recipientProfile = await getUserProfile(recipientId);
+        if (!recipientProfile) return;
+        await recordStreakSnap(
+          { uid: senderId, displayName: senderName },
+          { uid: recipientId, displayName: recipientProfile.displayName }
+        );
+      } catch {
+        // Streak-Update ist best effort - der Snap selbst ist bereits verschickt.
+      }
+    })
+  );
 }
 
 export function listenIncomingSnaps(uid, callback) {

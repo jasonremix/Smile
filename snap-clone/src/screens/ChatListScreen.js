@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import { useAuth } from "../context/AuthContext";
-import { listenChats } from "../services/chatService";
+import { isStreakActive, listenChats } from "../services/chatService";
 import { listenGroups } from "../services/groupService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { listenIncomingSnaps } from "../services/snapService";
@@ -54,6 +54,7 @@ export default function ChatListScreen({ navigation }) {
           lastMessage: chat.lastMessage,
           isMine: chat.lastSenderId === user.uid,
           updatedAtMs: toMillis(chat.updatedAt),
+          streakCount: isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0,
         };
       });
 
@@ -112,6 +113,7 @@ export default function ChatListScreen({ navigation }) {
             name={item.name}
             lastMessage={item.lastMessage}
             isMine={item.isMine}
+            streakCount={item.streakCount}
             onPress={() =>
               item.type === "group"
                 ? navigation.navigate("GroupChat", { groupId: item.groupId, groupName: item.groupName })

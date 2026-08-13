@@ -2,14 +2,21 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "../theme/colors";
 
-export default function ChatListItem({ name, avatarColor, lastMessage, isMine, onPress }) {
+export default function ChatListItem({ name, avatarColor, lastMessage, isMine, streakCount, onPress }) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress}>
       <View style={[styles.avatar, { backgroundColor: avatarColor || colors.primary }]}>
         <Text style={styles.avatarText}>{(name || "?").charAt(0).toUpperCase()}</Text>
       </View>
       <View style={styles.textContainer}>
-        <Text style={styles.name}>{name}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{name}</Text>
+          {streakCount > 0 ? (
+            <Text style={styles.streak}>
+              🔥 {streakCount}
+            </Text>
+          ) : null}
+        </View>
         <Text numberOfLines={1} style={styles.preview}>
           {isMine ? "Du: " : ""}
           {lastMessage || "Sag Hallo 👋"}
@@ -43,10 +50,20 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   name: {
     color: colors.text,
     fontSize: 15,
     fontWeight: "600",
+  },
+  streak: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
   },
   preview: {
     color: colors.textMuted,
