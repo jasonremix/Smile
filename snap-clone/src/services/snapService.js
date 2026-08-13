@@ -50,7 +50,7 @@ export async function sendSnap({ senderId, senderName, recipientIds, localUri, m
   await Promise.all(writes);
 
   // Nata Score: +1 pro verschicktem Snap (wie beim Senden gewohnt).
-  await bumpNataScore(senderId, recipientIds.length);
+  await bumpNataScore(senderId, recipientIds.length, "Snap gesendet");
 
   // Streaks aktualisieren - darf den erfolgreichen Snap-Versand nicht
   // nachtraeglich fehlschlagen lassen, daher pro Empfaenger einzeln
@@ -91,7 +91,7 @@ export async function markSnapViewed(snapId, viewerId) {
   await updateDoc(doc(db, "snaps", snapId), { viewed: true, viewedAt: serverTimestamp() });
   // Nata Score: +1 fuers Ansehen, genau wie beim Verschicken.
   if (viewerId) {
-    await bumpNataScore(viewerId, 1);
+    await bumpNataScore(viewerId, 1, "Snap angesehen");
   }
 }
 

@@ -70,6 +70,22 @@ service cloud.firestore {
         allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
       }
 
+      // Nachvollziehbare Score-Historie fuer die Home-/Score-Ansicht - reine
+      // Anzeige-Hilfe, kein Sicherheitsmechanismus (der eigentliche Schutz
+      // vor Score-Manipulation liegt auf dem nataScore-Feld selbst weiter
+      // oben). Nur create/read durch die eigene Person, unveraenderlich
+      // danach, damit die Historie nicht nachtraeglich "geschoent" wird.
+      match /scoreEvents/{eventId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.amount is int
+          && request.resource.data.amount > 0
+          && request.resource.data.amount <= 5
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() <= 60;
+        allow update, delete: if false;
+      }
+
       // Wer blockiert wurde, steht hier - nur der blockierende Nutzer selbst
       // darf seine eigene Liste sehen/aendern.
       match /blocked/{blockedUid} {

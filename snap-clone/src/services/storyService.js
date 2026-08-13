@@ -52,7 +52,7 @@ export async function postStory({
   });
 
   // Nata Score: +1 fuers Teilen einer Story.
-  await bumpNataScore(uid, 1);
+  await bumpNataScore(uid, 1, "Story gepostet");
 }
 
 // Beobachtet alle Storys von Freunden (inkl. eigener) ueber eine collectionGroup-Abfrage.

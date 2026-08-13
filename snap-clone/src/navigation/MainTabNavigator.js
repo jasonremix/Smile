@@ -3,6 +3,7 @@ import React from "react";
 import { Text } from "react-native";
 import CameraScreen from "../screens/CameraScreen";
 import ChatListScreen from "../screens/ChatListScreen";
+import HomeScreen from "../screens/HomeScreen";
 import StoriesScreen from "../screens/StoriesScreen";
 import { colors } from "../theme/colors";
 import { useUnreadChats } from "../hooks/useUnreadChats";
@@ -18,7 +19,7 @@ export default function MainTabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName="Camera"
+      initialRouteName="Home"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
@@ -26,6 +27,11 @@ export default function MainTabNavigator() {
         tabBarActiveTintColor: colors.primary,
       }}
     >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} /> }}
+      />
       <Tab.Screen
         name="Chats"
         component={ChatListScreen}

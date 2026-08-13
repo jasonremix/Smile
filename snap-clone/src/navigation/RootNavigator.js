@@ -16,6 +16,7 @@ import FriendsScreen from "../screens/FriendsScreen";
 import LegalScreen from "../screens/LegalScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
 import StoryViewerScreen from "../screens/StoryViewerScreen";
@@ -155,6 +156,15 @@ export default function RootNavigator() {
             component={FeedbackScreen}
             options={{
               title: "Feedback geben",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="ScoreHistory"
+            component={ScoreHistoryScreen}
+            options={{
+              title: "Punkte-Historie",
               headerStyle: { backgroundColor: colors.surface },
               headerTintColor: colors.text,
             }}

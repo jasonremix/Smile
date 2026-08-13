@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import BetaBadge from "../components/BetaBadge";
+import NataScoreCard from "../components/NataScoreCard";
 import SettingsRow from "../components/SettingsRow";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
@@ -33,10 +34,11 @@ export default function ProfileScreen({ navigation }) {
         </View>
         <Text style={styles.username}>@{user?.username}</Text>
 
-        <View style={styles.scoreCard}>
-          <Text style={styles.scoreLabel}>Nata Score</Text>
-          <Text style={styles.scoreValue}>{user?.nataScore ?? 0}</Text>
-        </View>
+        <NataScoreCard
+          score={user?.nataScore ?? 0}
+          onPress={() => navigation.navigate("ScoreHistory")}
+        />
+        <View style={{ height: 24 }} />
 
         <SettingsRow icon="👥" label="Freunde verwalten" onPress={() => navigation.navigate("Friends")} />
         <SettingsRow icon="🔒" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
@@ -123,30 +125,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 15,
     marginBottom: 24,
-  },
-  scoreCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    alignItems: "center",
-    marginBottom: 24,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  scoreLabel: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginBottom: 4,
-  },
-  scoreValue: {
-    color: colors.primary,
-    fontSize: 32,
-    fontWeight: "800",
   },
   feedbackBadge: {
     marginRight: 8,
