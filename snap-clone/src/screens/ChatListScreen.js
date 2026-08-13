@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import Icon from "../components/Icon";
+import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { isStreakActive } from "../services/chatService";
 import { listenGroups } from "../services/groupService";
@@ -77,20 +78,20 @@ export default function ChatListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="back" size={20} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.header}>Nachrichten</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={openNewGroup} style={styles.headerIconButton}>
-            <Icon name="people" size={19} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("AddFriends")} style={styles.headerIconButton}>
-            <Icon name="plus" size={19} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader
+        onBack={() => navigation.goBack()}
+        title="Nachrichten"
+        right={
+          <View style={styles.headerIcons}>
+            <TouchableOpacity onPress={openNewGroup} style={styles.headerIconButton}>
+              <Icon name="people" size={19} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("AddFriends")} style={styles.headerIconButton}>
+              <Icon name="plus" size={19} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
       {visibleSnaps.length > 0 ? (
         <View style={styles.snapsSection}>
@@ -148,22 +149,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 56,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  header: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: "800",
   },
   headerIcons: {
     flexDirection: "row",

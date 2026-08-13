@@ -1,6 +1,7 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
+import ScreenHeader from "../components/ScreenHeader";
 import { colors } from "../theme/colors";
 
 function InfoRow({ icon, title, text }) {
@@ -17,9 +18,9 @@ function InfoRow({ icon, title, text }) {
 
 export default function PrivacyScreen({ navigation }) {
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.header}>Privatsphäre</Text>
-
+    <View style={styles.container}>
+      <ScreenHeader onBack={() => navigation.goBack()} title="Privatsphäre" />
+      <ScrollView contentContainerStyle={styles.content}>
       <InfoRow
         icon="moment"
         title="Moments"
@@ -51,7 +52,8 @@ export default function PrivacyScreen({ navigation }) {
       <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("Legal")}>
         <Text style={styles.actionButtonText}>Datenschutzerklärung lesen</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -63,12 +65,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 48,
-  },
-  header: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: "800",
-    marginBottom: 20,
   },
   row: {
     flexDirection: "row",

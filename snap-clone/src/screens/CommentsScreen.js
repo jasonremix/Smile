@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import Icon from "../components/Icon";
+import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { addComment, listenComments } from "../services/postService";
 import { timeAgo } from "../utils/timeAgo";
@@ -45,13 +46,7 @@ export default function CommentsScreen({ route, navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={90}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="back" size={18} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Kommentare</Text>
-        <View style={{ width: 32 }} />
-      </View>
+      <ScreenHeader onBack={() => navigation.goBack()} title="Kommentare" />
 
       <FlatList
         data={comments}
@@ -94,24 +89,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 56,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backButton: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-  },
-  headerTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700",
   },
   list: {
     paddingHorizontal: 16,

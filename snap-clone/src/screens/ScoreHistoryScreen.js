@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
+import AchievementRow from "../components/AchievementRow";
 import { useAuth } from "../context/AuthContext";
 import { listenScoreEventsSince } from "../services/userService";
 import { colors } from "../theme/colors";
@@ -27,6 +28,7 @@ export default function ScoreHistoryScreen() {
         data={events}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={<AchievementRow score={user?.nataScore ?? 0} />}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <View>

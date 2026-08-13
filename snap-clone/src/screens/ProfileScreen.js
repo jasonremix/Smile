@@ -4,7 +4,9 @@ import BetaBadge from "../components/BetaBadge";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
+import ScreenHeader from "../components/ScreenHeader";
 import SettingsRow from "../components/SettingsRow";
+import SettingsSection from "../components/SettingsSection";
 import StatusEditor from "../components/StatusEditor";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
@@ -35,13 +37,11 @@ export default function ProfileScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {isModal ? (
-        <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-          <Icon name="close" size={16} color={colors.text} />
-        </TouchableOpacity>
+        <ScreenHeader onBack={() => navigation.goBack()} backIcon="close" title="Profil" />
       ) : null}
 
       <FlatList
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, isModal && { paddingTop: 8 }]}
         showsVerticalScrollIndicator={false}
         data={posts}
         keyExtractor={(item) => item.id}
@@ -82,22 +82,27 @@ export default function ProfileScreen({ navigation }) {
             <View style={{ height: 24 }} />
 
             <View style={{ width: "100%" }}>
-              <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
-              <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
-              <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
-              <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
-              <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
-              <SettingsRow
-                icon="document"
-                label="Datenschutz & Nutzungsbedingungen"
-                onPress={() => navigation.navigate("Legal")}
-              />
-              <SettingsRow
-                icon="chat"
-                label="Feedback geben"
-                onPress={() => navigation.navigate("Feedback")}
-                badge={<BetaBadge style={styles.feedbackBadge} />}
-              />
+              <SettingsSection>
+                <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
+                <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
+                <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
+                <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
+              </SettingsSection>
+
+              <SettingsSection>
+                <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
+                <SettingsRow
+                  icon="document"
+                  label="Datenschutz & Nutzungsbedingungen"
+                  onPress={() => navigation.navigate("Legal")}
+                />
+                <SettingsRow
+                  icon="chat"
+                  label="Feedback geben"
+                  onPress={() => navigation.navigate("Feedback")}
+                  badge={<BetaBadge style={styles.feedbackBadge} />}
+                />
+              </SettingsSection>
             </View>
 
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -141,12 +146,6 @@ const styles = StyleSheet.create({
   },
   postWrapper: {
     width: "100%",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 56,
-    left: 16,
-    zIndex: 1,
   },
   avatar: {
     width: 96,

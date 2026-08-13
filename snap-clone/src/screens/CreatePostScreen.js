@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Icon from "../components/Icon";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import PrimaryButton from "../components/PrimaryButton";
+import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { createPost } from "../services/postService";
 import { colors } from "../theme/colors";
@@ -36,14 +36,9 @@ export default function CreatePostScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
-          <Icon name="close" size={16} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Neuer Beitrag</Text>
-        <View style={{ width: 32 }} />
-      </View>
+      <ScreenHeader onBack={() => navigation.goBack()} backIcon="close" title="Neuer Beitrag" />
 
+      <View style={styles.content}>
       <TextInput
         style={styles.input}
         placeholder="Was moechtest du teilen?"
@@ -62,6 +57,7 @@ export default function CreatePostScreen({ navigation }) {
         loading={posting}
         style={styles.postButton}
       />
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -70,24 +66,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 56,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-  },
-  headerTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700",
   },
   input: {
     color: colors.text,

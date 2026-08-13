@@ -3,6 +3,7 @@ import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react
 import Icon from "../components/Icon";
 import PostCard from "../components/PostCard";
 import ReportModal from "../components/ReportModal";
+import ScreenHeader from "../components/ScreenHeader";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { getChatId } from "../services/chatService";
@@ -74,24 +75,23 @@ export default function UserProfileScreen({ route, navigation }) {
   }
 
   return (
-    <>
+    <View style={styles.container}>
+    <ScreenHeader
+      onBack={() => navigation.goBack()}
+      title={profile.username ? `@${profile.username}` : ""}
+      right={
+        <TouchableOpacity onPress={openMenu} style={styles.iconButton}>
+          <Text style={styles.menuDots}>⋯</Text>
+        </TouchableOpacity>
+      }
+    />
     <FlatList
-      style={styles.container}
       contentContainerStyle={styles.content}
       data={posts}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => <PostCard post={item} navigation={navigation} />}
       ListHeaderComponent={
         <View>
-          <View style={styles.topRow}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-              <Icon name="back" size={18} color={colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={openMenu} style={styles.iconButton}>
-              <Text style={styles.menuDots}>⋯</Text>
-            </TouchableOpacity>
-          </View>
-
           <View style={[styles.avatar, { backgroundColor: profile.avatarColor || colors.primary }]}>
             <Text style={styles.avatarText}>{(profile.displayName || "?").charAt(0).toUpperCase()}</Text>
           </View>
@@ -139,7 +139,7 @@ export default function UserProfileScreen({ route, navigation }) {
         })
       }
     />
-    </>
+    </View>
   );
 }
 
@@ -149,15 +149,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingTop: 56,
     paddingHorizontal: 20,
     paddingBottom: 40,
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
   },
   iconButton: {
     width: 34,

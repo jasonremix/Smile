@@ -1,12 +1,13 @@
 import React from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
 
-// Modernisierter Haupt-Button: kraeftige Farbe, weicher Farb-Glow-Schatten
-// statt harter Kanten, ein duenner Glanz-Streifen oben fuer etwas Tiefe ohne
-// eine native Gradient-Library zu brauchen (die wuerde die schon gebaute
-// Standalone-APK ohne neuen nativen Build kaputt machen), und ein deutlich
-// spuerbares Press-Feedback.
+// Flacher, iOS-naeher gestalteter Haupt-Button: kraeftige Fuellfarbe, kein
+// Glanz-Streifen/starker Farb-Glow mehr, nur ein dezenter Schatten und ein
+// einfaches Press-Dimming statt Scale-Animation - naeher an einem nativen
+// UIButton, ohne dabei den Lila-Ton zu veraendern.
 export default function PrimaryButton({ title, onPress, disabled, loading, style, variant = "solid" }) {
   const isOutline = variant === "outline";
 
@@ -22,7 +23,6 @@ export default function PrimaryButton({ title, onPress, disabled, loading, style
         style,
       ]}
     >
-      {!isOutline ? <View style={styles.sheen} /> : null}
       {loading ? (
         <ActivityIndicator color={isOutline ? colors.primary : colors.text} />
       ) : (
@@ -34,47 +34,34 @@ export default function PrimaryButton({ title, onPress, disabled, loading, style
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 32,
-    paddingVertical: 17,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.lg - 1,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
   solid: {
     backgroundColor: colors.primary,
     shadowColor: colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   outline: {
     backgroundColor: "transparent",
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
-  sheen: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "55%",
-    backgroundColor: "rgba(255,255,255,0.14)",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
   disabled: {
     opacity: 0.35,
   },
   pressed: {
-    transform: [{ scale: 0.97 }],
-    opacity: 0.92,
+    opacity: 0.75,
   },
   text: {
     color: colors.text,
-    fontWeight: "800",
-    fontSize: 16,
-    letterSpacing: 0.3,
+    fontWeight: "600",
+    fontSize: 17,
   },
   textOutline: {
     color: colors.primary,

@@ -290,8 +290,11 @@ const GLYPHS = {
   ),
   star: (c) => (
     <>
-      <Bar top={4} left={10.6} width={2.8} height={16} color={c} radius={1.4} />
-      <Bar top={10.6} left={4} width={16} height={2.8} color={c} radius={1.4} />
+      <Bar top={4.2} left={11.1} width={2} height={15.6} color={c} radius={1} rotate={0} />
+      <Bar top={4.2} left={11.1} width={2} height={15.6} color={c} radius={1} rotate={36} />
+      <Bar top={4.2} left={11.1} width={2} height={15.6} color={c} radius={1} rotate={72} />
+      <Bar top={4.2} left={11.1} width={2} height={15.6} color={c} radius={1} rotate={108} />
+      <Bar top={4.2} left={11.1} width={2} height={15.6} color={c} radius={1} rotate={144} />
     </>
   ),
   back: (c) => (

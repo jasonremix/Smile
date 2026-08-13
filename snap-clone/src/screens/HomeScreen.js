@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import AchievementRow from "../components/AchievementRow";
 import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
@@ -126,8 +125,6 @@ export default function HomeScreen({ navigation }) {
         onPress={() => navigation.navigate("ScoreHistory")}
       />
 
-      <AchievementRow score={user?.nataScore ?? 0} />
-
       {incomingRequests.length > 0 ? (
         <TouchableOpacity style={styles.highlightCard} onPress={() => navigation.navigate("Friends")}>
           <Icon name="people" size={20} color={colors.primaryLight} style={styles.highlightIcon} />
@@ -147,16 +144,9 @@ export default function HomeScreen({ navigation }) {
           <Icon name="plus" size={20} color={colors.primaryLight} style={styles.quickActionIcon} />
           <Text style={styles.quickActionText}>Verbinden</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.quickAction}
-          onPress={() => navigation.navigate("Camera", { intent: "story" })}
-        >
-          <Icon name="moment" size={20} color={colors.primaryLight} style={styles.quickActionIcon} />
-          <Text style={styles.quickActionText}>Moment{"\n"}teilen</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate("Feedback")}>
           <Icon name="bulb" size={20} color={colors.primaryLight} style={styles.quickActionIcon} />
-          <Text style={styles.quickActionText}>Feedback{"\n"}geben</Text>
+          <Text style={styles.quickActionText}>Feedback geben</Text>
         </TouchableOpacity>
       </View>
 

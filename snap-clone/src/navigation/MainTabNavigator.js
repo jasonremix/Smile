@@ -28,10 +28,10 @@ function CreateTabIcon({ focused }) {
         alignItems: "center",
         marginTop: -14,
         shadowColor: colors.primary,
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
+        shadowOpacity: 0.28,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 3,
       }}
     >
       <Icon name="plus" size={20} color={colors.text} />
@@ -50,7 +50,7 @@ export default function MainTabNavigator() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
-          tabBarStyle: { backgroundColor: "#000", borderTopColor: colors.border },
+          tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
           tabBarActiveTintColor: colors.primary,
         }}
       >

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
+import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import {
   acceptFriendRequest,
@@ -64,19 +65,20 @@ export default function FriendsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.header}>Connections</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => navigation.navigate("Discovery")} style={styles.headerActionButton}>
-            <Icon name="search" size={19} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addRow} onPress={() => navigation.navigate("AddFriends")}>
-            <Icon name="plus" size={16} color={colors.primary} />
-            <Text style={styles.addIcon}>Hinzufuegen</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
+      <ScreenHeader
+        title="Connections"
+        right={
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={() => navigation.navigate("Discovery")} style={styles.headerActionButton}>
+              <Icon name="search" size={19} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("AddFriends")}>
+              <Icon name="plus" size={19} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
+      <View style={styles.content}>
       {visibleRequests.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Verbindungsanfragen</Text>
@@ -134,6 +136,7 @@ export default function FriendsScreen({ navigation }) {
       >
         <Text style={styles.blockedLinkText}>Blockierte Nutzer verwalten</Text>
       </TouchableOpacity>
+      </View>
 
       <ReportModal
         visible={!!reportTarget}
@@ -156,36 +159,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 56,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  header: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: "800",
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  headerActionButton: {
-    marginRight: 18,
-  },
-  addRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  addIcon: {
-    color: colors.primary,
-    fontWeight: "600",
-    fontSize: 13,
+    gap: 18,
   },
   section: {
     marginBottom: 20,

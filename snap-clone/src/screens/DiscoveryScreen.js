@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
+import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { getFriendSuggestions } from "../services/discoveryService";
 import { listenFriends, sendFriendRequest } from "../services/friendService";
@@ -51,7 +52,8 @@ export default function DiscoveryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Entdecken</Text>
+      <ScreenHeader title="Entdecken" />
+      <View style={styles.content}>
 
       <TouchableOpacity style={styles.qrRow} onPress={() => navigation.navigate("QRCode")}>
         <Icon name="grid" size={20} color={colors.primary} style={styles.qrIcon} />
@@ -97,6 +99,7 @@ export default function DiscoveryScreen({ navigation }) {
           }
         />
       )}
+      </View>
     </View>
   );
 }
@@ -105,14 +108,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 56,
-    paddingHorizontal: 16,
   },
-  header: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: "800",
-    marginBottom: 16,
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   qrRow: {
     flexDirection: "row",
