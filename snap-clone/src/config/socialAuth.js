@@ -5,7 +5,13 @@
 // iOS/Android-IDs werden nur fuer die jeweilige Redirect-URI gebraucht.
 // Bis diese Werte echt sind, ist der Google-Button inaktiv/zeigt einen
 // Hinweis.
-export const GOOGLE_WEB_CLIENT_ID = "";
+export const GOOGLE_WEB_CLIENT_ID =
+  "657792334963-86u43u8t4fn34l99sfrjcmujnd9avkup.apps.googleusercontent.com";
+// Noch nicht angelegt - expo-auth-session faellt fuer diese Plattformen auf
+// die Web-Client-ID zurueck (Redirect laeuft ueber das eigene URL-Scheme
+// "nata", nicht ueber eine plattformspezifische Redirect-URI). Falls sich
+// das auf einem echten Geraet als unzureichend zeigt, koennen die beiden
+// hier ergaenzt werden.
 export const GOOGLE_IOS_CLIENT_ID = "";
 export const GOOGLE_ANDROID_CLIENT_ID = "";
 
