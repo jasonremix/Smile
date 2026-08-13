@@ -18,6 +18,7 @@ import LegalScreen from "../screens/LegalScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import QRCodeScreen from "../screens/QRCodeScreen";
+import ReferralScreen from "../screens/ReferralScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
 import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
@@ -194,6 +195,15 @@ export default function RootNavigator() {
             name="ScanQR"
             component={ScanQRScreen}
             options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+          <Stack.Screen
+            name="Referral"
+            component={ReferralScreen}
+            options={{
+              title: "Einladungen",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
           />
         </Stack.Navigator>
       ) : (

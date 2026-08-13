@@ -20,6 +20,7 @@ export default function SignupScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralUsername, setReferralUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +36,7 @@ export default function SignupScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await signup(username, displayName, email.trim(), password);
+      await signup(username, displayName, email.trim(), password, referralUsername);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
@@ -86,6 +87,14 @@ export default function SignupScreen({ navigation }) {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Einladungscode (optional)"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+          value={referralUsername}
+          onChangeText={setReferralUsername}
         />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}

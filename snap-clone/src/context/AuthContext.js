@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, firebaseInitError } from "../config/firebase";
+import { applyReferral, assignBetaTesterNumber, findUserByUsername } from "../services/betaService";
 
 const AuthContext = createContext(null);
 
@@ -85,10 +86,31 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const signup = async (username, displayName, email, password) => {
+  const signup = async (username, displayName, email, password, referralUsername) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(credential.user, { displayName });
     await createProfileDoc(credential.user.uid, username, displayName, email);
+
+    // Beta-Tester-Nummer und Einladung sind bewusst "best effort" nach dem
+    // eigentlichen Profil - ein Fehler hier darf die Registrierung selbst
+    // nicht scheitern lassen, das Konto ist zu diesem Zeitpunkt schon nutzbar.
+    try {
+      await assignBetaTesterNumber(credential.user.uid);
+    } catch {
+      // Tester-Nummer ist ein Nice-to-have, kein kritischer Registrierungsschritt.
+    }
+
+    if (referralUsername && referralUsername.trim()) {
+      try {
+        const referrer = await findUserByUsername(referralUsername);
+        if (referrer && referrer.uid !== credential.user.uid) {
+          await applyReferral(credential.user.uid, referrer.uid);
+        }
+      } catch {
+        // Ungueltiger/falscher Einladungscode blockiert die Registrierung nicht.
+      }
+    }
+
     return credential;
   };
 

@@ -61,6 +61,22 @@ service cloud.firestore {
           || (request.resource.data.displayName is string
               && request.resource.data.displayName.size() >= 1
               && request.resource.data.displayName.size() <= 40)
+        )
+        // betaTesterNumber/referredBy werden einmalig direkt nach der
+        // Registrierung gesetzt und danach nie wieder geaendert.
+        && (
+          !('betaTesterNumber' in request.resource.data.diff(resource.data).affectedKeys())
+          || (!('betaTesterNumber' in resource.data) && request.resource.data.betaTesterNumber is int)
+        )
+        && (
+          !('referredBy' in request.resource.data.diff(resource.data).affectedKeys())
+          || (!('referredBy' in resource.data) && request.resource.data.referredBy is string)
+        )
+        && (
+          !('referralCount' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.referralCount is int
+              && request.resource.data.referralCount >= 0
+              && request.resource.data.referralCount <= resource.data.get('referralCount', 0) + 1)
         );
 
       allow delete: if isOwner(userId);
@@ -117,6 +133,19 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers']);
         allow delete: if isOwner(userId);
       }
+    }
+
+    // Gemeinsamer Zaehler fuer die fortlaufende Beta-Tester-Nummer. Ohne
+    // Cloud Function nicht perfekt faelschungssicher (rein kosmetischer Wert,
+    // kein Sicherheitsmerkmal), deshalb wie an anderen Stellen auf einen
+    // plausiblen Sprung von maximal +1 pro Schreibvorgang begrenzt.
+    match /meta/counters {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.betaTesterCount == 1;
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['betaTesterCount'])
+        && request.resource.data.betaTesterCount == resource.data.betaTesterCount + 1;
+      allow delete: if false;
     }
 
     match /friendRequests/{requestId} {

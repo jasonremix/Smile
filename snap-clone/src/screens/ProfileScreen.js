@@ -33,6 +33,11 @@ export default function ProfileScreen({ navigation }) {
           {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
         </View>
         <Text style={styles.username}>@{user?.username}</Text>
+        {user?.betaTesterNumber ? (
+          <View style={styles.testerBadge}>
+            <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
+          </View>
+        ) : null}
 
         <NataScoreCard
           score={user?.nataScore ?? 0}
@@ -43,6 +48,7 @@ export default function ProfileScreen({ navigation }) {
         <SettingsRow icon="👥" label="Freunde verwalten" onPress={() => navigation.navigate("Friends")} />
         <SettingsRow icon="🔎" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
         <SettingsRow icon="▦" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
+        <SettingsRow icon="🎟️" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
         <SettingsRow icon="🔒" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
         <SettingsRow
           icon="📄"
@@ -126,7 +132,19 @@ const styles = StyleSheet.create({
   username: {
     color: colors.textMuted,
     fontSize: 15,
-    marginBottom: 24,
+    marginBottom: 8,
+  },
+  testerBadge: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 20,
+  },
+  testerBadgeText: {
+    color: colors.primaryLight,
+    fontSize: 11,
+    fontWeight: "700",
   },
   feedbackBadge: {
     marginRight: 8,
