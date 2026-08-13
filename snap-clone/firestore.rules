@@ -141,7 +141,7 @@ service cloud.firestore {
       allow update: if isSignedIn() && request.auth.uid in resource.data.participants
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'participantNames',
-                       'streakCount', 'streakLastDate', 'streakSentToday'])
+                       'streakCount', 'streakLastDate', 'streakSentToday', 'typing'])
         && (
           !('streakCount' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.streakCount is int

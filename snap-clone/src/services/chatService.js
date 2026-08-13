@@ -132,6 +132,13 @@ export async function sendMessage(chatId, senderId, text) {
   );
 }
 
+// "Tippt..."-Status pro Nutzer als verschachteltes Feld auf dem Chat-Dokument
+// - setDoc mit merge:true fuehrt verschachtelte Maps zusammen, ueberschreibt
+// also nur den eigenen Eintrag, nicht den der anderen Person.
+export async function setTypingStatus(chatId, uid, isTyping) {
+  await setDoc(doc(db, "chats", chatId), { typing: { [uid]: isTyping } }, { merge: true });
+}
+
 export function listenChat(chatId, callback) {
   return onSnapshot(doc(db, "chats", chatId), (snap) => {
     callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);

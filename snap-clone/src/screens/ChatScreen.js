@@ -18,9 +18,12 @@ import {
   listenChat,
   listenMessages,
   sendMessage,
+  setTypingStatus,
 } from "../services/chatService";
 import { blockUser, reportContent } from "../services/moderationService";
 import { colors } from "../theme/colors";
+
+const TYPING_TIMEOUT_MS = 3000;
 
 export default function ChatScreen({ route, navigation }) {
   const { chatId: initialChatId, otherUser } = route.params;
@@ -30,7 +33,11 @@ export default function ChatScreen({ route, navigation }) {
   const [text, setText] = useState("");
   const [reportTarget, setReportTarget] = useState(null);
   const [streakCount, setStreakCount] = useState(0);
+  const [otherIsTyping, setOtherIsTyping] = useState(false);
   const listRef = useRef(null);
+  const chatIdRef = useRef(chatId);
+  const isTypingRef = useRef(false);
+  const typingTimeoutRef = useRef(null);
 
   const openChatMenu = () => {
     Alert.alert(otherUser.name, "Was möchtest du tun?", [
@@ -86,17 +93,45 @@ export default function ChatScreen({ route, navigation }) {
         id = await getOrCreateChat(user, { uid: otherUser.id, displayName: otherUser.name });
         setChatId(id);
       }
+      chatIdRef.current = id;
       unsubscribeMessages = listenMessages(id, setMessages);
       unsubscribeChat = listenChat(id, (chat) => {
         setStreakCount(chat && isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0);
+        setOtherIsTyping(!!chat?.typing?.[otherUser.id]);
       });
     })();
 
     return () => {
       unsubscribeMessages && unsubscribeMessages();
       unsubscribeChat && unsubscribeChat();
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (isTypingRef.current && chatIdRef.current) {
+        setTypingStatus(chatIdRef.current, user.uid, false).catch(() => {});
+      }
     };
   }, []);
+
+  const handleChangeText = (value) => {
+    setText(value);
+    const id = chatIdRef.current;
+    if (!id) return; // Tipp-Status erst relevant, sobald der Chat wirklich existiert.
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    if (value.trim().length > 0) {
+      if (!isTypingRef.current) {
+        isTypingRef.current = true;
+        setTypingStatus(id, user.uid, true).catch(() => {});
+      }
+      typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false;
+        setTypingStatus(id, user.uid, false).catch(() => {});
+      }, TYPING_TIMEOUT_MS);
+    } else if (isTypingRef.current) {
+      isTypingRef.current = false;
+      setTypingStatus(id, user.uid, false).catch(() => {});
+    }
+  };
 
   const handleSend = async () => {
     const trimmed = text.trim();
@@ -107,7 +142,15 @@ export default function ChatScreen({ route, navigation }) {
     if (!id) {
       id = await getOrCreateChat(user, { uid: otherUser.id, displayName: otherUser.name });
       setChatId(id);
+      chatIdRef.current = id;
     }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      setTypingStatus(id, user.uid, false).catch(() => {});
+    }
+
     await sendMessage(id, user.uid, trimmed);
   };
 
@@ -144,13 +187,19 @@ export default function ChatScreen({ route, navigation }) {
         }}
       />
 
+      {otherIsTyping ? (
+        <View style={styles.typingRow}>
+          <Text style={styles.typingText}>{otherUser.name} tippt...</Text>
+        </View>
+      ) : null}
+
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
           placeholder="Nachricht senden..."
           placeholderTextColor={colors.textMuted}
           value={text}
-          onChangeText={setText}
+          onChangeText={handleChangeText}
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
@@ -208,6 +257,15 @@ const styles = StyleSheet.create({
   bubbleText: {
     color: "#fff",
     fontSize: 15,
+  },
+  typingRow: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  typingText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontStyle: "italic",
   },
   inputRow: {
     flexDirection: "row",
