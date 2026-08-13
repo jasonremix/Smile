@@ -10,6 +10,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // true, wenn der anfragende Nutzer mit ownerId befreundet ist (Freunde
+    // werden beim Annehmen einer Anfrage auf beiden Seiten gespeichert,
+    // ein Blick auf die Seite des Owners reicht daher aus).
+    function isFriendOf(ownerId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(ownerId)/friends/$(request.auth.uid));
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
 
@@ -66,10 +74,17 @@ service cloud.firestore {
       }
 
       match /stories/{storyId} {
-        allow read: if isSignedIn();
+        // Eigene Storys immer sichtbar; sonst nur laut gewaehlter Sichtbarkeit:
+        // "friends" braucht eine bestehende Freundschaft, "custom" braucht
+        // einen Eintrag in visibleTo.
+        allow read: if isOwner(userId)
+          || (resource.data.visibility == 'friends' && isFriendOf(userId))
+          || (resource.data.visibility == 'custom' && request.auth.uid in resource.data.visibleTo);
         allow create: if isOwner(userId)
           && request.resource.data.ownerId == userId
-          && request.resource.data.mediaUrl is string;
+          && request.resource.data.mediaUrl is string
+          && request.resource.data.visibility in ['friends', 'custom']
+          && (request.resource.data.visibility != 'custom' || request.resource.data.visibleTo is list);
         // Erlaubt anderen Nutzern, sich als "viewer" einzutragen - dabei darf
         // sich ausschliesslich das viewers-Feld aendern.
         allow update: if isSignedIn()
@@ -98,7 +113,8 @@ service cloud.firestore {
         && request.resource.data.recipientId is string
         && request.resource.data.mediaUrl is string
         && request.resource.data.viewDuration >= 1
-        && request.resource.data.viewDuration <= 10;
+        && request.resource.data.viewDuration <= 10
+        && isFriendOf(request.resource.data.recipientId);
       allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewed', 'viewedAt']);
       allow delete: if isSignedIn() &&

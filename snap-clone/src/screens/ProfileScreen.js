@@ -41,9 +41,9 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate("BlockedUsers")}
+          onPress={() => navigation.navigate("Privacy")}
         >
-          <Text style={styles.actionButtonText}>🚫 Blockierte Nutzer</Text>
+          <Text style={styles.actionButtonText}>🔒 Privatsphäre</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

@@ -9,6 +9,7 @@ import ChatScreen from "../screens/ChatScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import FriendsScreen from "../screens/FriendsScreen";
 import LegalScreen from "../screens/LegalScreen";
+import PrivacyScreen from "../screens/PrivacyScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
@@ -117,6 +118,11 @@ export default function RootNavigator() {
               headerStyle: { backgroundColor: colors.surface },
               headerTintColor: colors.text,
             }}
+          />
+          <Stack.Screen
+            name="Privacy"
+            component={PrivacyScreen}
+            options={{ headerShown: false }}
           />
         </Stack.Navigator>
       ) : (

@@ -24,13 +24,13 @@ export default function SnapPreviewScreen({ route, navigation }) {
   const [friends, setFriends] = useState([]);
   const [selected, setSelected] = useState([]);
   const [duration, setDuration] = useState(5);
+  const [storyVisibility, setStoryVisibility] = useState("friends"); // "friends" | "custom"
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    if (isStory) return;
     const unsubscribe = listenFriends(user.uid, setFriends);
     return unsubscribe;
-  }, [user.uid, isStory]);
+  }, [user.uid]);
 
   const toggleFriend = (uid) => {
     setSelected((prev) =>
@@ -38,7 +38,12 @@ export default function SnapPreviewScreen({ route, navigation }) {
     );
   };
 
+  const showFriendPicker = !isStory || storyVisibility === "custom";
+
   const handleSend = async () => {
+    if (isStory && storyVisibility === "custom" && selected.length === 0) return;
+    if (!isStory && selected.length === 0) return;
+
     setSending(true);
     try {
       if (isStory) {
@@ -48,12 +53,10 @@ export default function SnapPreviewScreen({ route, navigation }) {
           avatarColor: user.avatarColor,
           localUri: uri,
           mediaType,
+          visibility: storyVisibility,
+          visibleTo: storyVisibility === "custom" ? selected : [],
         });
       } else {
-        if (selected.length === 0) {
-          setSending(false);
-          return;
-        }
         await sendSnap({
           senderId: user.uid,
           senderName: user.displayName,
@@ -68,6 +71,9 @@ export default function SnapPreviewScreen({ route, navigation }) {
       setSending(false);
     }
   };
+
+  const sendDisabled =
+    sending || (isStory ? storyVisibility === "custom" && selected.length === 0 : selected.length === 0);
 
   return (
     <View style={styles.container}>
@@ -101,20 +107,51 @@ export default function SnapPreviewScreen({ route, navigation }) {
 
       <View style={styles.recipientsPanel}>
         {isStory ? (
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={sending}>
-            {sending ? (
-              <ActivityIndicator color={colors.text} />
-            ) : (
-              <Text style={styles.sendButtonText}>An meine Story posten ➤</Text>
-            )}
-          </TouchableOpacity>
-        ) : (
+          <View style={styles.visibilityRow}>
+            <TouchableOpacity
+              style={[
+                styles.visibilityChip,
+                storyVisibility === "friends" && styles.visibilityChipActive,
+              ]}
+              onPress={() => setStoryVisibility("friends")}
+            >
+              <Text
+                style={[
+                  styles.visibilityText,
+                  storyVisibility === "friends" && styles.visibilityTextActive,
+                ]}
+              >
+                👥 Alle Freunde
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.visibilityChip,
+                storyVisibility === "custom" && styles.visibilityChipActive,
+              ]}
+              onPress={() => setStoryVisibility("custom")}
+            >
+              <Text
+                style={[
+                  styles.visibilityText,
+                  storyVisibility === "custom" && styles.visibilityTextActive,
+                ]}
+              >
+                🔒 Nur ausgewählte
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {showFriendPicker ? (
           <>
-            <Text style={styles.panelTitle}>An wen senden?</Text>
+            <Text style={styles.panelTitle}>
+              {isStory ? "Sichtbar für" : "An wen senden?"}
+            </Text>
             <FlatList
               data={friends}
               keyExtractor={(item) => item.uid}
-              style={{ maxHeight: 260 }}
+              style={{ maxHeight: 220 }}
               renderItem={({ item }) => {
                 const isSelected = selected.includes(item.uid);
                 return (
@@ -130,22 +167,24 @@ export default function SnapPreviewScreen({ route, navigation }) {
                 <Text style={styles.emptyText}>Du hast noch keine Freunde hinzugefuegt.</Text>
               }
             />
-
-            <TouchableOpacity
-              style={[styles.sendButton, selected.length === 0 && styles.sendButtonDisabled]}
-              onPress={handleSend}
-              disabled={selected.length === 0 || sending}
-            >
-              {sending ? (
-                <ActivityIndicator color={colors.text} />
-              ) : (
-                <Text style={styles.sendButtonText}>
-                  Senden {selected.length > 0 ? `(${selected.length})` : ""} ➤
-                </Text>
-              )}
-            </TouchableOpacity>
           </>
-        )}
+        ) : null}
+
+        <TouchableOpacity
+          style={[styles.sendButton, sendDisabled && styles.sendButtonDisabled]}
+          onPress={handleSend}
+          disabled={sendDisabled}
+        >
+          {sending ? (
+            <ActivityIndicator color={colors.text} />
+          ) : (
+            <Text style={styles.sendButtonText}>
+              {isStory
+                ? "An meine Story posten ➤"
+                : `Senden ${selected.length > 0 ? `(${selected.length})` : ""} ➤`}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -206,6 +245,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 28,
+  },
+  visibilityRow: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  visibilityChip: {
+    flex: 1,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginRight: 8,
+  },
+  visibilityChipActive: {
+    backgroundColor: colors.primary,
+  },
+  visibilityText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  visibilityTextActive: {
+    color: colors.text,
   },
   panelTitle: {
     color: colors.text,

@@ -18,7 +18,7 @@ export default function StoriesScreen({ navigation }) {
 
   useEffect(() => {
     const uids = [user.uid, ...friends.map((f) => f.uid)];
-    const unsubscribe = listenStoriesForUsers(uids, setStoryGroups);
+    const unsubscribe = listenStoriesForUsers(uids, setStoryGroups, user.uid);
     return unsubscribe;
   }, [user.uid, friends]);
 

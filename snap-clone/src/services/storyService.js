@@ -27,7 +27,16 @@ async function uploadMedia(localUri, uid, mediaType) {
   return getDownloadURL(storageRef);
 }
 
-export async function postStory({ uid, displayName, avatarColor, localUri, mediaType }) {
+// visibility: "friends" (Standard, alle Freunde) oder "custom" (nur visibleTo)
+export async function postStory({
+  uid,
+  displayName,
+  avatarColor,
+  localUri,
+  mediaType,
+  visibility = "friends",
+  visibleTo = [],
+}) {
   const mediaUrl = await uploadMedia(localUri, uid, mediaType);
   await addDoc(collection(db, "users", uid, "stories"), {
     ownerId: uid,
@@ -36,6 +45,8 @@ export async function postStory({ uid, displayName, avatarColor, localUri, media
     mediaUrl,
     mediaType,
     viewers: [],
+    visibility,
+    visibleTo: visibility === "custom" ? visibleTo : [],
     createdAt: serverTimestamp(),
     expiresAtMs: Date.now() + STORY_LIFETIME_MS,
   });
@@ -45,7 +56,7 @@ export async function postStory({ uid, displayName, avatarColor, localUri, media
 }
 
 // Beobachtet alle Storys von Freunden (inkl. eigener) ueber eine collectionGroup-Abfrage.
-export function listenStoriesForUsers(uids, callback) {
+export function listenStoriesForUsers(uids, callback, viewerUid) {
   if (!uids || uids.length === 0) {
     callback([]);
     return () => {};
@@ -61,7 +72,12 @@ export function listenStoriesForUsers(uids, callback) {
     const now = Date.now();
     const active = snap.docs
       .map((d) => ({ id: d.id, ref: d.ref, ...d.data() }))
-      .filter((s) => !s.expiresAtMs || s.expiresAtMs > now);
+      .filter((s) => !s.expiresAtMs || s.expiresAtMs > now)
+      .filter((s) => {
+        if (s.ownerId === viewerUid) return true;
+        if (s.visibility !== "custom") return true;
+        return (s.visibleTo || []).includes(viewerUid);
+      });
 
     const grouped = {};
     active.forEach((story) => {
