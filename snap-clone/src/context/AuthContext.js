@@ -7,11 +7,18 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebase";
+import { auth, db, firebaseInitError } from "../config/firebase";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  // Wird waehrend des Renderns geworfen (nicht schon beim Modul-Import),
+  // damit die ErrorBoundary in App.js den Fehler auffangen und anzeigen kann,
+  // statt dass die App stumm auf einem leeren Bildschirm haengen bleibt.
+  if (firebaseInitError) {
+    throw firebaseInitError;
+  }
+
   const [authUser, setAuthUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [initializing, setInitializing] = useState(true);

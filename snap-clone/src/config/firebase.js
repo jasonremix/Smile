@@ -15,11 +15,26 @@ const firebaseConfig = {
   appId: "YOUR_APP_ID",
 };
 
-export const app = initializeApp(firebaseConfig);
+// Wird waehrend des Modul-Imports ausgefuehrt, also VOR dem ersten React-Render.
+// Ein hier ungefangener Fehler wuerde die App ohne jede sichtbare Meldung
+// abstuerzen lassen. Stattdessen merken wir uns den Fehler und werfen ihn
+// spaeter innerhalb einer Komponente (siehe AuthContext), wo ihn die
+// ErrorBoundary auffangen und anzeigen kann.
+let app = null;
+let auth = null;
+let db = null;
+let storage = null;
+export let firebaseInitError = null;
 
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+try {
+  app = initializeApp(firebaseConfig);
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+  db = getFirestore(app);
+  storage = getStorage(app);
+} catch (error) {
+  firebaseInitError = error;
+}
 
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export { app, auth, db, storage };
