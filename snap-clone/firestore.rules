@@ -65,8 +65,12 @@ service cloud.firestore {
 
       allow delete: if isOwner(userId);
 
+      // Eigene Freunde duerfen die Freundesliste mitlesen (nicht nur der
+      // Owner selbst) - noetig fuer "gemeinsame Freunde" und "Freunde von
+      // Freunden entdecken". Bewusster, ueblicher Kompromiss, kein oeffentlicher
+      // Zugriff: nur wer bereits verifiziert befreundet ist, sieht mit.
       match /friends/{friendId} {
-        allow read: if isOwner(userId);
+        allow read: if isOwner(userId) || isFriendOf(userId);
         allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
       }
 

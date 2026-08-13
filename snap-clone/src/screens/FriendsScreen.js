@@ -65,9 +65,14 @@ export default function FriendsScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.header}>Freunde</Text>
-        <TouchableOpacity onPress={() => navigation.navigate("AddFriends")}>
-          <Text style={styles.addIcon}>➕ Hinzufuegen</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => navigation.navigate("Discovery")} style={styles.headerActionButton}>
+            <Text style={styles.addIcon}>🔎</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("AddFriends")}>
+            <Text style={styles.addIcon}>➕ Hinzufuegen</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {visibleRequests.length > 0 ? (
@@ -157,6 +162,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 24,
     fontWeight: "800",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerActionButton: {
+    marginRight: 18,
   },
   addIcon: {
     color: colors.primary,

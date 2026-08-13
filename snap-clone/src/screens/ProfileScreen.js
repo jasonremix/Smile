@@ -41,6 +41,8 @@ export default function ProfileScreen({ navigation }) {
         <View style={{ height: 24 }} />
 
         <SettingsRow icon="👥" label="Freunde verwalten" onPress={() => navigation.navigate("Friends")} />
+        <SettingsRow icon="🔎" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
+        <SettingsRow icon="▦" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
         <SettingsRow icon="🔒" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
         <SettingsRow
           icon="📄"

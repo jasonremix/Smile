@@ -10,12 +10,15 @@ import ChatScreen from "../screens/ChatScreen";
 import CompleteProfileScreen from "../screens/CompleteProfileScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
+import DiscoveryScreen from "../screens/DiscoveryScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import FriendsScreen from "../screens/FriendsScreen";
 import LegalScreen from "../screens/LegalScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import QRCodeScreen from "../screens/QRCodeScreen";
+import ScanQRScreen from "../screens/ScanQRScreen";
 import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
@@ -168,6 +171,29 @@ export default function RootNavigator() {
               headerStyle: { backgroundColor: colors.surface },
               headerTintColor: colors.text,
             }}
+          />
+          <Stack.Screen
+            name="Discovery"
+            component={DiscoveryScreen}
+            options={{
+              title: "Entdecken",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="QRCode"
+            component={QRCodeScreen}
+            options={{
+              title: "Mein Code",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="ScanQR"
+            component={ScanQRScreen}
+            options={{ headerShown: false, presentation: "fullScreenModal" }}
           />
         </Stack.Navigator>
       ) : (
