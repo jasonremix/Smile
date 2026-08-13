@@ -4,15 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Trag hier die Werte aus deiner Firebase-Console ein (Projekteinstellungen -> Web-App).
-// Siehe .env.example fuer die benoetigten Felder.
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyCaual6NQdRQYLfsL8KMG5QFL-Gnrp0kpM",
+  authDomain: "nata-93b3b.firebaseapp.com",
+  projectId: "nata-93b3b",
+  storageBucket: "nata-93b3b.firebasestorage.app",
+  messagingSenderId: "657792334963",
+  appId: "1:657792334963:web:15719bab66c6160d117e06",
 };
 
 // Wird waehrend des Modul-Imports ausgefuehrt, also VOR dem ersten React-Render.
