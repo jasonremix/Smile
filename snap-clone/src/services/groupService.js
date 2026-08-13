@@ -12,6 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { bumpNataScore } from "./userService";
 
 export async function createGroup({ creatorUid, creatorName, name, members }) {
   const memberIds = Array.from(new Set([creatorUid, ...members.map((m) => m.uid)]));
@@ -57,6 +58,8 @@ export async function sendGroupMessage(groupId, senderId, senderName, text) {
     lastSenderId: senderId,
     updatedAt: serverTimestamp(),
   });
+
+  await bumpNataScore(senderId, 1, "Nachricht gesendet");
 }
 
 export function listenGroupMessages(groupId, callback) {

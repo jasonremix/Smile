@@ -11,6 +11,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { bumpNataScore } from "./userService";
 
 // Deterministische Chat-ID aus den beiden Nutzer-IDs, damit fuer ein Paar
 // immer derselbe Chat-Dokumentpfad verwendet wird.
@@ -130,6 +131,8 @@ export async function sendMessage(chatId, senderId, text) {
     },
     { merge: true }
   );
+
+  await bumpNataScore(senderId, 1, "Nachricht gesendet");
 }
 
 // "Tippt..."-Status pro Nutzer als verschachteltes Feld auf dem Chat-Dokument
