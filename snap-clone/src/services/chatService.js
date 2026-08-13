@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
@@ -8,6 +9,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -163,4 +165,27 @@ export function listenMessages(chatId, callback) {
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   });
+}
+
+export async function editMessage(chatId, messageId, text) {
+  await updateDoc(doc(db, "chats", chatId, "messages", messageId), { text, edited: true });
+}
+
+export async function deleteMessage(chatId, messageId) {
+  await deleteDoc(doc(db, "chats", chatId, "messages", messageId));
+}
+
+export function listenReactions(chatId, messageId, callback) {
+  return onSnapshot(collection(db, "chats", chatId, "messages", messageId, "reactions"), (snap) => {
+    callback(snap.docs.map((d) => d.id));
+  });
+}
+
+export async function toggleReaction(chatId, messageId, uid, isReacting) {
+  const reactionRef = doc(db, "chats", chatId, "messages", messageId, "reactions", uid);
+  if (isReacting) {
+    await setDoc(reactionRef, { createdAt: serverTimestamp() });
+  } else {
+    await deleteDoc(reactionRef);
+  }
 }

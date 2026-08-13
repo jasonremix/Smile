@@ -3,11 +3,13 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -67,6 +69,29 @@ export function listenGroupMessages(groupId, callback) {
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   });
+}
+
+export async function editGroupMessage(groupId, messageId, text) {
+  await updateDoc(doc(db, "groups", groupId, "messages", messageId), { text, edited: true });
+}
+
+export async function deleteGroupMessage(groupId, messageId) {
+  await deleteDoc(doc(db, "groups", groupId, "messages", messageId));
+}
+
+export function listenGroupMessageReactions(groupId, messageId, callback) {
+  return onSnapshot(collection(db, "groups", groupId, "messages", messageId, "reactions"), (snap) => {
+    callback(snap.docs.map((d) => d.id));
+  });
+}
+
+export async function toggleGroupMessageReaction(groupId, messageId, uid, isReacting) {
+  const reactionRef = doc(db, "groups", groupId, "messages", messageId, "reactions", uid);
+  if (isReacting) {
+    await setDoc(reactionRef, { createdAt: serverTimestamp() });
+  } else {
+    await deleteDoc(reactionRef);
+  }
 }
 
 export async function leaveGroup(groupId, uid) {

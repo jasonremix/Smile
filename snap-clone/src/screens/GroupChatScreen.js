@@ -11,8 +11,19 @@ import {
   View,
 } from "react-native";
 import Icon from "../components/Icon";
+import MessageBubble from "../components/MessageBubble";
+import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
-import { leaveGroup, listenGroupMessages, sendGroupMessage } from "../services/groupService";
+import {
+  deleteGroupMessage,
+  editGroupMessage,
+  leaveGroup,
+  listenGroupMessageReactions,
+  listenGroupMessages,
+  sendGroupMessage,
+  toggleGroupMessageReaction,
+} from "../services/groupService";
+import { reportContent } from "../services/moderationService";
 import { colors } from "../theme/colors";
 
 export default function GroupChatScreen({ route, navigation }) {
@@ -20,6 +31,8 @@ export default function GroupChatScreen({ route, navigation }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [reportTarget, setReportTarget] = useState(null);
   const listRef = useRef(null);
 
   const openGroupMenu = () => {
@@ -66,8 +79,50 @@ export default function GroupChatScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    if (editingMessage) {
+      setText("");
+      const editingId = editingMessage.id;
+      setEditingMessage(null);
+      await editGroupMessage(groupId, editingId, trimmed);
+      return;
+    }
+
     setText("");
     await sendGroupMessage(groupId, user.uid, user.displayName, trimmed);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setText("");
+  };
+
+  const handleLongPressMessage = (message) => {
+    const isMine = message.senderId === user.uid;
+    const options = [
+      {
+        text: "Mit Herz reagieren",
+        onPress: () => toggleGroupMessageReaction(groupId, message.id, user.uid, true),
+      },
+    ];
+    if (isMine) {
+      options.push({
+        text: "Bearbeiten",
+        onPress: () => {
+          setEditingMessage(message);
+          setText(message.text);
+        },
+      });
+      options.push({
+        text: "Löschen",
+        style: "destructive",
+        onPress: () => deleteGroupMessage(groupId, message.id),
+      });
+    } else {
+      options.push({ text: "Melden", onPress: () => setReportTarget({ messageId: message.id, senderId: message.senderId }) });
+    }
+    options.push({ text: "Abbrechen", style: "cancel" });
+    Alert.alert("Nachricht", "Was möchtest du tun?", options);
   };
 
   return (
@@ -82,18 +137,29 @@ export default function GroupChatScreen({ route, navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-        renderItem={({ item }) => {
-          const isMine = item.senderId === user.uid;
-          return (
-            <View style={[styles.bubbleRow, isMine ? styles.rowRight : styles.rowLeft]}>
-              <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
-                {!isMine ? <Text style={styles.senderName}>{item.senderName}</Text> : null}
-                <Text style={styles.bubbleText}>{item.text}</Text>
-              </View>
-            </View>
-          );
-        }}
+        renderItem={({ item }) => (
+          <MessageBubble
+            message={item}
+            isMine={item.senderId === user.uid}
+            senderName={item.senderName}
+            currentUid={user.uid}
+            onLongPress={handleLongPressMessage}
+            listenReactions={(messageId, cb) => listenGroupMessageReactions(groupId, messageId, cb)}
+            toggleReaction={(messageId, uid, isReacting) =>
+              toggleGroupMessageReaction(groupId, messageId, uid, isReacting)
+            }
+          />
+        )}
       />
+
+      {editingMessage ? (
+        <View style={styles.editingRow}>
+          <Text style={styles.editingText}>Nachricht bearbeiten</Text>
+          <TouchableOpacity onPress={cancelEditing}>
+            <Icon name="close" size={13} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <View style={styles.inputRow}>
         <TextInput
@@ -105,9 +171,24 @@ export default function GroupChatScreen({ route, navigation }) {
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-          <Icon name="send" size={16} color={colors.text} />
+          <Icon name={editingMessage ? "check" : "send"} size={16} color={colors.text} />
         </TouchableOpacity>
       </View>
+
+      <ReportModal
+        visible={!!reportTarget}
+        onClose={() => setReportTarget(null)}
+        title="Nachricht melden"
+        onSubmit={(reason) =>
+          reportContent({
+            reporterId: user.uid,
+            targetType: "message",
+            targetId: reportTarget.messageId,
+            targetUserId: reportTarget.senderId,
+            reason,
+          })
+        }
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -117,39 +198,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  bubbleRow: {
-    marginBottom: 8,
+  editingRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 6,
   },
-  rowLeft: {
-    justifyContent: "flex-start",
-  },
-  rowRight: {
-    justifyContent: "flex-end",
-  },
-  bubble: {
-    maxWidth: "75%",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  bubbleMine: {
-    backgroundColor: colors.bubbleMine,
-    borderBottomRightRadius: 4,
-  },
-  bubbleTheirs: {
-    backgroundColor: colors.bubbleTheirs,
-    borderBottomLeftRadius: 4,
-  },
-  senderName: {
-    color: colors.primaryLight,
-    fontSize: 11,
-    fontWeight: "700",
-    marginBottom: 2,
-  },
-  bubbleText: {
-    color: "#fff",
-    fontSize: 15,
+  editingText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontStyle: "italic",
   },
   inputRow: {
     flexDirection: "row",

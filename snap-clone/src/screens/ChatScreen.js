@@ -11,17 +11,22 @@ import {
   View,
 } from "react-native";
 import Icon from "../components/Icon";
+import MessageBubble from "../components/MessageBubble";
 import ReportModal from "../components/ReportModal";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import {
+  deleteMessage,
+  editMessage,
   getOrCreateChat,
   isStreakActive,
   listenChat,
   listenMessages,
+  listenReactions,
   markChatRead,
   sendMessage,
   setTypingStatus,
+  toggleReaction,
 } from "../services/chatService";
 import { blockUser, reportContent } from "../services/moderationService";
 import { getActiveChatId, setActiveChatId } from "../state/activeChat";
@@ -40,6 +45,7 @@ export default function ChatScreen({ route, navigation }) {
   const [streakCount, setStreakCount] = useState(0);
   const [otherIsTyping, setOtherIsTyping] = useState(false);
   const [otherVerified, setOtherVerified] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
   const listRef = useRef(null);
   const chatIdRef = useRef(chatId);
   const isTypingRef = useRef(false);
@@ -171,6 +177,15 @@ export default function ChatScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    if (editingMessage) {
+      setText("");
+      const editingId = editingMessage.id;
+      setEditingMessage(null);
+      await editMessage(chatIdRef.current, editingId, trimmed);
+      return;
+    }
+
     setText("");
 
     let id = chatId;
@@ -190,8 +205,36 @@ export default function ChatScreen({ route, navigation }) {
   };
 
   const handleLongPressMessage = (message) => {
-    if (message.senderId === user.uid) return; // eigene Nachrichten nicht meldbar
-    setReportTarget({ type: "message", messageId: message.id });
+    const isMine = message.senderId === user.uid;
+    const options = [
+      {
+        text: "Mit Herz reagieren",
+        onPress: () => toggleReaction(chatIdRef.current, message.id, user.uid, true),
+      },
+    ];
+    if (isMine) {
+      options.push({
+        text: "Bearbeiten",
+        onPress: () => {
+          setEditingMessage(message);
+          setText(message.text);
+        },
+      });
+      options.push({
+        text: "Löschen",
+        style: "destructive",
+        onPress: () => deleteMessage(chatIdRef.current, message.id),
+      });
+    } else {
+      options.push({ text: "Melden", onPress: () => setReportTarget({ type: "message", messageId: message.id }) });
+    }
+    options.push({ text: "Abbrechen", style: "cancel" });
+    Alert.alert("Nachricht", "Was möchtest du tun?", options);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setText("");
   };
 
   return (
@@ -206,25 +249,32 @@ export default function ChatScreen({ route, navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-        renderItem={({ item }) => {
-          const isMine = item.senderId === user.uid;
-          return (
-            <View style={[styles.bubbleRow, isMine ? styles.rowRight : styles.rowLeft]}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onLongPress={() => handleLongPressMessage(item)}
-                style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}
-              >
-                <Text style={styles.bubbleText}>{item.text}</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        }}
+        renderItem={({ item }) => (
+          <MessageBubble
+            message={item}
+            isMine={item.senderId === user.uid}
+            currentUid={user.uid}
+            onLongPress={handleLongPressMessage}
+            listenReactions={(messageId, cb) => listenReactions(chatIdRef.current, messageId, cb)}
+            toggleReaction={(messageId, uid, isReacting) =>
+              toggleReaction(chatIdRef.current, messageId, uid, isReacting)
+            }
+          />
+        )}
       />
 
       {otherIsTyping ? (
         <View style={styles.typingRow}>
           <Text style={styles.typingText}>{otherUser.name} tippt...</Text>
+        </View>
+      ) : null}
+
+      {editingMessage ? (
+        <View style={styles.editingRow}>
+          <Text style={styles.editingText}>Nachricht bearbeiten</Text>
+          <TouchableOpacity onPress={cancelEditing}>
+            <Icon name="close" size={13} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
       ) : null}
 
@@ -238,7 +288,7 @@ export default function ChatScreen({ route, navigation }) {
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-          <Icon name="send" size={16} color={colors.text} />
+          <Icon name={editingMessage ? "check" : "send"} size={16} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -290,44 +340,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
-  bubbleRow: {
-    marginBottom: 8,
-    flexDirection: "row",
-  },
-  rowLeft: {
-    justifyContent: "flex-start",
-  },
-  rowRight: {
-    justifyContent: "flex-end",
-  },
-  bubble: {
-    maxWidth: "75%",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  bubbleMine: {
-    backgroundColor: colors.bubbleMine,
-    borderBottomRightRadius: 6,
-  },
-  bubbleTheirs: {
-    backgroundColor: colors.bubbleTheirs,
-    borderBottomLeftRadius: 6,
-  },
-  bubbleText: {
-    color: "#fff",
-    fontSize: 15,
-  },
   typingRow: {
     paddingHorizontal: 16,
     paddingBottom: 4,
   },
   typingText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  editingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 6,
+  },
+  editingText: {
     color: colors.textMuted,
     fontSize: 12,
     fontStyle: "italic",

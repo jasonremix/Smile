@@ -220,7 +220,26 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 2000;
-        allow update, delete: if false;
+        // Nur die sendende Person darf ihre eigene Nachricht bearbeiten -
+        // ausschliesslich Text + "edited"-Markierung, sonst nichts.
+        allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.edited == true;
+        allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
+
+        // Reaktionen als eigene Subcollection (Dokument-ID = Nutzer-uid),
+        // analog zu posts/likes - jede Person kann nur ihren eigenen
+        // Reaktions-Eintrag anlegen/loeschen.
+        match /reactions/{uid} {
+          allow read: if isSignedIn() &&
+            request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+          allow create, delete: if isOwner(uid) &&
+            request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+          allow update: if false;
+        }
       }
     }
 
@@ -250,7 +269,21 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 2000;
-        allow update, delete: if false;
+        allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.edited == true;
+        allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
+
+        match /reactions/{uid} {
+          allow read: if isSignedIn() &&
+            request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+          allow create, delete: if isOwner(uid) &&
+            request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+          allow update: if false;
+        }
       }
     }
 
