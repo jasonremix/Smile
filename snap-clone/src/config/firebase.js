@@ -29,7 +29,12 @@ try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
-  db = getFirestore(app);
+  // Diese Firestore-Datenbank wurde mit der Datenbank-ID "default" (ohne
+  // Klammern) angelegt statt der klassischen "(default)"-Kennung, auf die
+  // getFirestore(app) ohne zweites Argument zielt. Ohne die explizite ID
+  // scheitert JEDER Schreibvorgang mit "NOT_FOUND", egal wie oft man's
+  // versucht - deshalb muss die ID hier ausdruecklich angegeben werden.
+  db = getFirestore(app, "default");
   storage = getStorage(app);
 } catch (error) {
   firebaseInitError = error;

@@ -51,8 +51,7 @@ export function AuthProvider({ children }) {
   const user = authUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
 
   // Falls die Firestore-Profildoc trotz vorhandenem Auth-Account fehlt (z.B.
-  // weil der Schreibvorgang direkt nach der Kontoerstellung an einer Race
-  // Condition mit dem noch nicht bereiten Auth-Token gescheitert ist), landet
+  // durch einen voruebergehenden Netzwerkfehler beim Registrieren), landet
   // der Account sonst dauerhaft unbrauchbar und unsichtbar in der Suche.
   const needsProfileSetup = !!authUser && profileLoaded && !profile;
 
@@ -72,6 +71,8 @@ export function AuthProvider({ children }) {
       nataScore: 0,
       createdAt: serverTimestamp(),
     };
+    // Reine Netzwerk-Resilienz gegen voruebergehende Fehler - kein Ersatz
+    // fuer eine korrekt konfigurierte Datenbankverbindung.
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -87,12 +88,6 @@ export function AuthProvider({ children }) {
   const signup = async (username, displayName, email, password) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(credential.user, { displayName });
-    // Direkt nach der Kontoerstellung hat die Firestore-SDK-Instanz (vor allem
-    // unter React Native mit AsyncStorage-Persistenz) das neue Auth-Token noch
-    // nicht zwingend uebernommen - ein sofortiger Schreibvorgang schlaegt dann
-    // mit permission-denied fehl, obwohl serverseitig alles erlaubt waere.
-    // Ein erzwungener Token-Refresh vor dem Schreiben behebt das zuverlaessig.
-    await credential.user.getIdToken(true);
     await createProfileDoc(credential.user.uid, username, displayName, email);
     return credential;
   };
@@ -101,7 +96,6 @@ export function AuthProvider({ children }) {
   // Schema wie signup(), nur ohne erneute Kontoerstellung.
   const completeProfile = async (username, displayName) => {
     await updateProfile(auth.currentUser, { displayName });
-    await auth.currentUser.getIdToken(true);
     await createProfileDoc(authUser.uid, username, displayName, authUser.email);
   };
 
