@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +10,7 @@ import {
   View,
 } from "react-native";
 import BetaBadge from "../components/BetaBadge";
+import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { FEEDBACK_CATEGORIES, submitFeedback } from "../services/feedbackService";
 import { colors } from "../theme/colors";
@@ -79,17 +79,12 @@ export default function FeedbackScreen({ navigation }) {
         textAlignVertical="top"
       />
 
-      <TouchableOpacity
-        style={[styles.submitButton, !message.trim() && styles.submitButtonDisabled]}
+      <PrimaryButton
+        title="Feedback senden"
         onPress={handleSubmit}
-        disabled={!message.trim() || sending}
-      >
-        {sending ? (
-          <ActivityIndicator color={colors.text} />
-        ) : (
-          <Text style={styles.submitButtonText}>Feedback senden</Text>
-        )}
-      </TouchableOpacity>
+        disabled={!message.trim()}
+        loading={sending}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -148,19 +143,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 180,
     marginBottom: 24,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  submitButtonDisabled: {
-    opacity: 0.4,
-  },
-  submitButtonText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
 });

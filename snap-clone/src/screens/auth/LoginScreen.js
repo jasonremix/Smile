@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import PrimaryButton from "../../components/PrimaryButton";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
 
@@ -67,13 +67,7 @@ export default function LoginScreen({ navigation }) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color={colors.text} />
-        ) : (
-          <Text style={styles.buttonText}>Anmelden</Text>
-        )}
-      </TouchableOpacity>
+      <PrimaryButton title="Anmelden" onPress={handleLogin} loading={loading} style={styles.button} />
 
       <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
         <Text style={styles.link}>Noch kein Konto? Registrieren</Text>
@@ -127,23 +121,19 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 14,
     fontSize: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
     marginTop: 8,
-  },
-  buttonText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 16,
   },
   link: {
     color: colors.textMuted,

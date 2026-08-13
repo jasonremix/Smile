@@ -1,6 +1,8 @@
 import React from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import BetaBadge from "../components/BetaBadge";
+import SettingsRow from "../components/SettingsRow";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
 
@@ -25,7 +27,10 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
         </View>
 
-        <Text style={styles.displayName}>{user?.displayName}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.displayName}>{user?.displayName}</Text>
+          {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
+        </View>
         <Text style={styles.username}>@{user?.username}</Text>
 
         <View style={styles.scoreCard}>
@@ -33,34 +38,19 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.scoreValue}>{user?.nataScore ?? 0}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate("Friends")}
-        >
-          <Text style={styles.actionButtonText}>👥 Freunde verwalten</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate("Privacy")}
-        >
-          <Text style={styles.actionButtonText}>🔒 Privatsphäre</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
+        <SettingsRow icon="👥" label="Freunde verwalten" onPress={() => navigation.navigate("Friends")} />
+        <SettingsRow icon="🔒" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
+        <SettingsRow
+          icon="📄"
+          label="Datenschutz & Nutzungsbedingungen"
           onPress={() => navigation.navigate("Legal")}
-        >
-          <Text style={styles.actionButtonText}>📄 Datenschutz & Nutzungsbedingungen</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.feedbackButton]}
+        />
+        <SettingsRow
+          icon="💬"
+          label="Feedback geben"
           onPress={() => navigation.navigate("Feedback")}
-        >
-          <Text style={styles.actionButtonText}>💬 Feedback geben</Text>
-          <BetaBadge style={styles.feedbackBadge} />
-        </TouchableOpacity>
+          badge={<BetaBadge style={styles.feedbackBadge} />}
+        />
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Abmelden</Text>
@@ -105,16 +95,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   avatarText: {
     color: "#000",
     fontSize: 36,
     fontWeight: "800",
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   displayName: {
     color: colors.text,
     fontSize: 22,
     fontWeight: "700",
+  },
+  verifiedBadge: {
+    marginTop: 2,
   },
   username: {
     color: colors.textMuted,
@@ -123,12 +126,17 @@ const styles = StyleSheet.create({
   },
   scoreCard: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 18,
     paddingHorizontal: 32,
     alignItems: "center",
     marginBottom: 24,
     width: "100%",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   scoreLabel: {
     color: colors.textMuted,
@@ -140,26 +148,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "800",
   },
-  actionButton: {
-    width: "100%",
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  actionButtonText: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  feedbackButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
   feedbackBadge: {
-    marginLeft: 2,
+    marginRight: 8,
   },
   logoutButton: {
     marginTop: 12,

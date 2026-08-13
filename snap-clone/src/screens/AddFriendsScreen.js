@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { searchUsersByUsername, sendFriendRequest } from "../services/friendService";
 import { listenBlockedUsers } from "../services/moderationService";
@@ -69,7 +70,10 @@ export default function AddFriendsScreen() {
           return (
             <View style={styles.row}>
               <View>
-                <Text style={styles.name}>{item.displayName}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.name}>{item.displayName}</Text>
+                  {item.verified ? <VerifiedBadge size={14} /> : null}
+                </View>
                 <Text style={styles.username}>@{item.username}</Text>
               </View>
               <TouchableOpacity
@@ -102,10 +106,15 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     fontSize: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   row: {
     flexDirection: "row",
@@ -114,6 +123,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   name: {
     color: colors.text,
@@ -125,9 +139,14 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   addButtonDisabled: {
     backgroundColor: colors.surfaceLight,

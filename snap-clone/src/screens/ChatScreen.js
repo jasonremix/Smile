@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import ReportModal from "../components/ReportModal";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import {
   getOrCreateChat,
@@ -23,6 +24,7 @@ import {
 } from "../services/chatService";
 import { blockUser, reportContent } from "../services/moderationService";
 import { getActiveChatId, setActiveChatId } from "../state/activeChat";
+import { getUserProfile } from "../services/userService";
 import { colors } from "../theme/colors";
 
 const TYPING_TIMEOUT_MS = 3000;
@@ -36,6 +38,7 @@ export default function ChatScreen({ route, navigation }) {
   const [reportTarget, setReportTarget] = useState(null);
   const [streakCount, setStreakCount] = useState(0);
   const [otherIsTyping, setOtherIsTyping] = useState(false);
+  const [otherVerified, setOtherVerified] = useState(false);
   const listRef = useRef(null);
   const chatIdRef = useRef(chatId);
   const isTypingRef = useRef(false);
@@ -76,14 +79,28 @@ export default function ChatScreen({ route, navigation }) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: streakCount > 0 ? `${otherUser.name}  🔥 ${streakCount}` : otherUser.name,
+      headerTitle: () => (
+        <View style={styles.headerTitleRow}>
+          <Text style={styles.headerTitleText} numberOfLines={1}>
+            {otherUser.name}
+            {streakCount > 0 ? `  🔥 ${streakCount}` : ""}
+          </Text>
+          {otherVerified ? <VerifiedBadge size={15} style={styles.headerBadge} /> : null}
+        </View>
+      ),
       headerRight: () => (
         <TouchableOpacity onPress={openChatMenu} style={{ paddingHorizontal: 8 }}>
           <Text style={{ color: colors.text, fontSize: 20 }}>⋯</Text>
         </TouchableOpacity>
       ),
     });
-  }, [navigation, otherUser, streakCount]);
+  }, [navigation, otherUser, streakCount, otherVerified]);
+
+  useEffect(() => {
+    getUserProfile(otherUser.id)
+      .then((profile) => setOtherVerified(!!profile?.verified))
+      .catch(() => {});
+  }, [otherUser.id]);
 
   useEffect(() => {
     let unsubscribeMessages;
@@ -242,6 +259,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  headerTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    maxWidth: 220,
+  },
+  headerTitleText: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  headerBadge: {
+    marginTop: 1,
+  },
   bubbleRow: {
     marginBottom: 8,
     flexDirection: "row",
@@ -254,17 +285,22 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: "75%",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   bubbleMine: {
     backgroundColor: colors.bubbleMine,
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
   bubbleTheirs: {
     backgroundColor: colors.bubbleTheirs,
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
   },
   bubbleText: {
     color: "#fff",
@@ -290,19 +326,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
     maxHeight: 100,
     marginRight: 8,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   sendButtonText: {
     color: colors.text,

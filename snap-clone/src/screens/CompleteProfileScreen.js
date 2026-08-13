@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -10,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
+import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
 
@@ -73,13 +73,12 @@ export default function CompleteProfileScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color={colors.text} />
-          ) : (
-            <Text style={styles.buttonText}>Profil speichern</Text>
-          )}
-        </TouchableOpacity>
+        <PrimaryButton
+          title="Profil speichern"
+          onPress={handleSubmit}
+          loading={loading}
+          style={styles.button}
+        />
 
         <TouchableOpacity onPress={logout}>
           <Text style={styles.logoutLink}>Abmelden</Text>
@@ -124,24 +123,20 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 14,
     fontSize: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   button: {
     width: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
     marginTop: 8,
-  },
-  buttonText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 16,
   },
   logoutLink: {
     color: colors.textMuted,

@@ -1,7 +1,6 @@
 import { Video } from "expo-av";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { listenFriends } from "../services/friendService";
 import { sendSnap } from "../services/snapService";
@@ -175,21 +175,17 @@ export default function SnapPreviewScreen({ route, navigation }) {
           </>
         ) : null}
 
-        <TouchableOpacity
-          style={[styles.sendButton, sendDisabled && styles.sendButtonDisabled]}
+        <PrimaryButton
+          title={
+            isStory
+              ? "An meine Story posten ➤"
+              : `Senden ${selected.length > 0 ? `(${selected.length})` : ""} ➤`
+          }
           onPress={handleSend}
           disabled={sendDisabled}
-        >
-          {sending ? (
-            <ActivityIndicator color={colors.text} />
-          ) : (
-            <Text style={styles.sendButtonText}>
-              {isStory
-                ? "An meine Story posten ➤"
-                : `Senden ${selected.length > 0 ? `(${selected.length})` : ""} ➤`}
-            </Text>
-          )}
-        </TouchableOpacity>
+          loading={sending}
+          style={styles.sendButton}
+        />
       </View>
     </View>
   );
@@ -315,18 +311,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   sendButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
     marginTop: 12,
-  },
-  sendButtonDisabled: {
-    opacity: 0.4,
-  },
-  sendButtonText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 15,
   },
 });
