@@ -120,12 +120,17 @@ const styles = StyleSheet.create({
   },
   categoryChip: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
   },
   categoryChipActive: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   categoryText: {
     color: colors.textMuted,

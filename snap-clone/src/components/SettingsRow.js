@@ -2,15 +2,15 @@ import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../theme/colors";
 
-// Moderne Einstellungs-Zeile mit Icon-Kreis, Label und Chevron statt der
-// bisherigen schlichten, vollflaechigen Buttons.
+// Minimalistische Einstellungs-Zeile: kein Rahmen, weicher Schatten statt
+// harter Kanten, groszuegiger Abstand, sanftes Press-Feedback.
 export default function SettingsRow({ icon, label, onPress, badge, tint = colors.primary }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={[styles.iconCircle, { backgroundColor: `${tint}26` }]}>
+      <View style={[styles.iconCircle, { backgroundColor: `${tint}22` }]}>
         <Text style={styles.icon}>{icon}</Text>
       </View>
       <Text style={styles.label}>{label}</Text>
@@ -26,26 +26,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     marginBottom: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
   pressed: {
-    backgroundColor: colors.surfaceLight,
+    opacity: 0.75,
+    transform: [{ scale: 0.99 }],
   },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 14,
   },
   icon: {
     fontSize: 16,

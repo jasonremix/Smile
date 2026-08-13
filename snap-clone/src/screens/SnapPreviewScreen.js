@@ -225,13 +225,18 @@ const styles = StyleSheet.create({
   },
   timerChip: {
     backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
     marginLeft: 6,
   },
   timerChipActive: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   timerText: {
     color: "#fff",
@@ -254,13 +259,18 @@ const styles = StyleSheet.create({
   visibilityChip: {
     flex: 1,
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
-    paddingVertical: 10,
+    borderRadius: 18,
+    paddingVertical: 12,
     alignItems: "center",
     marginRight: 8,
   },
   visibilityChipActive: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   visibilityText: {
     color: colors.textMuted,

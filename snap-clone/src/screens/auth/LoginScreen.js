@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 16,
+    borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 14,
