@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AppleSignInButton from "../../components/AppleSignInButton";
+import GoogleSignInButton from "../../components/GoogleSignInButton";
 import PrimaryButton from "../../components/PrimaryButton";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
@@ -54,6 +56,15 @@ export default function SignupScreen({ navigation }) {
           <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
           <Text style={styles.logo}>Konto erstellen</Text>
           <Text style={styles.greeting}>Schön, dass du zu Nata kommst!</Text>
+        </View>
+
+        <GoogleSignInButton style={styles.socialButton} />
+        <AppleSignInButton style={styles.socialButton} />
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>oder mit E-Mail</Text>
+          <View style={styles.dividerLine} />
         </View>
 
         <TextInput
@@ -178,6 +189,24 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginHorizontal: 12,
+  },
+  socialButton: {
+    marginBottom: 12,
   },
   link: {
     color: colors.textMuted,

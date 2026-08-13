@@ -2,13 +2,16 @@
   "expo": {
     "name": "Nata",
     "slug": "snap-clone",
+    "scheme": "nata",
     "version": "1.0.0",
     "privacy": "unlisted",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
     "backgroundColor": "#0d0d0d",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.natainc.nata",
@@ -19,7 +22,10 @@
     },
     "android": {
       "package": "com.natainc.nata",
-      "permissions": ["CAMERA", "RECORD_AUDIO"],
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0d0d0d"
@@ -44,7 +50,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#0d0d0d"
         }
-      ]
+      ],
+      "expo-web-browser",
+      "expo-apple-authentication"
     ],
     "extra": {
       "eas": {

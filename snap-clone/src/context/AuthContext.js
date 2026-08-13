@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -58,6 +61,20 @@ export function AuthProvider({ children }) {
 
   const login = (email, password) =>
     signInWithEmailAndPassword(auth, email, password);
+
+  // Fuer neue Accounts greift danach automatisch derselbe
+  // needsProfileSetup/CompleteProfileScreen-Reparaturweg wie bei
+  // E-Mail-Registrierung mit fehlgeschlagenem Profil-Schreibvorgang -
+  // Google/Apple liefern keinen Nata-Benutzernamen, den fragt
+  // CompleteProfileScreen ohnehin schon ab.
+  const loginWithGoogleIdToken = (idToken) =>
+    signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+
+  const loginWithAppleCredential = (identityToken, rawNonce) =>
+    signInWithCredential(
+      auth,
+      new OAuthProvider("apple.com").credential({ idToken: identityToken, rawNonce })
+    );
 
   async function createProfileDoc(uid, username, displayName, email) {
     const data = {
@@ -125,7 +142,17 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, initializing, needsProfileSetup, login, signup, completeProfile, logout }}
+      value={{
+        user,
+        initializing,
+        needsProfileSetup,
+        login,
+        signup,
+        completeProfile,
+        logout,
+        loginWithGoogleIdToken,
+        loginWithAppleCredential,
+      }}
     >
       {children}
     </AuthContext.Provider>
