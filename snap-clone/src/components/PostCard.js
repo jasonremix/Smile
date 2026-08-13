@@ -71,19 +71,29 @@ export default function PostCard({ post, navigation }) {
 
   const createdAtDate = post.createdAt?.toDate ? post.createdAt.toDate() : null;
 
+  const openAuthorProfile = () => {
+    if (isOwn) {
+      navigation.navigate("Profile");
+    } else {
+      navigation.navigate("UserProfile", { uid: post.authorId });
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={[styles.avatar, { backgroundColor: post.authorAvatarColor || colors.primary }]}>
-          <Text style={styles.avatarText}>{(post.authorName || "?").charAt(0).toUpperCase()}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <View style={styles.nameRow}>
-            <Text style={styles.authorName}>{post.authorName}</Text>
-            {post.authorVerified ? <VerifiedBadge size={13} /> : null}
+        <TouchableOpacity style={styles.headerTappable} onPress={openAuthorProfile}>
+          <View style={[styles.avatar, { backgroundColor: post.authorAvatarColor || colors.primary }]}>
+            <Text style={styles.avatarText}>{(post.authorName || "?").charAt(0).toUpperCase()}</Text>
           </View>
-          <Text style={styles.time}>{createdAtDate ? timeAgo(createdAtDate) : ""}</Text>
-        </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.nameRow}>
+              <Text style={styles.authorName}>{post.authorName}</Text>
+              {post.authorVerified ? <VerifiedBadge size={13} /> : null}
+            </View>
+            <Text style={styles.time}>{createdAtDate ? timeAgo(createdAtDate) : ""}</Text>
+          </View>
+        </TouchableOpacity>
         <TouchableOpacity onPress={openMenu} style={styles.menuButton}>
           <Text style={styles.menuDots}>⋯</Text>
         </TouchableOpacity>
@@ -139,6 +149,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
+  },
+  headerTappable: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 38,

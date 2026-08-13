@@ -24,6 +24,7 @@ import ReferralScreen from "../screens/ReferralScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
 import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
+import UserProfileScreen from "../screens/UserProfileScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
 import StoryViewerScreen from "../screens/StoryViewerScreen";
 import { colors } from "../theme/colors";
@@ -90,6 +91,11 @@ export default function RootNavigator() {
             name="Comments"
             component={CommentsScreen}
             options={{ headerShown: false, presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="UserProfile"
+            component={UserProfileScreen}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="SnapPreview"

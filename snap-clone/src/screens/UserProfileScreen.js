@@ -1,0 +1,248 @@
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "../components/Icon";
+import PostCard from "../components/PostCard";
+import ReportModal from "../components/ReportModal";
+import VerifiedBadge from "../components/VerifiedBadge";
+import { useAuth } from "../context/AuthContext";
+import { getChatId } from "../services/chatService";
+import { hasPendingRequest, listenFriends, sendFriendRequest } from "../services/friendService";
+import { blockUser, reportContent } from "../services/moderationService";
+import { listenUserPosts } from "../services/postService";
+import { getUserProfile } from "../services/userService";
+import { colors } from "../theme/colors";
+
+export default function UserProfileScreen({ route, navigation }) {
+  const { uid } = route.params;
+  const { user: currentUser } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [isFriend, setIsFriend] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const [reporting, setReporting] = useState(false);
+
+  useEffect(() => {
+    getUserProfile(uid).then(setProfile);
+  }, [uid]);
+
+  useEffect(() => {
+    const unsubscribe = listenUserPosts(uid, setPosts);
+    return unsubscribe;
+  }, [uid]);
+
+  useEffect(() => {
+    hasPendingRequest(currentUser.uid, uid).then(setRequestSent);
+  }, [uid, currentUser.uid]);
+
+  useEffect(() => {
+    const unsubscribe = listenFriends(currentUser.uid, (friends) => {
+      setIsFriend(friends.some((f) => f.uid === uid));
+    });
+    return unsubscribe;
+  }, [uid, currentUser.uid]);
+
+  const handleConnect = async () => {
+    if (!profile || requestSent) return;
+    await sendFriendRequest(currentUser, profile);
+    setRequestSent(true);
+  };
+
+  const handleMessage = () => {
+    navigation.navigate("Chat", {
+      chatId: getChatId(currentUser.uid, uid),
+      otherUser: { id: uid, name: profile?.displayName },
+    });
+  };
+
+  const openMenu = () => {
+    Alert.alert(profile?.displayName || "", "Was moechtest du tun?", [
+      { text: "Melden", onPress: () => setReporting(true) },
+      {
+        text: "Blockieren",
+        style: "destructive",
+        onPress: () => {
+          blockUser(currentUser.uid, { uid, displayName: profile?.displayName });
+          navigation.goBack();
+        },
+      },
+      { text: "Abbrechen", style: "cancel" },
+    ]);
+  };
+
+  if (!profile) {
+    return <View style={styles.container} />;
+  }
+
+  return (
+    <>
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      data={posts}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <PostCard post={item} navigation={navigation} />}
+      ListHeaderComponent={
+        <View>
+          <View style={styles.topRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+              <Icon name="back" size={18} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={openMenu} style={styles.iconButton}>
+              <Text style={styles.menuDots}>⋯</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.avatar, { backgroundColor: profile.avatarColor || colors.primary }]}>
+            <Text style={styles.avatarText}>{(profile.displayName || "?").charAt(0).toUpperCase()}</Text>
+          </View>
+
+          <View style={styles.nameRow}>
+            <Text style={styles.displayName}>{profile.displayName}</Text>
+            {profile.verified ? <VerifiedBadge size={18} style={{ marginTop: 2 }} /> : null}
+          </View>
+          <Text style={styles.username}>@{profile.username}</Text>
+
+          <View style={styles.actionsRow}>
+            {isFriend ? (
+              <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
+                <Text style={styles.messageButtonText}>Nachricht</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.connectButton, requestSent && styles.connectButtonDisabled]}
+                onPress={handleConnect}
+                disabled={requestSent}
+              >
+                <Text style={styles.connectButtonText}>
+                  {requestSent ? "Angefragt" : "Verbinden"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={styles.postsHeading}>Beitraege</Text>
+        </View>
+      }
+      ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beitraege.</Text>}
+      showsVerticalScrollIndicator={false}
+    />
+    <ReportModal
+      visible={reporting}
+      onClose={() => setReporting(false)}
+      title={`${profile.displayName} melden`}
+      onSubmit={(reason) =>
+        reportContent({
+          reporterId: currentUser.uid,
+          targetType: "user",
+          targetUserId: uid,
+          reason,
+        })
+      }
+    />
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    paddingTop: 56,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  iconButton: {
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+  },
+  menuDots: {
+    color: colors.text,
+    fontSize: 20,
+    textAlign: "center",
+  },
+  avatar: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  avatarText: {
+    color: "#000",
+    fontSize: 32,
+    fontWeight: "800",
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  displayName: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  username: {
+    color: colors.textMuted,
+    fontSize: 14,
+    marginTop: 2,
+    marginBottom: 18,
+  },
+  actionsRow: {
+    flexDirection: "row",
+  },
+  connectButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 22,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  connectButtonDisabled: {
+    backgroundColor: colors.surfaceLight,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  connectButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  messageButton: {
+    backgroundColor: colors.surface,
+    borderRadius: 22,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+  },
+  messageButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  postsHeading: {
+    color: colors.textMuted,
+    fontSize: 13,
+    textTransform: "uppercase",
+    marginTop: 28,
+    marginBottom: 12,
+  },
+  emptyText: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 12,
+  },
+});

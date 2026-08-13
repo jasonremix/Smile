@@ -57,6 +57,15 @@ export function listenFollowingFeed(connectionIds, callback) {
   });
 }
 
+// Eigene Beitraege einer bestimmten Person - fuers Profil (eigenes oder
+// fremdes).
+export function listenUserPosts(uid, callback) {
+  const q = query(collection(db, "posts"), where("authorId", "==", uid), orderBy("createdAt", "desc"));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
 export async function deletePost(postId) {
   await deleteDoc(doc(db, "posts", postId));
 }

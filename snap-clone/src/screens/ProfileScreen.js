@@ -1,16 +1,25 @@
-import React from "react";
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import BetaBadge from "../components/BetaBadge";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
+import PostCard from "../components/PostCard";
 import SettingsRow from "../components/SettingsRow";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
+import { listenUserPosts } from "../services/postService";
 import { colors } from "../theme/colors";
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
   const isModal = navigation.canGoBack();
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubscribe = listenUserPosts(user.uid, setPosts);
+    return unsubscribe;
+  }, [user?.uid]);
 
   const handleLogout = () => {
     Alert.alert("Abmelden", "Moechtest du dich wirklich abmelden?", [
@@ -27,56 +36,74 @@ export default function ProfileScreen({ navigation }) {
         </TouchableOpacity>
       ) : null}
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-          <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-        </View>
-
-        <View style={styles.nameRow}>
-          <Text style={styles.displayName}>{user?.displayName}</Text>
-          {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
-        </View>
-        <Text style={styles.username}>@{user?.username}</Text>
-        {user?.betaTesterNumber ? (
-          <View style={styles.testerBadge}>
-            <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
+      <FlatList
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.postWrapper}>
+            <PostCard post={item} navigation={navigation} />
           </View>
-        ) : null}
+        )}
+        ListHeaderComponent={
+          <View style={{ alignItems: "center" }}>
+            <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+              <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+            </View>
 
-        <NataScoreCard
-          score={user?.nataScore ?? 0}
-          onPress={() => navigation.navigate("ScoreHistory")}
-        />
-        <View style={{ height: 24 }} />
+            <View style={styles.nameRow}>
+              <Text style={styles.displayName}>{user?.displayName}</Text>
+              {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
+            </View>
+            <Text style={styles.username}>@{user?.username}</Text>
+            {user?.betaTesterNumber ? (
+              <View style={styles.testerBadge}>
+                <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
+              </View>
+            ) : null}
 
-        <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
-        <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
-        <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
-        <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
-        <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
-        <SettingsRow
-          icon="document"
-          label="Datenschutz & Nutzungsbedingungen"
-          onPress={() => navigation.navigate("Legal")}
-        />
-        <SettingsRow
-          icon="chat"
-          label="Feedback geben"
-          onPress={() => navigation.navigate("Feedback")}
-          badge={<BetaBadge style={styles.feedbackBadge} />}
-        />
+            <NataScoreCard
+              score={user?.nataScore ?? 0}
+              onPress={() => navigation.navigate("ScoreHistory")}
+            />
+            <View style={{ height: 24 }} />
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Abmelden</Text>
-        </TouchableOpacity>
+            <View style={{ width: "100%" }}>
+              <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
+              <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
+              <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
+              <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
+              <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
+              <SettingsRow
+                icon="document"
+                label="Datenschutz & Nutzungsbedingungen"
+                onPress={() => navigation.navigate("Legal")}
+              />
+              <SettingsRow
+                icon="chat"
+                label="Feedback geben"
+                onPress={() => navigation.navigate("Feedback")}
+                badge={<BetaBadge style={styles.feedbackBadge} />}
+              />
+            </View>
 
-        <TouchableOpacity
-          style={styles.deleteAccountButton}
-          onPress={() => navigation.navigate("DeleteAccount")}
-        >
-          <Text style={styles.deleteAccountText}>Konto löschen</Text>
-        </TouchableOpacity>
-      </ScrollView>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Abmelden</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.deleteAccountButton}
+              onPress={() => navigation.navigate("DeleteAccount")}
+            >
+              <Text style={styles.deleteAccountText}>Konto löschen</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.postsHeading}>Meine Beitraege</Text>
+          </View>
+        }
+        ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beitraege.</Text>}
+      />
     </View>
   );
 }
@@ -91,6 +118,9 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     paddingHorizontal: 24,
     paddingBottom: 48,
+  },
+  postWrapper: {
+    width: "100%",
   },
   closeButton: {
     position: "absolute",
@@ -168,5 +198,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
     textDecorationLine: "underline",
+  },
+  postsHeading: {
+    color: colors.textMuted,
+    fontSize: 13,
+    textTransform: "uppercase",
+    alignSelf: "flex-start",
+    marginTop: 28,
+    marginBottom: 12,
+  },
+  emptyText: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 12,
   },
 });

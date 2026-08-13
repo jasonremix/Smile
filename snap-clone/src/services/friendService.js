@@ -95,6 +95,21 @@ export async function declineFriendRequest(request) {
   await updateDoc(doc(db, "friendRequests", request.id), { status: "declined" });
 }
 
+// Einmaliger Check, ob bereits eine offene Anfrage von fromUid an toUid
+// existiert - fuers Fremdprofil, damit der "Verbinden"-Button nicht doppelt
+// gedrueckt werden kann.
+export async function hasPendingRequest(fromUid, toUid) {
+  const q = query(
+    collection(db, "friendRequests"),
+    where("from", "==", fromUid),
+    where("to", "==", toUid),
+    where("status", "==", "pending"),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
 export function listenFriends(uid, callback) {
   const q = query(collection(db, "users", uid, "friends"), orderBy("displayName"));
   return onSnapshot(q, (snap) => {

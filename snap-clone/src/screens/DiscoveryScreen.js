@@ -74,12 +74,12 @@ export default function DiscoveryScreen({ navigation }) {
             const alreadySent = sentTo.includes(item.uid);
             return (
               <View style={styles.row}>
-                <View>
+                <TouchableOpacity onPress={() => navigation.navigate("UserProfile", { uid: item.uid })}>
                   <Text style={styles.name}>{item.displayName}</Text>
                   <Text style={styles.mutual}>
                     {item.mutualCount} gemeinsame Connection{item.mutualCount === 1 ? "" : "s"}
                   </Text>
-                </View>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.addButton, alreadySent && styles.addButtonDisabled]}
                   onPress={() => handleAdd(item)}
