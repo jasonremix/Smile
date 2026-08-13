@@ -6,7 +6,9 @@ import { useAuth } from "../context/AuthContext";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import ChatScreen from "../screens/ChatScreen";
+import CreateGroupScreen from "../screens/CreateGroupScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
+import GroupChatScreen from "../screens/GroupChatScreen";
 import FriendsScreen from "../screens/FriendsScreen";
 import LegalScreen from "../screens/LegalScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
@@ -123,6 +125,23 @@ export default function RootNavigator() {
             name="Privacy"
             component={PrivacyScreen}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreateGroup"
+            component={CreateGroupScreen}
+            options={{
+              title: "Neue Gruppe",
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
+          />
+          <Stack.Screen
+            name="GroupChat"
+            component={GroupChatScreen}
+            options={{
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+            }}
           />
         </Stack.Navigator>
       ) : (

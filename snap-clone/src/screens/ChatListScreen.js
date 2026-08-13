@@ -3,22 +3,30 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native
 import ChatListItem from "../components/ChatListItem";
 import { useAuth } from "../context/AuthContext";
 import { listenChats } from "../services/chatService";
+import { listenGroups } from "../services/groupService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { listenIncomingSnaps } from "../services/snapService";
 import { colors } from "../theme/colors";
 
+function toMillis(timestamp) {
+  return timestamp?.toMillis ? timestamp.toMillis() : 0;
+}
+
 export default function ChatListScreen({ navigation }) {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [incomingSnaps, setIncomingSnaps] = useState([]);
   const [blocked, setBlocked] = useState([]);
 
   useEffect(() => {
     const unsubChats = listenChats(user.uid, setChats);
+    const unsubGroups = listenGroups(user.uid, setGroups);
     const unsubSnaps = listenIncomingSnaps(user.uid, setIncomingSnaps);
     const unsubBlocked = listenBlockedUsers(user.uid, setBlocked);
     return () => {
       unsubChats();
+      unsubGroups();
       unsubSnaps();
       unsubBlocked();
     };
@@ -31,19 +39,52 @@ export default function ChatListScreen({ navigation }) {
     return { id: otherId, name: chat.participantNames?.[otherId] || "Unbekannt" };
   };
 
-  const visibleChats = chats.filter((chat) => {
-    const other = otherParticipant(chat);
-    return !blockedIds.has(other.id);
-  });
   const visibleSnaps = incomingSnaps.filter((snap) => !blockedIds.has(snap.senderId));
+
+  const conversations = useMemo(() => {
+    const dmItems = chats
+      .filter((chat) => !blockedIds.has(otherParticipant(chat).id))
+      .map((chat) => {
+        const other = otherParticipant(chat);
+        return {
+          type: "dm",
+          id: chat.id,
+          name: other.name,
+          otherUser: other,
+          lastMessage: chat.lastMessage,
+          isMine: chat.lastSenderId === user.uid,
+          updatedAtMs: toMillis(chat.updatedAt),
+        };
+      });
+
+    const groupItems = groups.map((group) => ({
+      type: "group",
+      id: group.id,
+      name: `👥 ${group.name}`,
+      groupId: group.id,
+      groupName: group.name,
+      lastMessage: group.lastMessage,
+      isMine: group.lastSenderId === user.uid,
+      updatedAtMs: toMillis(group.updatedAt),
+    }));
+
+    return [...dmItems, ...groupItems].sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+  }, [chats, groups, blockedIds, user.uid]);
+
+  const openNewGroup = () => navigation.navigate("CreateGroup");
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.header}>Chat</Text>
-        <TouchableOpacity onPress={() => navigation.navigate("AddFriends")}>
-          <Text style={styles.addFriendIcon}>➕</Text>
-        </TouchableOpacity>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={openNewGroup} style={styles.headerIconButton}>
+            <Text style={styles.headerIcon}>👥➕</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("AddFriends")} style={styles.headerIconButton}>
+            <Text style={styles.headerIcon}>➕</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {visibleSnaps.length > 0 ? (
@@ -64,21 +105,20 @@ export default function ChatListScreen({ navigation }) {
       ) : null}
 
       <FlatList
-        data={visibleChats}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const other = otherParticipant(item);
-          return (
-            <ChatListItem
-              name={other.name}
-              lastMessage={item.lastMessage}
-              isMine={item.lastSenderId === user.uid}
-              onPress={() =>
-                navigation.navigate("Chat", { chatId: item.id, otherUser: other })
-              }
-            />
-          );
-        }}
+        data={conversations}
+        keyExtractor={(item) => `${item.type}-${item.id}`}
+        renderItem={({ item }) => (
+          <ChatListItem
+            name={item.name}
+            lastMessage={item.lastMessage}
+            isMine={item.isMine}
+            onPress={() =>
+              item.type === "group"
+                ? navigation.navigate("GroupChat", { groupId: item.groupId, groupName: item.groupName })
+                : navigation.navigate("Chat", { chatId: item.id, otherUser: item.otherUser })
+            }
+          />
+        )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
             Noch keine Unterhaltungen. Fuege Freunde hinzu, um loszulegen!
@@ -107,8 +147,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "800",
   },
-  addFriendIcon: {
-    fontSize: 20,
+  headerIcons: {
+    flexDirection: "row",
+  },
+  headerIconButton: {
+    marginLeft: 16,
+  },
+  headerIcon: {
+    fontSize: 18,
   },
   snapsSection: {
     paddingHorizontal: 16,

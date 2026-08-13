@@ -143,6 +143,36 @@ service cloud.firestore {
       }
     }
 
+    match /groups/{groupId} {
+      allow read, delete: if isSignedIn() && request.auth.uid in resource.data.memberIds;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.memberIds
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.memberIds.size() >= 2
+        && request.resource.data.memberIds.size() <= 50
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 50;
+      // Jedes Mitglied darf umbenennen, selbst austreten oder neue Mitglieder
+      // hinzufuegen (einfaches Modell ohne Admin-Rolle fuer die erste Version).
+      allow update: if isSignedIn() && request.auth.uid in resource.data.memberIds
+        && request.resource.data.memberIds.size() <= 50
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'memberIds', 'memberNames', 'name']);
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.senderId
+          && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+        allow update, delete: if false;
+      }
+    }
+
     // Meldungen sind ausschliesslich per create durch die meldende Person
     // erreichbar - Einsicht/Bearbeitung nur ueber die Firebase-Konsole bzw.
     // spaeter eine Admin-Cloud-Function, nie ueber die Client-App.
