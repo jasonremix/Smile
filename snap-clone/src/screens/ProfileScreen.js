@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Animated, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
@@ -18,11 +19,23 @@ import { typography } from "../theme/typography";
 
 export default function ProfileScreen({ navigation }) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const isModal = navigation.canGoBack();
   const [posts, setPosts] = useState([]);
   const [friends, setFriends] = useState([]);
   const [statusEditorVisible, setStatusEditorVisible] = useState(false);
   const activeStatus = isStatusActive(user?.status) ? user.status : null;
+
+  // Collapsing Header: die grosse Identitaets-Sektion scrollt normal mit,
+  // eine schmale Leiste mit Mini-Avatar + Name blendet sich erst ein, wenn
+  // sie aus dem Blick gescrollt ist - wie bei einem nativen Large-Title, der
+  // beim Scrollen zu einem kompakten Titel wird.
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const compactHeaderOpacity = scrollY.interpolate({
+    inputRange: [70, 130],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -54,6 +67,8 @@ export default function ProfileScreen({ navigation }) {
       style={styles.headerIconButton}
       onPress={() => navigation.navigate("Settings")}
       hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Einstellungen"
     >
       <Icon name="settings" size={18} color={colors.text} />
     </TouchableOpacity>
@@ -72,9 +87,28 @@ export default function ProfileScreen({ navigation }) {
         <ScreenHeader title="Profil" right={settingsButton} />
       )}
 
-      <FlatList
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.compactHeader,
+          { paddingTop: insets.top + spacing.sm, opacity: compactHeaderOpacity },
+        ]}
+      >
+        <View style={[styles.compactAvatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+          <Text style={styles.compactAvatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+        </View>
+        <Text style={styles.compactName} numberOfLines={1}>
+          {user?.displayName}
+        </Text>
+      </Animated.View>
+
+      <Animated.FlatList
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        scrollEventThrottle={16}
         data={posts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -132,10 +166,18 @@ export default function ProfileScreen({ navigation }) {
                 <TouchableOpacity
                   style={styles.editButton}
                   onPress={() => navigation.navigate("EditProfile")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profil bearbeiten"
                 >
                   <Text style={styles.editButtonText}>Profil bearbeiten</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.shareButton} onPress={handleShare} hitSlop={8}>
+                <TouchableOpacity
+                  style={styles.shareButton}
+                  onPress={handleShare}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profil teilen"
+                >
                   <Icon name="send" size={15} color={colors.text} />
                 </TouchableOpacity>
               </View>
@@ -187,6 +229,35 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
+  },
+  compactHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 34,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  compactAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.xs,
+  },
+  compactAvatarText: {
+    color: "#000",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  compactName: {
+    color: colors.text,
+    ...typography.headline,
   },
   identitySection: {
     alignItems: "center",

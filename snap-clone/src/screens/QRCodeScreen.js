@@ -47,11 +47,21 @@ export default function QRCodeScreen({ navigation }) {
         <Text style={styles.hint}>Andere können diesen Code scannen, um sich direkt mit dir zu verbinden.</Text>
 
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("ScanQR")}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate("ScanQR")}
+            accessibilityRole="button"
+            accessibilityLabel="Code scannen"
+          >
             <Icon name="camera" size={16} color={colors.text} style={styles.actionIcon} />
             <Text style={styles.actionButtonText}>Scannen</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleShare}
+            accessibilityRole="button"
+            accessibilityLabel="Nata-Code teilen"
+          >
             <Icon name="send" size={15} color={colors.text} style={styles.actionIcon} />
             <Text style={styles.actionButtonText}>Teilen</Text>
           </TouchableOpacity>

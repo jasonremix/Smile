@@ -1,7 +1,10 @@
-import React from "react";
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
+import { useAuth } from "../context/AuthContext";
+import { updatePrivacyPrefs } from "../services/userService";
+import { hapticSelection } from "../utils/haptics";
 import { colors } from "../theme/colors";
 
 // Affiliate-Link (kein offizielles Datenschutz-Partnerschaftsprogramm) -
@@ -22,10 +25,83 @@ function InfoRow({ icon, title, text }) {
 }
 
 export default function PrivacyScreen({ navigation }) {
+  const { user } = useAuth();
+  const [discoverable, setDiscoverable] = useState(user?.discoverable !== false);
+  const [connectionsVisibility, setConnectionsVisibility] = useState(
+    user?.connectionsVisibility || "everyone"
+  );
+
+  const handleToggleDiscoverable = (next) => {
+    hapticSelection();
+    setDiscoverable(next);
+    updatePrivacyPrefs(user.uid, { discoverable: next }).catch(() => setDiscoverable(!next));
+  };
+
+  const handleSetConnectionsVisibility = (value) => {
+    if (value === connectionsVisibility) return;
+    hapticSelection();
+    setConnectionsVisibility(value);
+    updatePrivacyPrefs(user.uid, { connectionsVisibility: value }).catch(() => {});
+  };
+
   return (
     <View style={styles.container}>
       <ScreenHeader onBack={() => navigation.goBack()} title="Privatsphäre" />
       <ScrollView contentContainerStyle={styles.content}>
+      <Text style={styles.sectionLabel}>Sichtbarkeit</Text>
+
+      <View style={styles.settingCard}>
+        <View style={styles.settingRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.settingTitle}>Sichtbar in Suche & Entdecken</Text>
+            <Text style={styles.settingSubtitle}>
+              Aus: du tauchst nicht mehr in der Suche oder in Vorschlägen auf. Dein Profil bleibt
+              trotzdem für alle sichtbar, die deinen Nata-Code oder Link haben.
+            </Text>
+          </View>
+          <Switch
+            value={discoverable}
+            onValueChange={handleToggleDiscoverable}
+            trackColor={{ false: colors.surfaceLight, true: colors.primary }}
+          />
+        </View>
+      </View>
+
+      <View style={styles.settingCard}>
+        <Text style={styles.settingTitle}>Wer sieht deine Connections-Liste?</Text>
+        <Text style={styles.settingSubtitle}>
+          Wirkt sich auf "gemeinsame Connections"-Vorschläge für andere aus.
+        </Text>
+        <View style={styles.segmentRow}>
+          <TouchableOpacity
+            style={[styles.segment, connectionsVisibility === "everyone" && styles.segmentActive]}
+            onPress={() => handleSetConnectionsVisibility("everyone")}
+          >
+            <Text
+              style={[
+                styles.segmentText,
+                connectionsVisibility === "everyone" && styles.segmentTextActive,
+              ]}
+            >
+              Verbindungen
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segment, connectionsVisibility === "onlyMe" && styles.segmentActive]}
+            onPress={() => handleSetConnectionsVisibility("onlyMe")}
+          >
+            <Text
+              style={[
+                styles.segmentText,
+                connectionsVisibility === "onlyMe" && styles.segmentTextActive,
+              ]}
+            >
+              Nur ich
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <InfoRow
         icon="moment"
         title="Moments"
@@ -90,6 +166,60 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 48,
+  },
+  sectionLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 10,
+    marginLeft: 4,
+  },
+  settingCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  settingTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  settingSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  segmentRow: {
+    flexDirection: "row",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    padding: 3,
+    marginTop: 12,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 9,
+    alignItems: "center",
+  },
+  segmentActive: {
+    backgroundColor: colors.primary,
+  },
+  segmentText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  segmentTextActive: {
+    color: colors.text,
   },
   row: {
     flexDirection: "row",

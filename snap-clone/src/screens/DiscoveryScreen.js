@@ -117,7 +117,12 @@ export default function DiscoveryScreen({ navigation }) {
           onChangeText={setSearchTerm}
         />
         {searchTerm.length > 0 ? (
-          <TouchableOpacity onPress={() => setSearchTerm("")} hitSlop={8}>
+          <TouchableOpacity
+            onPress={() => setSearchTerm("")}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Suche löschen"
+          >
             <Icon name="close" size={14} color={colors.textMuted} />
           </TouchableOpacity>
         ) : null}

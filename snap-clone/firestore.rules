@@ -116,6 +116,19 @@ service cloud.firestore {
           || (request.resource.data.location.city is string
               && request.resource.data.location.city.size() > 0
               && request.resource.data.location.city.size() <= 60)
+        )
+        // Sichtbarkeitseinstellungen (siehe PrivacyScreen): "discoverable"
+        // blendet die eigene Person aus Suche/Vorschlaegen aus (das Profil
+        // selbst bleibt fuer alle Signed-in-Nutzer lesbar - siehe oben),
+        // "connectionsVisibility" steuert, wer die eigene Connections-Liste
+        // sehen darf (siehe friends-Subcollection-Regel unten).
+        && (
+          !('discoverable' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.discoverable is bool
+        )
+        && (
+          !('connectionsVisibility' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.connectionsVisibility in ['everyone', 'onlyMe']
         );
 
       allow delete: if isOwner(userId);
@@ -125,7 +138,14 @@ service cloud.firestore {
       // Freunden entdecken". Bewusster, ueblicher Kompromiss, kein oeffentlicher
       // Zugriff: nur wer bereits verifiziert befreundet ist, sieht mit.
       match /friends/{friendId} {
-        allow read: if isOwner(userId) || isFriendOf(userId);
+        // "connectionsVisibility" == 'onlyMe' auf dem Owner-Profil schaltet
+        // den isFriendOf-Ausnahmefall ab (Standard weiterhin: Freunde von
+        // Freunden duerfen mitlesen, siehe isFriendOf oben).
+        allow read: if isOwner(userId)
+          || (
+            isFriendOf(userId)
+            && get(/databases/$(database)/documents/users/$(userId)).data.get('connectionsVisibility', 'everyone') != 'onlyMe'
+          );
         allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
       }
 

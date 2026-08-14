@@ -11,6 +11,7 @@ import {
   listenIncomingRequests,
 } from "../services/friendService";
 import { blockUser, listenBlockedUsers, reportContent } from "../services/moderationService";
+import { hapticSuccess } from "../utils/haptics";
 import { colors } from "../theme/colors";
 import { avatarColorForUid } from "../theme/avatarPalette";
 
@@ -36,6 +37,11 @@ export default function FriendsScreen({ navigation }) {
   const visibleRequests = requests.filter((r) => !blockedIds.has(r.from));
 
   const currentUserForAccept = { uid: user.uid, displayName: user.displayName, username: user.username };
+
+  const handleAccept = (req) => {
+    hapticSuccess();
+    acceptFriendRequest(req, currentUserForAccept);
+  };
 
   const handleLongPressFriend = (friend) => {
     Alert.alert(friend.displayName, "Was möchtest du tun?", [
@@ -95,7 +101,7 @@ export default function FriendsScreen({ navigation }) {
                 <View style={styles.requestActions}>
                   <TouchableOpacity
                     style={styles.acceptButton}
-                    onPress={() => acceptFriendRequest(req, currentUserForAccept)}
+                    onPress={() => handleAccept(req)}
                   >
                     <Text style={styles.acceptText}>Annehmen</Text>
                   </TouchableOpacity>

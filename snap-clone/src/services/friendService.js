@@ -48,7 +48,10 @@ export async function searchUsersByUsername(searchTerm, currentUid) {
   for (const d of [...usernameSnap.docs, ...displayNameSnap.docs]) {
     results.set(d.data().uid, d.data());
   }
-  return Array.from(results.values()).filter((u) => u.uid !== currentUid);
+  // "discoverable" faellt nur die Suche/Vorschlaege raus, nicht das
+  // eigentliche Leserecht auf das Profil - wer den Nata-Code oder Link einer
+  // Person hat, findet sie weiterhin ganz normal.
+  return Array.from(results.values()).filter((u) => u.uid !== currentUid && u.discoverable !== false);
 }
 
 export async function sendFriendRequest(fromUser, toUser) {

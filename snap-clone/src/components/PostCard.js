@@ -14,6 +14,7 @@ import {
   unlikePost,
   unsavePost,
 } from "../services/postService";
+import { hapticLight } from "../utils/haptics";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
 
@@ -34,6 +35,7 @@ export default function PostCard({ post, navigation }) {
   }, [post.id, user.uid]);
 
   const toggleLike = () => {
+    hapticLight();
     if (liked) {
       unlikePost(post.id, user.uid);
     } else {
@@ -108,7 +110,12 @@ export default function PostCard({ post, navigation }) {
             </Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={openMenu} style={styles.menuButton}>
+        <TouchableOpacity
+          onPress={openMenu}
+          style={styles.menuButton}
+          accessibilityRole="button"
+          accessibilityLabel="Weitere Optionen"
+        >
           <Text style={styles.menuDots}>⋯</Text>
         </TouchableOpacity>
       </View>
@@ -116,7 +123,13 @@ export default function PostCard({ post, navigation }) {
       <Text style={styles.text}>{post.text}</Text>
 
       <View style={styles.actionsRow}>
-        <Pressable style={styles.actionButton} onPress={toggleLike}>
+        <Pressable
+          style={styles.actionButton}
+          onPress={toggleLike}
+          accessibilityRole="button"
+          accessibilityLabel={liked ? "Gefällt mir entfernen" : "Gefällt mir"}
+          accessibilityState={{ selected: liked }}
+        >
           <Icon name="heart" size={16} color={liked ? colors.primary : colors.textMuted} />
           <Text style={[styles.actionCount, liked && styles.actionCountActive]}>
             {post.likeCount || 0}
@@ -125,14 +138,27 @@ export default function PostCard({ post, navigation }) {
         <Pressable
           style={styles.actionButton}
           onPress={() => navigation.navigate("Comments", { postId: post.id, postAuthorId: post.authorId })}
+          accessibilityRole="button"
+          accessibilityLabel="Kommentare ansehen"
         >
           <Icon name="chat" size={16} color={colors.textMuted} />
           <Text style={styles.actionCount}>{post.commentCount || 0}</Text>
         </Pressable>
-        <Pressable style={styles.actionButton} onPress={toggleSave}>
+        <Pressable
+          style={styles.actionButton}
+          onPress={toggleSave}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? "Beitrag nicht mehr merken" : "Beitrag merken"}
+          accessibilityState={{ selected: saved }}
+        >
           <Icon name="bookmark" size={16} color={saved ? colors.primary : colors.textMuted} />
         </Pressable>
-        <Pressable style={[styles.actionButton, styles.shareAction]} onPress={handleShare}>
+        <Pressable
+          style={[styles.actionButton, styles.shareAction]}
+          onPress={handleShare}
+          accessibilityRole="button"
+          accessibilityLabel="Beitrag teilen"
+        >
           <Icon name="send" size={15} color={colors.textMuted} />
         </Pressable>
       </View>

@@ -82,6 +82,18 @@ export async function clearLocation(uid) {
   await updateDoc(doc(db, "users", uid), { location: null });
 }
 
+// Zwei unabhaengige Sichtbarkeits-Stufen (siehe PrivacyScreen): discoverable
+// betrifft nur Suche/Vorschlaege, connectionsVisibility nur die eigene
+// Connections-Liste - beide aendern nichts am generellen Leserecht auf das
+// Profil selbst.
+export async function updatePrivacyPrefs(uid, { discoverable, connectionsVisibility }) {
+  const data = {};
+  if (discoverable !== undefined) data.discoverable = discoverable;
+  if (connectionsVisibility !== undefined) data.connectionsVisibility = connectionsVisibility;
+  if (Object.keys(data).length === 0) return;
+  await updateDoc(doc(db, "users", uid), data);
+}
+
 // "verified" selbst ist per Firestore-Regel nie client-schreibbar (siehe
 // firestore.rules) - dieser Flag ist rein dafuer da, die Glueckwunsch-
 // Anzeige nach einer frischen Verifizierung genau einmal zu zeigen.

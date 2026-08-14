@@ -34,6 +34,7 @@ import {
 import { blockUser, reportContent } from "../services/moderationService";
 import { getActiveChatId, setActiveChatId } from "../state/activeChat";
 import { getUserProfile } from "../services/userService";
+import { hapticLight } from "../utils/haptics";
 import { colors } from "../theme/colors";
 
 const TYPING_TIMEOUT_MS = 3000;
@@ -180,6 +181,7 @@ export default function ChatScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    hapticLight();
 
     if (editingMessage) {
       setText("");

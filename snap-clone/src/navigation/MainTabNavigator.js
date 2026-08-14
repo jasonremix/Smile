@@ -10,6 +10,7 @@ import HomeScreen from "../screens/HomeScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { colors } from "../theme/colors";
 import { shadow } from "../theme/shadow";
+import { hapticSelection } from "../utils/haptics";
 
 const Tab = createBottomTabNavigator();
 
@@ -79,22 +80,30 @@ export default function MainTabNavigator() {
         <Tab.Screen
           name="Home"
           component={HomeScreen}
-          options={{ tabBarIcon: ({ focused }) => <TabIcon name="home" label="Home" focused={focused} /> }}
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon name="home" label="Home" focused={focused} />,
+            tabBarAccessibilityLabel: "Home",
+          }}
         />
         <Tab.Screen
           name="Discovery"
           component={DiscoveryScreen}
           options={{
             tabBarIcon: ({ focused }) => <TabIcon name="search" label="Entdecken" focused={focused} />,
+            tabBarAccessibilityLabel: "Entdecken",
           }}
         />
         <Tab.Screen
           name="Create"
           component={View}
-          options={{ tabBarIcon: ({ focused }) => <CreateTabIcon focused={focused} /> }}
+          options={{
+            tabBarIcon: ({ focused }) => <CreateTabIcon focused={focused} />,
+            tabBarAccessibilityLabel: "Erstellen",
+          }}
           listeners={{
             tabPress: (e) => {
               e.preventDefault();
+              hapticSelection();
               setCreateVisible(true);
             },
           }}
@@ -104,6 +113,7 @@ export default function MainTabNavigator() {
           component={FriendsScreen}
           options={{
             tabBarIcon: ({ focused }) => <TabIcon name="people" label="Connections" focused={focused} />,
+            tabBarAccessibilityLabel: "Connections",
           }}
         />
         <Tab.Screen
@@ -111,6 +121,7 @@ export default function MainTabNavigator() {
           component={ProfileScreen}
           options={{
             tabBarIcon: ({ focused }) => <TabIcon name="person" label="Profil" focused={focused} />,
+            tabBarAccessibilityLabel: "Profil",
           }}
         />
       </Tab.Navigator>

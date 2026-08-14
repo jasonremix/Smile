@@ -84,7 +84,11 @@ export default function NotificationsScreen({ navigation }) {
         onBack={() => navigation.goBack()}
         right={
           hasUnread ? (
-            <TouchableOpacity onPress={() => markAllNotificationsRead(user.uid, notifications)}>
+            <TouchableOpacity
+              onPress={() => markAllNotificationsRead(user.uid, notifications)}
+              accessibilityRole="button"
+              accessibilityLabel="Alle als gelesen markieren"
+            >
               <Text style={styles.markAllText}>Alle gelesen</Text>
             </TouchableOpacity>
           ) : null

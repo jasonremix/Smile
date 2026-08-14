@@ -4,6 +4,7 @@ import PrimaryButton from "./PrimaryButton";
 import VerifiedBadge from "./VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { markVerifiedSeen } from "../services/userService";
+import { hapticSuccess } from "../utils/haptics";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -33,6 +34,11 @@ export default function VerifiedCelebration() {
   useEffect(() => {
     if (!pending) setDismissing(false);
   }, [pending]);
+
+  useEffect(() => {
+    if (visible) hapticSuccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const handleDismiss = async () => {
     setDismissing(true);

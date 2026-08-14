@@ -5,6 +5,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { clearLocation, shareLocationCity, updateProfileFields } from "../services/userService";
+import { hapticSelection } from "../utils/haptics";
 import { colors } from "../theme/colors";
 import { AVATAR_PALETTE } from "../theme/avatarPalette";
 import { radius } from "../theme/radius";
@@ -52,6 +53,7 @@ export default function EditProfileScreen({ navigation }) {
   };
 
   const handleToggleLocation = async (next) => {
+    hapticSelection();
     if (!next) {
       await clearLocation(user.uid).catch(() => {});
       return;
@@ -121,7 +123,10 @@ export default function EditProfileScreen({ navigation }) {
                 { backgroundColor: color },
                 avatarColor === color && styles.swatchSelected,
               ]}
-              onPress={() => setAvatarColor(color)}
+              onPress={() => {
+                hapticSelection();
+                setAvatarColor(color);
+              }}
             />
           ))}
         </View>

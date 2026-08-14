@@ -13,6 +13,7 @@ import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { addComment, listenComments } from "../services/postService";
+import { hapticLight } from "../utils/haptics";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
 import { shadow } from "../theme/shadow";
@@ -32,6 +33,7 @@ export default function CommentsScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
+    hapticLight();
     setSending(true);
     setText("");
     try {

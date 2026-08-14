@@ -20,7 +20,13 @@ export default function ScreenHeader({ title, onBack, backIcon = "back", right, 
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }, style]}>
       {isDetail ? (
         <>
-          <TouchableOpacity onPress={onBack} style={styles.iconButton} hitSlop={8}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.iconButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={backIcon === "close" ? "Schließen" : "Zurück"}
+          >
             <Icon name={backIcon} size={18} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.detailTitle} numberOfLines={1}>

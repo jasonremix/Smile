@@ -98,6 +98,12 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity
             style={styles.messagesButton}
             onPress={() => navigation.navigate("Notifications")}
+            accessibilityRole="button"
+            accessibilityLabel={
+              unreadNotifications > 0
+                ? `Benachrichtigungen, ${unreadNotifications} ungelesen`
+                : "Benachrichtigungen"
+            }
           >
             <Icon name="bell" size={20} color={colors.text} />
             {unreadNotifications > 0 ? (
@@ -108,7 +114,12 @@ export default function HomeScreen({ navigation }) {
               </View>
             ) : null}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.messagesButton} onPress={() => navigation.navigate("Chats")}>
+          <TouchableOpacity
+            style={styles.messagesButton}
+            onPress={() => navigation.navigate("Chats")}
+            accessibilityRole="button"
+            accessibilityLabel={unreadCount > 0 ? `Nachrichten, ${unreadCount} ungelesen` : "Nachrichten"}
+          >
             <Icon name="chat" size={20} color={colors.text} />
             {unreadCount > 0 ? (
               <View style={styles.messagesBadge}>

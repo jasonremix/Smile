@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
 import Icon from "./Icon";
 import { useAuth } from "../context/AuthContext";
+import { hapticSuccess } from "../utils/haptics";
 import { getLevelIcon, getLevelInfo, getLevelName } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -42,6 +43,7 @@ export default function LevelUpCelebration() {
   }, [user?.nataScore]);
 
   const showCelebration = (level) => {
+    hapticSuccess();
     setCelebrationLevel(level);
     opacity.setValue(0);
     translateY.setValue(6);

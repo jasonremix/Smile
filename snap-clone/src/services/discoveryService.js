@@ -15,7 +15,15 @@ export async function getFriendSuggestions(currentUid, myFriends, limitCount = 1
 
   await Promise.all(
     sampleFriends.map(async (friend) => {
-      const snap = await getDocs(collection(db, "users", friend.uid, "friends"));
+      // Wer seine Connections-Liste auf "Nur ich" gestellt hat, lehnt diesen
+      // Read per Firestore-Regel ab - einfach ueberspringen statt die ganze
+      // Vorschlagsberechnung platzen zu lassen.
+      let snap;
+      try {
+        snap = await getDocs(collection(db, "users", friend.uid, "friends"));
+      } catch (e) {
+        return;
+      }
       snap.docs.forEach((d) => {
         const data = d.data();
         if (excludedIds.has(data.uid)) return;

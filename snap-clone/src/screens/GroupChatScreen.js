@@ -26,6 +26,7 @@ import {
   toggleGroupMessageReaction,
 } from "../services/groupService";
 import { reportContent } from "../services/moderationService";
+import { hapticLight } from "../utils/haptics";
 import { colors } from "../theme/colors";
 
 export default function GroupChatScreen({ route, navigation }) {
@@ -81,6 +82,7 @@ export default function GroupChatScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    hapticLight();
 
     if (editingMessage) {
       setText("");
