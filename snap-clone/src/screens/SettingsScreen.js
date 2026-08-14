@@ -79,6 +79,7 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={styles.sectionLabel}>Sicherheit</Text>
         <SettingsSection>
+          <SettingsRow icon="shield" label="Sicherheitsmaßnahmen" onPress={() => navigation.navigate("Security")} />
           <SettingsRow icon="block" label="Blockierte Nutzer" onPress={() => navigation.navigate("BlockedUsers")} />
           <SettingsRow
             icon="trash"
@@ -90,6 +91,8 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={styles.sectionLabel}>App</Text>
         <SettingsSection>
+          <SettingsRow icon="info" label="Über Nata" onPress={() => navigation.navigate("About")} />
+          <SettingsRow icon="roadmap" label="Roadmap" onPress={() => navigation.navigate("Roadmap")} />
           <SettingsRow
             icon="chat"
             label="Feedback geben"

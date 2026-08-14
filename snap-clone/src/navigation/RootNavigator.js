@@ -7,6 +7,7 @@ import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
 import UpdateAnnouncementBanner from "../components/UpdateAnnouncementBanner";
 import VerifiedCelebration from "../components/VerifiedCelebration";
+import AboutScreen from "../screens/AboutScreen";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import CameraScreen from "../screens/CameraScreen";
@@ -25,8 +26,10 @@ import NotificationsScreen from "../screens/NotificationsScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
 import QRCodeScreen from "../screens/QRCodeScreen";
 import ReferralScreen from "../screens/ReferralScreen";
+import RoadmapScreen from "../screens/RoadmapScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
 import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
+import SecurityScreen from "../screens/SecurityScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import UserProfileScreen from "../screens/UserProfileScreen";
@@ -222,6 +225,9 @@ export default function RootNavigator() {
             component={NotificationsScreen}
             options={{ headerShown: false }}
           />
+          <Stack.Screen name="About" component={AboutScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Roadmap" component={RoadmapScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
           <Stack.Screen
             name="Referral"
             component={ReferralScreen}

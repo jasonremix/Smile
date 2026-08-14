@@ -402,6 +402,23 @@ const GLYPHS = {
       <Bar top={10.5} left={11.1} width={2} height={7} radius={1} color={c} />
     </>
   ),
+  shield: (c) => (
+    <>
+      <Box top={3} left={7} width={10} height={8} color={c} radius={2.5} openBottom />
+      <Tri direction="down" top={11} left={7} size={10} color={c} />
+      <Bar top={12.5} left={9.3} width={4} height={1.6} rotate={45} color={c} />
+      <Bar top={9.7} left={10.3} width={7.5} height={1.6} rotate={-45} color={c} />
+    </>
+  ),
+  roadmap: (c) => (
+    <>
+      <Dot top={10} left={2} size={4} color={c} />
+      <Bar top={11.3} left={7} width={5} height={1.4} color={c} />
+      <Dot top={8.5} left={13} size={5} color={c} />
+      <Bar top={11.3} left={19} width={3} height={1.4} color={c} />
+      <Dot top={10} left={20.5} size={4} color={c} />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 22, color = colors.text, style }) {
