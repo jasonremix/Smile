@@ -187,7 +187,6 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.greeting}>Hey, {user?.displayName || "du"}</Text>
             {user?.verified ? <VerifiedBadge size={16} /> : null}
           </View>
-          <Text style={styles.subGreeting}>Schoen, dass du da bist.</Text>
         </View>
         <View>
           {booVisible ? (
@@ -208,11 +207,13 @@ export default function HomeScreen({ navigation }) {
       <MomentsTray navigation={navigation} />
       <StatusStrip navigation={navigation} />
 
-      <NataScoreCard
-        score={user?.nataScore ?? 0}
-        weeklyPoints={weeklyPoints}
-        onPress={() => navigation.navigate("ScoreHistory")}
-      />
+      <View style={styles.scoreCardWrap}>
+        <NataScoreCard
+          score={user?.nataScore ?? 0}
+          weeklyPoints={weeklyPoints}
+          onPress={() => navigation.navigate("ScoreHistory")}
+        />
+      </View>
 
       {incomingRequests.length > 0 ? (
         <TouchableOpacity style={styles.highlightCard} onPress={() => navigation.navigate("Friends")}>
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
   },
   brand: {
     color: colors.text,
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
   },
   greetingTextBlock: {
     flex: 1,
@@ -350,11 +351,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 22,
     fontWeight: "800",
-  },
-  subGreeting: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginTop: 2,
   },
   avatar: {
     width: 46,
@@ -401,14 +397,17 @@ const styles = StyleSheet.create({
     ...typography.footnote,
     marginTop: 2,
   },
+  scoreCardWrap: {
+    marginTop: spacing.lg,
+  },
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
-    marginTop: spacing.xxl,
+    marginTop: spacing.lg,
   },
   feedTabRow: {
     flexDirection: "row",
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
     marginBottom: spacing.md,
     gap: spacing.sm,
   },

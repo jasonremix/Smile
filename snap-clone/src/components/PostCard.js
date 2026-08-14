@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Alert, Pressable, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Animated, Pressable, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FilteredMedia from "./FilteredMedia";
 import Icon from "./Icon";
 import ReportModal from "./ReportModal";
@@ -29,6 +29,13 @@ export default function PostCard({ post, navigation }) {
   const [reporting, setReporting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const isOwn = post.authorId === user.uid;
+
+  // Sanftes Einblenden statt hartem Pop-in beim Scrollen - laeuft nur einmal
+  // pro gemountetem Card-Exemplar, nicht bei jedem Re-Render.
+  const enter = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(enter, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  }, [enter]);
 
   useEffect(() => {
     const unsubReaction = listenMyReaction(post.id, user.uid, setMyReaction);
@@ -114,7 +121,15 @@ export default function PostCard({ post, navigation }) {
   };
 
   return (
-    <View style={styles.card}>
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          opacity: enter,
+          transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+        },
+      ]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerTappable} onPress={openAuthorProfile}>
           <View style={[styles.avatar, { backgroundColor: post.authorAvatarColor || colors.primary }]}>
@@ -230,7 +245,7 @@ export default function PostCard({ post, navigation }) {
           })
         }
       />
-    </View>
+    </Animated.View>
   );
 }
 

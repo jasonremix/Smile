@@ -1,80 +1,86 @@
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text, View } from "react-native";
 import { useBetaCountdown } from "../hooks/useBetaCountdown";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import Icon from "./Icon";
 
-// Bewusst ganz oben im Home-Feed platziert statt nur in den Einstellungen
-// versteckt - der Gruender moechte, dass wirklich jede Person den Ablauf
-// der Beta sieht, nicht nur wer aktiv danach sucht.
-export default function BetaCountdownBanner({ onPress }) {
+// Bewusst als schmale Pille statt grosser Karte - soll sofort auffallen,
+// ohne den Home-Feed mit einem weiteren vollbreiten Block zuzustellen (der
+// Gruender wollte den Feed insgesamt uebersichtlicher, nicht voller).
+export default function BetaCountdownBanner() {
   const { expired, days, hours, minutes } = useBetaCountdown();
 
+  const pulse = useRef(new Animated.Value(1)).current;
+  const enter = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(enter, { toValue: 1, useNativeDriver: true, friction: 7, tension: 60 }).start();
+  }, [enter]);
+
+  useEffect(() => {
+    if (expired) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.18, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.delay(1400),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [expired, pulse]);
+
+  const label = expired
+    ? "Beta beendet"
+    : days > 0
+    ? `Noch ${days} ${days === 1 ? "Tag" : "Tage"} Beta`
+    : hours > 0
+    ? `Noch ${hours} ${hours === 1 ? "Stunde" : "Stunden"} Beta`
+    : `Noch ${minutes} ${minutes === 1 ? "Minute" : "Minuten"} Beta`;
+
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      disabled={!onPress}
-      activeOpacity={onPress ? 0.8 : 1}
-      accessibilityRole={onPress ? "button" : "text"}
+    <Animated.View
+      style={[
+        styles.pill,
+        {
+          opacity: enter,
+          transform: [{ scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
+        },
+      ]}
+      accessibilityRole="text"
       accessibilityLabel={
         expired
           ? "Die Beta ist beendet"
           : `Beta endet in ${days} Tagen, ${hours} Stunden und ${minutes} Minuten, am 24. September 2026`
       }
     >
-      <Icon name="warning" size={20} color={colors.primaryLight} style={styles.icon} />
-      <View style={styles.textBlock}>
-        {expired ? (
-          <>
-            <Text style={styles.title}>Die Beta ist beendet</Text>
-            <Text style={styles.subtitle}>Nata war bis 24.09.2026 als geschlossene Beta verfuegbar.</Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.title}>
-              {days > 0
-                ? `Noch ${days} ${days === 1 ? "Tag" : "Tage"} bis zum Beta-Ende`
-                : hours > 0
-                ? `Noch ${hours} ${hours === 1 ? "Stunde" : "Stunden"} bis zum Beta-Ende`
-                : `Noch ${minutes} ${minutes === 1 ? "Minute" : "Minuten"} bis zum Beta-Ende`}
-            </Text>
-            <Text style={styles.subtitle}>Die geschlossene Beta endet am 24.09.2026</Text>
-          </>
-        )}
-      </View>
-    </TouchableOpacity>
+      <Animated.View style={{ transform: [{ scale: expired ? 1 : pulse }] }}>
+        <Icon name="warning" size={13} color={colors.primaryLight} />
+      </Animated.View>
+      <Text style={styles.text}>{label} · endet 24.09.</Text>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  pill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(147, 51, 234, 0.14)",
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(147, 51, 234, 0.16)",
     borderWidth: 1,
     borderColor: "rgba(147, 51, 234, 0.4)",
-    borderRadius: radius.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: spacing.sm + 2,
+    marginBottom: spacing.md,
+    gap: 6,
   },
-  icon: {
-    marginRight: spacing.md,
-  },
-  textBlock: {
-    flex: 1,
-  },
-  title: {
+  text: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 11.5,
+    fontWeight: "700",
   },
 });
