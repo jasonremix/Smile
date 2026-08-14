@@ -3,7 +3,7 @@
     "name": "Nata",
     "slug": "snap-clone",
     "scheme": "nata",
-    "version": "1.1.0",
+    "version": "1.0.1",
     "privacy": "unlisted",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
