@@ -10,8 +10,14 @@ import {
 } from "../config/socialAuth";
 
 // Noetig, damit die Auth-Session-Antwort ankommt, sobald der System-Browser
-// nach dem Google-Login wieder zur App zurueckspringt.
-WebBrowser.maybeCompleteAuthSession();
+// nach dem Google-Login wieder zur App zurueckspringt. In try/catch, falls
+// das native Modul in einer aelteren App-Version fehlt.
+try {
+  WebBrowser.maybeCompleteAuthSession();
+} catch (e) {
+  // Natives expo-web-browser-Modul nicht vorhanden - Social-Login wird
+  // ohnehin ueber SocialSignInRow ausgeblendet.
+}
 
 // OAuth-Redirect-Flow ueber expo-auth-session (Browser-basiert, kein
 // natives Google-SDK) - erfordert ein frisches natives Build, weil dafuer

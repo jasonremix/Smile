@@ -40,15 +40,16 @@ service cloud.firestore {
       // Manipulationsschutz auf Basis reiner Firestore-Regeln hat Grenzen:
       // nataScore darf sich pro Schreibvorgang nur um einen kleinen,
       // plausiblen Betrag aendern statt auf beliebige Werte gesetzt zu
-      // werden. Wirklich serverseitig garantiert faelschungssicher wird der
-      // Score erst mit einer Cloud Function statt Client-Schreibzugriff
-      // (siehe Roadmap: Push-Benachrichtigungen/Content-Moderation brauchen
-      // ohnehin Cloud Functions - dort dann nataScore mit umziehen).
+      // werden. Obergrenze +20 pro Schreibvorgang - muss zu
+      // MAX_SCORE_PER_ACTION in userService.js passen (hoechste einzelne
+      // Aktion: Beitrag +6, Snap-Fanout gedeckelt auf +20). Wirklich
+      // serverseitig garantiert faelschungssicher wird der Score erst mit
+      // einer Cloud Function statt Client-Schreibzugriff (siehe Roadmap).
       allow update: if isOwner(userId)
         && (
           !('nataScore' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.nataScore >= resource.data.nataScore
-              && request.resource.data.nataScore <= resource.data.nataScore + 5)
+              && request.resource.data.nataScore <= resource.data.nataScore + 20)
         )
         && (
           !('username' in request.resource.data.diff(resource.data).affectedKeys())

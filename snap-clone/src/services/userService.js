@@ -56,20 +56,33 @@ export async function getUserProfile(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
+// Firestore-Regel begrenzt den nataScore-Zuwachs pro Schreibvorgang (Schutz
+// gegen manipulierte Clients). Groessere Betraege hier deckeln, damit eine
+// einzelne Aktion die Regel nicht verletzt und der Score-Write abgelehnt
+// wird. Muss zum Wert in firestore.rules passen.
+export const MAX_SCORE_PER_ACTION = 20;
+
 // "reason" ist ein kurzer, fuer Menschen lesbarer Text (z.B. "Snap gesendet"),
 // der in der Score-Historie angezeigt wird - kein interner Code.
+// WICHTIG: Der Score ist ein Zusatz. Schlaegt der Schreibvorgang fehl (z.B.
+// weil eine Regel greift oder das Netz weg ist), darf das die eigentliche
+// Aktion (Beitrag posten, Nachricht senden, Snap verschicken) NICHT kaputt
+// machen - deshalb komplett in try/catch und nie nach oben weiterwerfen.
 export async function bumpNataScore(uid, amount = 1, reason = "Aktivitaet") {
-  await updateDoc(doc(db, "users", uid), {
-    nataScore: increment(amount),
-  });
-  await addDoc(collection(db, "users", uid, "scoreEvents"), {
-    amount,
-    reason,
-    createdAt: serverTimestamp(),
-  }).catch(() => {
-    // Score-Historie ist ein Zusatz - ein fehlgeschlagener Log-Eintrag darf
-    // den eigentlichen Punktezuwachs nicht rueckgaengig machen.
-  });
+  const safeAmount = Math.max(0, Math.min(amount, MAX_SCORE_PER_ACTION));
+  if (safeAmount === 0) return;
+  try {
+    await updateDoc(doc(db, "users", uid), {
+      nataScore: increment(safeAmount),
+    });
+    await addDoc(collection(db, "users", uid, "scoreEvents"), {
+      amount: safeAmount,
+      reason,
+      createdAt: serverTimestamp(),
+    });
+  } catch (e) {
+    // Punktevergabe ist best effort - Aktion war trotzdem erfolgreich.
+  }
 }
 
 export function listenScoreEventsSince(uid, sinceDate, callback) {

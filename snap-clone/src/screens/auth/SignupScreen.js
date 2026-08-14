@@ -10,9 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AppleSignInButton from "../../components/AppleSignInButton";
-import GoogleSignInButton from "../../components/GoogleSignInButton";
 import PrimaryButton from "../../components/PrimaryButton";
+import SocialSignInRow, { socialSignInAvailable } from "../../components/SocialSignInRow";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
 
@@ -58,14 +57,16 @@ export default function SignupScreen({ navigation }) {
           <Text style={styles.greeting}>Schön, dass du zu Nata kommst!</Text>
         </View>
 
-        <GoogleSignInButton style={styles.socialButton} />
-        <AppleSignInButton style={styles.socialButton} />
-
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>oder mit E-Mail</Text>
-          <View style={styles.dividerLine} />
-        </View>
+        {socialSignInAvailable ? (
+          <>
+            <SocialSignInRow buttonStyle={styles.socialButton} />
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>oder mit E-Mail</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </>
+        ) : null}
 
         <TextInput
           style={styles.input}
