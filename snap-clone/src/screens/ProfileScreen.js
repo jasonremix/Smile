@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import BetaBadge from "../components/BetaBadge";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
 import ScreenHeader from "../components/ScreenHeader";
-import SettingsRow from "../components/SettingsRow";
-import SettingsSection from "../components/SettingsSection";
 import StatusEditor from "../components/StatusEditor";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { listenUserPosts } from "../services/postService";
 import { clearStatus, isStatusActive, setStatus } from "../services/userService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isModal = navigation.canGoBack();
   const [posts, setPosts] = useState([]);
   const [statusEditorVisible, setStatusEditorVisible] = useState(false);
@@ -27,21 +26,31 @@ export default function ProfileScreen({ navigation }) {
     return unsubscribe;
   }, [user?.uid]);
 
-  const handleLogout = () => {
-    Alert.alert("Abmelden", "Moechtest du dich wirklich abmelden?", [
-      { text: "Abbrechen", style: "cancel" },
-      { text: "Abmelden", style: "destructive", onPress: logout },
-    ]);
-  };
+  const settingsButton = (
+    <TouchableOpacity
+      style={styles.settingsButton}
+      onPress={() => navigation.navigate("Settings")}
+      hitSlop={8}
+    >
+      <Icon name="settings" size={18} color={colors.text} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       {isModal ? (
-        <ScreenHeader onBack={() => navigation.goBack()} backIcon="close" title="Profil" />
-      ) : null}
+        <ScreenHeader
+          onBack={() => navigation.goBack()}
+          backIcon="close"
+          title="Profil"
+          right={settingsButton}
+        />
+      ) : (
+        <ScreenHeader title="Profil" right={settingsButton} />
+      )}
 
       <FlatList
-        contentContainerStyle={[styles.scroll, isModal && { paddingTop: 8 }]}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         data={posts}
         keyExtractor={(item) => item.id}
@@ -79,42 +88,6 @@ export default function ProfileScreen({ navigation }) {
               score={user?.nataScore ?? 0}
               onPress={() => navigation.navigate("ScoreHistory")}
             />
-            <View style={{ height: 24 }} />
-
-            <View style={{ width: "100%" }}>
-              <SettingsSection>
-                <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
-                <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
-                <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
-                <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
-              </SettingsSection>
-
-              <SettingsSection>
-                <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
-                <SettingsRow
-                  icon="document"
-                  label="Datenschutz & Nutzungsbedingungen"
-                  onPress={() => navigation.navigate("Legal")}
-                />
-                <SettingsRow
-                  icon="chat"
-                  label="Feedback geben"
-                  onPress={() => navigation.navigate("Feedback")}
-                  badge={<BetaBadge style={styles.feedbackBadge} />}
-                />
-              </SettingsSection>
-            </View>
-
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutButtonText}>Abmelden</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.deleteAccountButton}
-              onPress={() => navigation.navigate("DeleteAccount")}
-            >
-              <Text style={styles.deleteAccountText}>Konto löschen</Text>
-            </TouchableOpacity>
 
             <Text style={styles.postsHeading}>Meine Beitraege</Text>
           </View>
@@ -140,9 +113,16 @@ const styles = StyleSheet.create({
   },
   scroll: {
     alignItems: "center",
-    paddingTop: 80,
+    paddingTop: spacing.sm,
     paddingHorizontal: 24,
     paddingBottom: 48,
+  },
+  settingsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    justifyContent: "center",
+    alignItems: "center",
   },
   postWrapper: {
     width: "100%",
@@ -210,29 +190,6 @@ const styles = StyleSheet.create({
     color: colors.primaryLight,
     fontSize: 11,
     fontWeight: "700",
-  },
-  feedbackBadge: {
-    marginRight: 8,
-  },
-  logoutButton: {
-    marginTop: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-  },
-  logoutButtonText: {
-    color: colors.danger,
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  deleteAccountButton: {
-    marginTop: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 32,
-  },
-  deleteAccountText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    textDecorationLine: "underline",
   },
   postsHeading: {
     color: colors.textMuted,

@@ -336,6 +336,30 @@ const GLYPHS = {
       <Dot top={16.5} left={16.5} size={4} color={c} />
     </>
   ),
+  settings: (c) => (
+    <>
+      <Bar top={6} left={3} width={18} height={STROKE} color={c} />
+      <Dot top={3} left={12} size={6} color={c} />
+      <Bar top={12} left={3} width={18} height={STROKE} color={c} />
+      <Dot top={9} left={5} size={6} color={c} />
+      <Bar top={18} left={3} width={18} height={STROKE} color={c} />
+      <Dot top={15} left={16} size={6} color={c} />
+    </>
+  ),
+  trash: (c) => (
+    <>
+      <Bar top={6} left={3} width={18} height={STROKE} color={c} />
+      <Box top={3} left={9} width={6} height={3} color={c} radius={1} />
+      <Box top={6} left={5.5} width={13} height={14} color={c} radius={2} />
+    </>
+  ),
+  logout: (c) => (
+    <>
+      <Box top={4} left={3} width={10} height={16} color={c} radius={2.5} />
+      <Bar top={11.1} left={8} width={11} color={c} />
+      <Tri top={8} left={16.5} direction="right" size={7} color={c} />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 22, color = colors.text, style }) {

@@ -42,3 +42,13 @@ export function getAchievementsProgress(score) {
   const { level } = getLevelInfo(score);
   return ACHIEVEMENTS.map((a) => ({ ...a, unlocked: level >= a.requiredLevel }));
 }
+
+// Icon-Tier fuers Score-Badge - steigt mit dem Level, unabhaengig von den
+// einzelnen ACHIEVEMENTS-Meilensteinen.
+export function getLevelIcon(level) {
+  if (level >= 12) return "crown";
+  if (level >= 8) return "diamond";
+  if (level >= 5) return "star";
+  if (level >= 2) return "flame";
+  return "sparkle";
+}

@@ -23,6 +23,7 @@ import QRCodeScreen from "../screens/QRCodeScreen";
 import ReferralScreen from "../screens/ReferralScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
 import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import UserProfileScreen from "../screens/UserProfileScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
@@ -219,6 +220,7 @@ export default function RootNavigator() {
               headerTintColor: colors.text,
             }}
           />
+          <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       ) : (
         <AuthNavigator />

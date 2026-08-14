@@ -1,7 +1,11 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { getLevelInfo } from "../utils/nataLevel";
+import Icon from "./Icon";
+import { getLevelIcon, getLevelInfo } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
 
 const WEEKLY_GOAL = 20;
 
@@ -16,12 +20,12 @@ export default function NataScoreCard({ score, weeklyPoints = 0, onPress }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.topRow}>
-        <View>
-          <Text style={styles.label}>Nata Score</Text>
-          <Text style={styles.score}>{score}</Text>
+        <View style={styles.levelIconCircle}>
+          <Icon name={getLevelIcon(level)} size={20} color={colors.primary} />
         </View>
-        <View style={styles.levelBadge}>
-          <Text style={styles.levelText}>Level {level}</Text>
+        <View style={styles.scoreBlock}>
+          <Text style={styles.label}>Nata Score · Level {level}</Text>
+          <Text style={styles.score}>{score}</Text>
         </View>
       </View>
 
@@ -58,59 +62,49 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     backgroundColor: colors.surface,
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
   },
   pressed: {
-    opacity: 0.85,
+    backgroundColor: colors.surfaceLight,
   },
   topRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 14,
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  levelIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.pill,
+    backgroundColor: `${colors.primary}22`,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+  },
+  scoreBlock: {
+    flex: 1,
   },
   label: {
     color: colors.textMuted,
-    fontSize: 13,
+    ...typography.footnote,
     marginBottom: 2,
   },
   score: {
     color: colors.text,
-    fontSize: 34,
-    fontWeight: "800",
-  },
-  levelBadge: {
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  levelText: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 14,
+    fontSize: 30,
+    fontWeight: "700",
   },
   progressTrack: {
     width: "100%",
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: radius.pill,
     backgroundColor: colors.surfaceLight,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
   },
   progressFillMuted: {
@@ -118,20 +112,20 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 8,
+    ...typography.caption,
+    marginTop: spacing.sm,
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
-    marginVertical: 16,
+    marginVertical: spacing.lg,
   },
   weeklyRow: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   weeklyText: {
     color: colors.text,
-    fontSize: 13,
+    ...typography.footnote,
     fontWeight: "600",
   },
 });
