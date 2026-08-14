@@ -12,6 +12,8 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Foto-/Video-Filter beim Aufnehmen (Warm, Kühl, Sonnenuntergang, Nacht, Retro) - live im Sucher wählbar, für alle Empfänger:innen gleich sichtbar",
+  "Ankündigungen des Gründers erscheinen jetzt dauerhaft in den Benachrichtigungen (nicht mehr nur als flüchtiger Banner)",
   "Automatische Sperr-/Timeout-Eskalation bei wiederholten Verstößen - Dauer richtet sich nach Schwere, serverseitig in den Datenbank-Zugriffsregeln durchgesetzt (nicht nur im Client umgehbar)",
   "Support-Tickets: Bot-Antworten in Echtzeit, mit optionaler Weiterleitung an den Gründer (@jasonbuerger)",
   "Automatische Inhaltsprüfung, client- und serverseitig (Firestore-Regeln) - deutlich erweiterte Begriffsliste, eigene Kategorie für Drohungen sowie einfühlsame Krisen-Unterstützung mit Telefonseelsorge-Hinweis statt reiner Regelverstoß-Meldung",

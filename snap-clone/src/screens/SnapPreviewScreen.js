@@ -1,14 +1,14 @@
-import { Video } from "expo-av";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import FilteredMedia from "../components/FilteredMedia";
+import FilterPickerRow from "../components/FilterPickerRow";
 import Icon from "../components/Icon";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
@@ -20,7 +20,7 @@ import { colors } from "../theme/colors";
 const TIMER_OPTIONS = [1, 3, 5, 10];
 
 export default function SnapPreviewScreen({ route, navigation }) {
-  const { uri, mediaType, intent } = route.params;
+  const { uri, mediaType, intent, filter: initialFilter } = route.params;
   const isStory = intent === "story";
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
@@ -28,6 +28,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
   const [duration, setDuration] = useState(5);
   const [storyVisibility, setStoryVisibility] = useState("friends"); // "friends" | "custom"
   const [sending, setSending] = useState(false);
+  const [filter, setFilter] = useState(initialFilter || "none");
 
   useEffect(() => {
     const unsubscribe = listenFriends(user.uid, setFriends);
@@ -57,6 +58,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
           mediaType,
           visibility: storyVisibility,
           visibleTo: storyVisibility === "custom" ? selected : [],
+          filter,
         });
       } else {
         await sendSnap({
@@ -66,6 +68,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
           localUri: uri,
           mediaType,
           viewDuration: duration,
+          filter,
         });
       }
       navigation.popToTop();
@@ -84,15 +87,19 @@ export default function SnapPreviewScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.mediaContainer}>
-        {mediaType === "video" ? (
-          <Video source={{ uri }} style={styles.media} resizeMode="cover" shouldPlay isLooping />
-        ) : (
-          <Image source={{ uri }} style={styles.media} />
-        )}
+        <FilteredMedia
+          uri={uri}
+          mediaType={mediaType}
+          filterId={filter}
+          style={styles.media}
+          videoProps={{ shouldPlay: true, isLooping: true }}
+        />
 
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
           <Icon name="close" size={16} color="#fff" />
         </TouchableOpacity>
+
+        <FilterPickerRow value={filter} onChange={setFilter} style={styles.filterRow} />
 
         {isStory ? null : (
           <View style={styles.timerRow}>
@@ -202,6 +209,11 @@ const styles = StyleSheet.create({
   },
   media: {
     flex: 1,
+  },
+  filterRow: {
+    position: "absolute",
+    bottom: 16,
+    width: "100%",
   },
   closeButton: {
     position: "absolute",

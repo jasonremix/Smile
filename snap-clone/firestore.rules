@@ -294,7 +294,11 @@ service cloud.firestore {
           && request.resource.data.ownerId == userId
           && request.resource.data.mediaUrl is string
           && request.resource.data.visibility in ['friends', 'custom']
-          && (request.resource.data.visibility != 'custom' || request.resource.data.visibleTo is list);
+          && (request.resource.data.visibility != 'custom' || request.resource.data.visibleTo is list)
+          && (
+            !('filter' in request.resource.data)
+            || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+          );
         // Erlaubt anderen Nutzern, sich als "viewer" einzutragen - dabei darf
         // sich ausschliesslich das viewers-Feld aendern.
         allow update: if isSignedIn()
@@ -378,6 +382,10 @@ service cloud.firestore {
         && request.resource.data.mediaUrl is string
         && request.resource.data.viewDuration >= 1
         && request.resource.data.viewDuration <= 10
+        && (
+          !('filter' in request.resource.data)
+          || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+        )
         && isFriendOf(request.resource.data.recipientId);
       // replayUsed darf nur von der empfangenden Person und nur einmal von
       // false/undefined auf true gesetzt werden - nie zurueck, damit das

@@ -1,13 +1,12 @@
-import { Video } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import FilteredMedia from "../components/FilteredMedia";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { reportContent } from "../services/moderationService";
@@ -85,19 +84,18 @@ export default function StoryViewerScreen({ route, navigation }) {
         ) : null}
       </View>
 
-      {current.mediaType === "video" ? (
-        <Video
-          source={{ uri: current.mediaUrl }}
-          style={styles.media}
-          resizeMode="cover"
-          shouldPlay
-          onPlaybackStatusUpdate={(status) => {
+      <FilteredMedia
+        uri={current.mediaUrl}
+        mediaType={current.mediaType}
+        filterId={current.filter}
+        style={styles.media}
+        videoProps={{
+          shouldPlay: true,
+          onPlaybackStatusUpdate: (status) => {
             if (status.didJustFinish) goNext();
-          }}
-        />
-      ) : (
-        <Image source={{ uri: current.mediaUrl }} style={styles.media} />
-      )}
+          },
+        }}
+      />
 
       <View style={styles.tapZones}>
         <TouchableWithoutFeedback onPress={goPrev}>

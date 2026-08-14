@@ -10,6 +10,7 @@ import StatusStrip from "../components/StatusStrip";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { useUnreadChats } from "../hooks/useUnreadChats";
+import { useUnseenAnnouncementCount } from "../hooks/useUnseenAnnouncementCount";
 import { listenFriends, listenIncomingRequests } from "../services/friendService";
 import { listenUnreadNotificationCount } from "../services/notificationService";
 import {
@@ -50,6 +51,8 @@ export default function HomeScreen({ navigation }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const unseenAnnouncementCount = useUnseenAnnouncementCount();
+  const bellBadgeCount = unreadNotifications + unseenAnnouncementCount;
 
   useEffect(() => {
     const unsubscribe = listenIncomingRequests(user.uid, setIncomingRequests);
@@ -145,16 +148,16 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("Notifications")}
             accessibilityRole="button"
             accessibilityLabel={
-              unreadNotifications > 0
-                ? `Benachrichtigungen, ${unreadNotifications} ungelesen`
+              bellBadgeCount > 0
+                ? `Benachrichtigungen, ${bellBadgeCount} ungelesen`
                 : "Benachrichtigungen"
             }
           >
             <Icon name="bell" size={20} color={colors.text} />
-            {unreadNotifications > 0 ? (
+            {bellBadgeCount > 0 ? (
               <View style={styles.messagesBadge}>
                 <Text style={styles.messagesBadgeText}>
-                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  {bellBadgeCount > 9 ? "9+" : bellBadgeCount}
                 </Text>
               </View>
             ) : null}

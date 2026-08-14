@@ -1,19 +1,20 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { listenAnnouncements } from "../services/adminService";
+import { getSeenAnnouncementIds, markAnnouncementSeen } from "../utils/announcementSeen";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
-const STORAGE_KEY = "nata:lastSeenAnnouncementId";
 const AUTO_HIDE_MS = 6000;
 
-// Gleiches Prinzip wie UpdateAnnouncementBanner.js: rein lokal per
-// AsyncStorage gemerkt, welche Ankuendigung schon gezeigt wurde - es gibt
-// KEINE Push-/E-Mail-Benachrichtigung, der Banner erscheint nur, wenn
-// jemand die App gerade offen hat/oeffnet.
+// Nutzt denselben "gesehen"-Stand wie NotificationsScreen/Glocke-Badge
+// (siehe utils/announcementSeen.js) - eine hier gezeigte Ankuendigung gilt
+// ueberall als gesehen, und umgekehrt. Es gibt KEINE Push-/E-Mail-
+// Benachrichtigung, der Banner erscheint nur, wenn jemand die App gerade
+// offen hat/oeffnet - wer ihn verpasst, findet dieselbe Ankuendigung
+// trotzdem dauerhaft in den Benachrichtigungen wieder (siehe dort).
 export default function FounderAnnouncementBanner() {
   const [current, setCurrent] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -25,16 +26,12 @@ export default function FounderAnnouncementBanner() {
     const unsubscribe = listenAnnouncements(async (items) => {
       const latest = items[0];
       if (!latest || shownIdRef.current === latest.id) return;
-      try {
-        const lastSeenId = await AsyncStorage.getItem(STORAGE_KEY);
-        if (lastSeenId === latest.id) return;
-        shownIdRef.current = latest.id;
-        setCurrent(latest);
-        show();
-        await AsyncStorage.setItem(STORAGE_KEY, latest.id);
-      } catch {
-        // Reiner Komfort-Hinweis - bei einem Speicherfehler passiert sonst nichts.
-      }
+      const seenIds = await getSeenAnnouncementIds();
+      if (seenIds.includes(latest.id)) return;
+      shownIdRef.current = latest.id;
+      setCurrent(latest);
+      show();
+      await markAnnouncementSeen(latest.id);
     });
     return unsubscribe;
   }, []);

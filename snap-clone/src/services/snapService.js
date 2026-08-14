@@ -30,7 +30,7 @@ async function uploadMedia(localUri, folder, uid, mediaType) {
 
 // Verschickt einen Snap an mehrere Freunde. Fuer jeden Empfaenger wird ein
 // eigenes Dokument angelegt, damit "gesehen"-Status pro Person getrennt ist.
-export async function sendSnap({ senderId, senderName, recipientIds, localUri, mediaType, viewDuration }) {
+export async function sendSnap({ senderId, senderName, recipientIds, localUri, mediaType, viewDuration, filter }) {
   const mediaUrl = await uploadMedia(localUri, "snaps", senderId, mediaType);
 
   const writes = recipientIds.map((recipientId) =>
@@ -40,6 +40,7 @@ export async function sendSnap({ senderId, senderName, recipientIds, localUri, m
       recipientId,
       mediaUrl,
       mediaType, // "photo" | "video"
+      filter: filter || "none",
       viewDuration: viewDuration || 5,
       viewed: false,
       createdAt: serverTimestamp(),

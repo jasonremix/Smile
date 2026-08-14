@@ -1,7 +1,5 @@
-import { Video } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -9,6 +7,7 @@ import {
   View,
 } from "react-native";
 import BetaBadge from "../components/BetaBadge";
+import FilteredMedia from "../components/FilteredMedia";
 import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
@@ -80,17 +79,14 @@ export default function SnapViewerScreen({ route, navigation }) {
   return (
     <TouchableWithoutFeedback onPress={handleTap}>
       <View style={styles.container}>
-        {snap.mediaType === "video" ? (
-          <Video
-            key={round}
-            source={{ uri: snap.mediaUrl }}
-            style={styles.media}
-            resizeMode="cover"
-            shouldPlay
-          />
-        ) : (
-          <Image source={{ uri: snap.mediaUrl }} style={styles.media} />
-        )}
+        <FilteredMedia
+          key={round}
+          uri={snap.mediaUrl}
+          mediaType={snap.mediaType}
+          filterId={snap.filter}
+          style={styles.media}
+          videoProps={{ shouldPlay: true }}
+        />
 
         <View style={styles.topBar}>
           <Text style={styles.sender}>{snap.senderName}</Text>

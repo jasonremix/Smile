@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
+import { listenAnnouncements } from "../services/adminService";
 import {
   listenNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from "../services/notificationService";
+import { getSeenAnnouncementIds, markAnnouncementSeen } from "../utils/announcementSeen";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -19,6 +21,7 @@ const ICON_BY_TYPE = {
   comment: "chat",
   friend_request: "people",
   friend_accept: "check",
+  announcement: "bell",
 };
 
 const TEXT_BY_TYPE = {
@@ -54,16 +57,57 @@ function groupNotifications(items) {
 export default function NotificationsScreen({ navigation }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [seenAnnouncementIds, setSeenAnnouncementIds] = useState([]);
 
   useEffect(() => {
     const unsubscribe = listenNotifications(user.uid, setNotifications);
     return unsubscribe;
   }, [user.uid]);
 
-  const sections = useMemo(() => groupNotifications(notifications), [notifications]);
-  const hasUnread = notifications.some((n) => !n.read);
+  useEffect(() => {
+    const unsubscribe = listenAnnouncements(setAnnouncements);
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    getSeenAnnouncementIds().then(setSeenAnnouncementIds);
+  }, []);
+
+  // Ankuendigungen (eine gemeinsame Collection fuer alle) werden hier mit
+  // den echten, personenbezogenen Benachrichtigungen zusammengefuehrt, damit
+  // eine gesendete Ankuendigung nicht auf einen fluechtigen Banner
+  // beschraenkt bleibt, sondern dauerhaft auffindbar ist (siehe
+  // FounderAnnouncementBanner.js fuer den Banner, utils/announcementSeen.js
+  // fuer den gemeinsamen "gesehen"-Stand).
+  const combined = useMemo(() => {
+    const announcementItems = announcements.map((a) => ({
+      id: `announcement-${a.id}`,
+      type: "announcement",
+      title: a.title,
+      message: a.message,
+      createdAt: a.createdAt,
+      read: seenAnnouncementIds.includes(a.id),
+      _announcementId: a.id,
+    }));
+    return [...notifications, ...announcementItems].sort(
+      (a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+    );
+  }, [notifications, announcements, seenAnnouncementIds]);
+
+  const sections = useMemo(() => groupNotifications(combined), [combined]);
+  const hasUnread = combined.some((n) => !n.read);
 
   const handlePress = (n) => {
+    if (n.type === "announcement") {
+      if (!n.read) {
+        markAnnouncementSeen(n._announcementId);
+        setSeenAnnouncementIds((prev) => [...prev, n._announcementId]);
+      }
+      Alert.alert(n.title, n.message);
+      return;
+    }
+
     if (!n.read) markNotificationRead(user.uid, n.id);
 
     if (n.type === "like" || n.type === "comment") {
@@ -72,6 +116,17 @@ export default function NotificationsScreen({ navigation }) {
       navigation.navigate("Friends");
     } else if (n.type === "friend_accept") {
       navigation.navigate("UserProfile", { uid: n.fromUid });
+    }
+  };
+
+  const handleMarkAllRead = () => {
+    markAllNotificationsRead(user.uid, notifications);
+    const unseenAnnouncementIds = announcements
+      .map((a) => a.id)
+      .filter((id) => !seenAnnouncementIds.includes(id));
+    unseenAnnouncementIds.forEach(markAnnouncementSeen);
+    if (unseenAnnouncementIds.length > 0) {
+      setSeenAnnouncementIds((prev) => [...prev, ...unseenAnnouncementIds]);
     }
   };
 
@@ -85,7 +140,7 @@ export default function NotificationsScreen({ navigation }) {
         right={
           hasUnread ? (
             <TouchableOpacity
-              onPress={() => markAllNotificationsRead(user.uid, notifications)}
+              onPress={handleMarkAllRead}
               accessibilityRole="button"
               accessibilityLabel="Alle als gelesen markieren"
             >
@@ -110,15 +165,28 @@ export default function NotificationsScreen({ navigation }) {
                 <Icon name={ICON_BY_TYPE[item.type] || "bell"} size={15} color={colors.text} />
               </View>
               <View style={styles.textBlock}>
-                <Text style={styles.rowText}>
-                  <Text style={styles.rowName}>{item.fromDisplayName}</Text>{" "}
-                  {TEXT_BY_TYPE[item.type] || ""}
-                </Text>
-                {item.preview ? (
-                  <Text style={styles.preview} numberOfLines={1}>
-                    "{item.preview}"
-                  </Text>
-                ) : null}
+                {item.type === "announcement" ? (
+                  <>
+                    <Text style={styles.rowText}>
+                      <Text style={styles.rowName}>{item.title}</Text>
+                    </Text>
+                    <Text style={styles.preview} numberOfLines={2}>
+                      {item.message}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.rowText}>
+                      <Text style={styles.rowName}>{item.fromDisplayName}</Text>{" "}
+                      {TEXT_BY_TYPE[item.type] || ""}
+                    </Text>
+                    {item.preview ? (
+                      <Text style={styles.preview} numberOfLines={1}>
+                        "{item.preview}"
+                      </Text>
+                    ) : null}
+                  </>
+                )}
               </View>
               <Text style={styles.time}>
                 {item.createdAt?.toDate ? timeAgo(item.createdAt.toDate()) : ""}

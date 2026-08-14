@@ -36,6 +36,7 @@ export async function postStory({
   mediaType,
   visibility = "friends",
   visibleTo = [],
+  filter,
 }) {
   const mediaUrl = await uploadMedia(localUri, uid, mediaType);
   await addDoc(collection(db, "users", uid, "stories"), {
@@ -44,6 +45,7 @@ export async function postStory({
     avatarColor,
     mediaUrl,
     mediaType,
+    filter: filter || "none",
     viewers: [],
     visibility,
     visibleTo: visibility === "custom" ? visibleTo : [],

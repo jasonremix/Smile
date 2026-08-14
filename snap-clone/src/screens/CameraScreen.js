@@ -1,8 +1,10 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import React, { useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import FilterPickerRow from "../components/FilterPickerRow";
 import Icon from "../components/Icon";
 import { colors } from "../theme/colors";
+import { getFilterById } from "../utils/photoFilters";
 
 const HOLD_THRESHOLD_MS = 250;
 
@@ -17,6 +19,8 @@ export default function CameraScreen({ navigation, route }) {
   const [facing, setFacing] = useState("back");
   const [flash, setFlash] = useState("off");
   const [recording, setRecording] = useState(false);
+  const [filter, setFilter] = useState("none");
+  const filterMeta = getFilterById(filter);
 
   if (!permission || !micPermission) {
     return <View style={styles.container} />;
@@ -44,7 +48,7 @@ export default function CameraScreen({ navigation, route }) {
   const takePhoto = async () => {
     if (!cameraRef.current) return;
     const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
-    navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent });
+    navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent, filter });
   };
 
   const startRecording = async () => {
@@ -54,7 +58,7 @@ export default function CameraScreen({ navigation, route }) {
     try {
       const video = await cameraRef.current.recordAsync({ maxDuration: 15 });
       if (video?.uri) {
-        navigation.navigate("SnapPreview", { uri: video.uri, mediaType: "video", intent });
+        navigation.navigate("SnapPreview", { uri: video.uri, mediaType: "video", intent, filter });
       }
     } finally {
       isRecording.current = false;
@@ -87,6 +91,16 @@ export default function CameraScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} flash={flash} mode="video">
+        {filterMeta.overlayColor ? (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              { backgroundColor: filterMeta.overlayColor, opacity: filterMeta.opacity },
+            ]}
+          />
+        ) : null}
+
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
             <Icon name="close" size={16} color="#fff" />
@@ -122,6 +136,8 @@ export default function CameraScreen({ navigation, route }) {
             <Text style={styles.sideButtonText}>Wechseln</Text>
           </TouchableOpacity>
         </View>
+
+        <FilterPickerRow value={filter} onChange={setFilter} style={styles.filterRow} />
 
         <View style={styles.hintContainer}>
           <Text style={styles.hint}>Tippen fuer Foto - Halten fuer Video</Text>
@@ -175,6 +191,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  filterRow: {
+    position: "absolute",
+    bottom: 160,
+    width: "100%",
   },
   hintContainer: {
     position: "absolute",
