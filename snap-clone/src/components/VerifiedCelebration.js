@@ -1,97 +1,97 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Modal, StyleSheet, Text, View } from "react-native";
+import PrimaryButton from "./PrimaryButton";
 import VerifiedBadge from "./VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { markVerifiedSeen } from "../services/userService";
 import { colors } from "../theme/colors";
-
-const SHOW_DURATION_MS = 2600;
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
 
 // "verified" wird ausschliesslich per Admin-Zugriff gesetzt (siehe
 // firestore.rules), nie durch eine eigene Aktion waehrend der laufenden
 // Session - anders als beim Level-Aufstieg reicht hier also kein Vergleich
-// mit einem vorherigen In-Memory-Wert. Stattdessen ein persistenter
-// "verifiedSeen"-Flag: verified && !verifiedSeen loest die Feier genau
-// einmal aus, danach quittiert der Client selbst mit markVerifiedSeen.
+// mit einem vorherigen In-Memory-Wert. Ein persistenter "verifiedSeen"-Flag
+// (verified && !verifiedSeen) entscheidet, ob die Feier noch aussteht.
+//
+// WICHTIG: verifiedSeen wird erst gesetzt, wenn die Person den Dialog aktiv
+// wegtippt - NICHT schon beim blossen Anzeigen-Versuch. Grund: ein
+// automatischer Reload (z.B. durch den OTA-Update-Check in App.js) kann
+// diese Komponente im Hintergrund neu mounten, ohne dass die Person gerade
+// hinschaut. Wuerde man dort sofort "gesehen" markieren, waere die einmalige
+// Glueckwunsch-Chance fuer immer verloren, ohne dass sie je sichtbar war
+// (genau das ist der Vorgaenger-Bug gewesen). Ein echtes Modal mit
+// Pflicht-Tap ist dafuer robuster als ein zeitgesteuertes Overlay.
 export default function VerifiedCelebration() {
   const { user } = useAuth();
-  const [visible, setVisible] = useState(false);
-  const triggeredRef = useRef(false);
-  const scale = useRef(new Animated.Value(0.5)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const [dismissing, setDismissing] = useState(false);
+
+  const pending = !!user?.uid && !!user.verified && !user.verifiedSeen;
+  const visible = pending && !dismissing;
 
   useEffect(() => {
-    if (!user?.uid || !user.verified || user.verifiedSeen) return;
-    if (triggeredRef.current) return;
-    triggeredRef.current = true;
+    if (!pending) setDismissing(false);
+  }, [pending]);
 
-    markVerifiedSeen(user.uid).catch(() => {});
-
-    setVisible(true);
-    scale.setValue(0.5);
-    opacity.setValue(0);
-    Animated.parallel([
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 5 }),
-      Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-    ]).start();
-
-    setTimeout(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-        setVisible(false);
-      });
-    }, SHOW_DURATION_MS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, user?.verified, user?.verifiedSeen]);
-
-  if (!visible) return null;
+  const handleDismiss = async () => {
+    setDismissing(true);
+    try {
+      await markVerifiedSeen(user.uid);
+    } catch {
+      // Schlaegt das Quittieren fehl (z.B. kein Netz), bleibt verifiedSeen
+      // unset - der Dialog kommt dann beim naechsten Start einfach wieder,
+      // was hier das sicherere Verhalten ist als ihn fuer immer zu verlieren.
+      setDismissing(false);
+    }
+  };
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.overlay, { opacity }]}>
-      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
-        <VerifiedBadge size={40} style={styles.badge} />
-        <Text style={styles.title}>Herzlichen Glückwunsch!</Text>
-        <Text style={styles.subtitle}>Dein Konto ist jetzt verifiziert</Text>
-      </Animated.View>
-    </Animated.View>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
+      <View style={styles.overlay}>
+        <View style={styles.card}>
+          <VerifiedBadge size={44} style={styles.badge} />
+          <Text style={styles.title}>Herzlichen Glückwunsch!</Text>
+          <Text style={styles.subtitle}>Dein Konto ist jetzt verifiziert.</Text>
+          <PrimaryButton title="Super!" onPress={handleDismiss} style={styles.button} />
+        </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: spacing.xxl,
   },
   card: {
+    width: "100%",
     backgroundColor: colors.surface,
-    borderRadius: 28,
-    paddingVertical: 32,
-    paddingHorizontal: 40,
+    borderRadius: radius.sheet,
+    paddingVertical: spacing.xxxl,
+    paddingHorizontal: spacing.xxl,
     alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
   },
   badge: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   title: {
     color: colors.text,
-    fontSize: 22,
-    fontWeight: "900",
+    ...typography.title,
     textAlign: "center",
   },
   subtitle: {
     color: colors.textMuted,
-    fontSize: 14,
-    marginTop: 4,
+    ...typography.body,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xl,
     textAlign: "center",
+  },
+  button: {
+    width: "100%",
   },
 });
