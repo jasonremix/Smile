@@ -32,6 +32,7 @@ import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
 import SecurityScreen from "../screens/SecurityScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
+import TicketsScreen from "../screens/TicketsScreen";
 import UserProfileScreen from "../screens/UserProfileScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
 import StoryViewerScreen from "../screens/StoryViewerScreen";
@@ -228,6 +229,7 @@ export default function RootNavigator() {
           <Stack.Screen name="About" component={AboutScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Roadmap" component={RoadmapScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Tickets" component={TicketsScreen} options={{ headerShown: false }} />
           <Stack.Screen
             name="Referral"
             component={ReferralScreen}

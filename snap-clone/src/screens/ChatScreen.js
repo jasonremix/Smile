@@ -31,7 +31,13 @@ import {
   setTypingStatus,
   toggleReaction,
 } from "../services/chatService";
-import { blockUser, reportContent } from "../services/moderationService";
+import {
+  blockUser,
+  getRestrictionAlert,
+  getRestrictionStatus,
+  recordStrike,
+  reportContent,
+} from "../services/moderationService";
 import { getActiveChatId, setActiveChatId } from "../state/activeChat";
 import { getUserProfile } from "../services/userService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
@@ -183,10 +189,18 @@ export default function ChatScreen({ route, navigation }) {
     const trimmed = text.trim();
     if (!trimmed) return;
 
+    const restriction = getRestrictionStatus(user);
+    if (restriction.restricted) {
+      const alertInfo = getRestrictionAlert(restriction);
+      Alert.alert(alertInfo.title, alertInfo.message);
+      return;
+    }
+
     const check = checkContent(trimmed);
     if (check.blocked) {
       const alertInfo = getBlockAlert(check.reason);
       Alert.alert(alertInfo.title, alertInfo.message);
+      if (check.reason !== "self_harm") recordStrike(user, check.reason);
       return;
     }
 

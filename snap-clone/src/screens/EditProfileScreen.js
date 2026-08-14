@@ -4,6 +4,7 @@ import Icon from "../components/Icon";
 import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
+import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../services/moderationService";
 import { clearLocation, shareLocationCity, updateProfileFields } from "../services/userService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticSelection } from "../utils/haptics";
@@ -42,10 +43,17 @@ export default function EditProfileScreen({ navigation }) {
       Alert.alert("Name fehlt", "Bitte gib einen Anzeigenamen ein.");
       return;
     }
+    const restriction = getRestrictionStatus(user);
+    if (restriction.restricted) {
+      const alertInfo = getRestrictionAlert(restriction);
+      Alert.alert(alertInfo.title, alertInfo.message);
+      return;
+    }
     const check = checkContent(`${displayName} ${bio}`);
     if (check.blocked) {
       const alertInfo = getBlockAlert(check.reason);
       Alert.alert(alertInfo.title, alertInfo.message);
+      if (check.reason !== "self_harm") recordStrike(user, check.reason);
       return;
     }
     setSaving(true);

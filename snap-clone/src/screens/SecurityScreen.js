@@ -53,6 +53,13 @@ const CATEGORIES = [
         detail:
           "Jede Person, jeder Beitrag und jede Nachricht lässt sich melden oder blockieren - blockierte Personen sehen dich nicht mehr. Meldungen lassen sich als PDF-Vorfallsbericht dokumentieren.",
       },
+      {
+        icon: "shield",
+        badge: "Automatische Sperren",
+        title: "Automatische Sperr-Eskalation",
+        detail:
+          "Wiederholte, von der Inhaltsprüfung erkannte Verstöße lösen automatisch einen zeitlich befristeten Timeout aus - die Dauer richtet sich nach Schwere und Häufigkeit und wird direkt in unseren Datenbank-Zugriffsregeln durchgesetzt, nicht nur im Client. Selbstgefährdung führt nie zu einer Sperre, nur zu Hilfsangeboten.",
+      },
     ],
   },
   {
@@ -148,8 +155,9 @@ export default function SecurityScreen({ navigation }) {
         ))}
 
         <Text style={styles.footnote}>
-          Fragen oder einen Sicherheitshinweis melden? Nutze "Feedback geben" in den
-          Einstellungen.
+          Fragen, eine automatische Sperre unklar oder ein Sicherheitshinweis? Eröffne ein
+          "Support-Ticket" in den Einstellungen - ein Bot antwortet sofort, bei Bedarf kannst du
+          an den Gründer weiterleiten.
         </Text>
       </ScrollView>
     </View>

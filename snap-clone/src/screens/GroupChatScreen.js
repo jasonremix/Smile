@@ -25,7 +25,12 @@ import {
   sendGroupVoiceMessage,
   toggleGroupMessageReaction,
 } from "../services/groupService";
-import { reportContent } from "../services/moderationService";
+import {
+  getRestrictionAlert,
+  getRestrictionStatus,
+  recordStrike,
+  reportContent,
+} from "../services/moderationService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
 import { colors } from "../theme/colors";
@@ -84,10 +89,18 @@ export default function GroupChatScreen({ route, navigation }) {
     const trimmed = text.trim();
     if (!trimmed) return;
 
+    const restriction = getRestrictionStatus(user);
+    if (restriction.restricted) {
+      const alertInfo = getRestrictionAlert(restriction);
+      Alert.alert(alertInfo.title, alertInfo.message);
+      return;
+    }
+
     const check = checkContent(trimmed);
     if (check.blocked) {
       const alertInfo = getBlockAlert(check.reason);
       Alert.alert(alertInfo.title, alertInfo.message);
+      if (check.reason !== "self_harm") recordStrike(user, check.reason);
       return;
     }
 

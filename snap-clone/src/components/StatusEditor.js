@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import PrimaryButton from "./PrimaryButton";
+import { useAuth } from "../context/AuthContext";
+import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../services/moderationService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
@@ -8,15 +10,23 @@ const SUGGESTIONS = ["Gerade unterwegs", "Gerade am Lernen", "Gerade frei", "Ger
 const MAX_LENGTH = 60;
 
 export default function StatusEditor({ visible, onClose, currentText, onSave, onClear }) {
+  const { user } = useAuth();
   const [text, setText] = useState(currentText || "");
 
   const handleSave = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    const restriction = getRestrictionStatus(user);
+    if (restriction.restricted) {
+      const alertInfo = getRestrictionAlert(restriction);
+      Alert.alert(alertInfo.title, alertInfo.message);
+      return;
+    }
     const check = checkContent(trimmed);
     if (check.blocked) {
       const alertInfo = getBlockAlert(check.reason);
       Alert.alert(alertInfo.title, alertInfo.message);
+      if (check.reason !== "self_harm") recordStrike(user, check.reason);
       return;
     }
     await onSave(trimmed);

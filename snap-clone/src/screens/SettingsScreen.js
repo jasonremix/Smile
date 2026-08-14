@@ -80,6 +80,7 @@ export default function SettingsScreen({ navigation }) {
         <Text style={styles.sectionLabel}>Sicherheit</Text>
         <SettingsSection>
           <SettingsRow icon="shield" label="Sicherheitsmaßnahmen" onPress={() => navigation.navigate("Security")} />
+          <SettingsRow icon="chat" label="Support-Tickets" onPress={() => navigation.navigate("Tickets")} />
           <SettingsRow icon="block" label="Blockierte Nutzer" onPress={() => navigation.navigate("BlockedUsers")} />
           <SettingsRow
             icon="trash"

@@ -18,6 +18,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(ownerId)/friends/$(request.auth.uid));
     }
 
+    // Automatische Sperr-/Timeout-Durchsetzung (siehe moderationService.js
+    // fuer die Strike-Vergabe): unabhaengig davon, ob der Client brav
+    // mitspielt, kann eine bereits gesetzte Sperre serverseitig nicht
+    // umgangen werden - jeder Versuch, waehrend einer aktiven Sperre neuen
+    // Inhalt zu erstellen, wird hier unabhaengig vom Inhalt selbst abgelehnt.
+    function isCurrentlyRestricted(uid) {
+      let restrictedUntil = get(/databases/$(database)/documents/users/$(uid)).data.get('restrictedUntil', null);
+      return restrictedUntil != null && restrictedUntil > request.time;
+    }
+
     // Serverseitige Haelfte der automatischen Inhaltspruefung (siehe
     // src/utils/contentFilter.js fuer die clientseitige Vorab-Pruefung mit
     // Leetspeak-Normalisierung und URL-/Kontakt-Heuristiken - das laesst
@@ -169,6 +179,24 @@ service cloud.firestore {
         && (
           !('connectionsVisibility' in request.resource.data.diff(resource.data).affectedKeys())
           || request.resource.data.connectionsVisibility in ['everyone', 'onlyMe']
+        )
+        // Automatische Sperr-/Timeout-Eskalation (siehe recordStrike() in
+        // moderationService.js): strikeWeight darf nur steigen, nie sinken,
+        // und pro Schreibvorgang nur um einen plausiblen Betrag (hoechstes
+        // Einzelgewicht ist "threat" mit 8, +10 Sicherheitsspanne).
+        // restrictedUntil darf ebenfalls nur nach vorne verschoben, nie
+        // verkuerzt oder geloescht werden - so kann sich niemand selbst
+        // entsperren, selbst mit einer manipulierten App.
+        && (
+          !('strikeWeight' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.strikeWeight is int
+              && request.resource.data.strikeWeight >= resource.data.get('strikeWeight', 0)
+              && request.resource.data.strikeWeight <= resource.data.get('strikeWeight', 0) + 10)
+        )
+        && (
+          !('restrictedUntil' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.restrictedUntil is timestamp
+              && request.resource.data.restrictedUntil >= resource.data.get('restrictedUntil', request.time))
         );
 
       allow delete: if isOwner(userId);
@@ -264,6 +292,22 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
           && request.resource.data.read == true;
       }
+
+      // Unveraenderliches Protokoll der eigenen Verstoesse gegen die
+      // Inhaltspruefung (siehe recordStrike() in moderationService.js) -
+      // nur create, nie update/delete, damit es nicht nachtraeglich
+      // "bereinigt" werden kann. Gewicht ist an die Kategorie gekoppelt,
+      // damit niemand ein falsches (zu niedriges) Gewicht vortaeuscht.
+      match /moderationStrikes/{strikeId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && (
+            (request.resource.data.category == 'spam' && request.resource.data.weight == 1)
+            || (request.resource.data.category == 'language' && request.resource.data.weight == 3)
+            || (request.resource.data.category == 'threat' && request.resource.data.weight == 8)
+          );
+        allow update, delete: if false;
+      }
     }
 
     // Gemeinsamer Zaehler fuer die fortlaufende Beta-Tester-Nummer. Ohne
@@ -343,6 +387,7 @@ service cloud.firestore {
         allow create: if isSignedIn()
           && request.auth.uid == request.resource.data.senderId
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && !isCurrentlyRestricted(request.auth.uid)
           && (
             (request.resource.data.text is string
               && request.resource.data.text.size() > 0
@@ -409,6 +454,7 @@ service cloud.firestore {
         allow create: if isSignedIn()
           && request.auth.uid == request.resource.data.senderId
           && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds
+          && !isCurrentlyRestricted(request.auth.uid)
           && (
             (request.resource.data.text is string
               && request.resource.data.text.size() > 0
@@ -472,6 +518,38 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // Support-Tickets: anders als Meldungen/Feedback darf die erstellende
+    // Person ihre eigenen Tickets lesen (Verlauf im TicketsScreen) und in
+    // engen Grenzen aendern - nur status ("bot_resolved" -> "escalated"
+    // oder "closed") und escalatedToFounder (nur false -> true, nie
+    // zurueck). Inhalt (category/subject/message/botResponse/uid) ist nach
+    // dem Erstellen unveraenderlich, damit niemand nachtraeglich die
+    // eigene Anfrage oder die geloggte Bot-Antwort umschreiben kann.
+    match /tickets/{ticketId} {
+      allow read: if isOwner(resource.data.uid);
+      allow create: if isOwner(request.resource.data.uid)
+        && request.resource.data.category in
+             ['restriction_appeal', 'content_decision', 'account_issue', 'other']
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() <= 100
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.botResponse is string
+        && request.resource.data.botResponse.size() > 0
+        && request.resource.data.status == 'bot_resolved'
+        && request.resource.data.escalatedToFounder == false;
+      allow update: if isOwner(resource.data.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'escalatedToFounder'])
+        && request.resource.data.status in ['escalated', 'closed']
+        && request.resource.data.escalatedToFounder is bool
+        && (
+          request.resource.data.escalatedToFounder == resource.data.escalatedToFounder
+          || request.resource.data.escalatedToFounder == true
+        );
+      allow delete: if false;
+    }
+
     // Beitraege im Home-Feed. MVP-Entscheidung: Lesbar fuer alle
     // angemeldeten Nutzer (wie "Entdecken"/Profile), nicht nur Connections -
     // "Fuer dich" braucht eine gewisse Reichweite ueber die eigene
@@ -482,6 +560,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.authorId == request.auth.uid
+        && !isCurrentlyRestricted(request.auth.uid)
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 500
@@ -510,6 +589,7 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow create: if isSignedIn()
           && request.resource.data.authorId == request.auth.uid
+          && !isCurrentlyRestricted(request.auth.uid)
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 300

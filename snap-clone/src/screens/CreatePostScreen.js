@@ -4,6 +4,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { createPost } from "../services/postService";
+import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../services/moderationService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
@@ -18,10 +19,18 @@ export default function CreatePostScreen({ navigation }) {
     const trimmed = text.trim();
     if (!trimmed || posting) return;
 
+    const restriction = getRestrictionStatus(user);
+    if (restriction.restricted) {
+      const alertInfo = getRestrictionAlert(restriction);
+      Alert.alert(alertInfo.title, alertInfo.message);
+      return;
+    }
+
     const check = checkContent(trimmed);
     if (check.blocked) {
       const alertInfo = getBlockAlert(check.reason);
       Alert.alert(alertInfo.title, alertInfo.message);
+      if (check.reason !== "self_harm") recordStrike(user, check.reason);
       return;
     }
 

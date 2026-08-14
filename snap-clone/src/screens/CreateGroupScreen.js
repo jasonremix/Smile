@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { listenFriends } from "../services/friendService";
 import { createGroup } from "../services/groupService";
+import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../services/moderationService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
@@ -35,10 +36,17 @@ export default function CreateGroupScreen({ navigation }) {
 
   const handleCreate = async () => {
     if (!canCreate) return;
+    const restriction = getRestrictionStatus(user);
+    if (restriction.restricted) {
+      const alertInfo = getRestrictionAlert(restriction);
+      Alert.alert(alertInfo.title, alertInfo.message);
+      return;
+    }
     const check = checkContent(name.trim());
     if (check.blocked) {
       const alertInfo = getBlockAlert(check.reason);
       Alert.alert(alertInfo.title, alertInfo.message);
+      if (check.reason !== "self_harm") recordStrike(user, check.reason);
       return;
     }
     setCreating(true);
