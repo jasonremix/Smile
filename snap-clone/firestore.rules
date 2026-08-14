@@ -49,6 +49,12 @@ service cloud.firestore {
         // "verified" ist auch beim Update fest gesperrt - nur Admin-Zugriff
         // (Service Account, ausserhalb der Client-Regeln) darf es setzen.
         && !('verified' in request.resource.data.diff(resource.data).affectedKeys())
+        // verifiedSeen darf die eigene Person nur auf true setzen (einmalige
+        // Glueckwunsch-Anzeige quittieren), nie zurueck auf false.
+        && (
+          !('verifiedSeen' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.verifiedSeen == true
+        )
         && (
           !('nataScore' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.nataScore >= resource.data.nataScore

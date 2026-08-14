@@ -56,6 +56,13 @@ export async function getUserProfile(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
+// "verified" selbst ist per Firestore-Regel nie client-schreibbar (siehe
+// firestore.rules) - dieser Flag ist rein dafuer da, die Glueckwunsch-
+// Anzeige nach einer frischen Verifizierung genau einmal zu zeigen.
+export async function markVerifiedSeen(uid) {
+  await updateDoc(doc(db, "users", uid), { verifiedSeen: true });
+}
+
 // Firestore-Regel begrenzt den nataScore-Zuwachs pro Schreibvorgang (Schutz
 // gegen manipulierte Clients). Groessere Betraege hier deckeln, damit eine
 // einzelne Aktion die Regel nicht verletzt und der Score-Write abgelehnt

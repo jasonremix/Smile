@@ -16,20 +16,20 @@ import { colors } from "../../theme/colors";
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setError("");
-    if (!email || !password) {
-      setError("Bitte E-Mail und Passwort eingeben.");
+    if (!identifier || !password) {
+      setError("Bitte E-Mail oder Benutzername und Passwort eingeben.");
       return;
     }
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(identifier.trim(), password);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
@@ -61,12 +61,12 @@ export default function LoginScreen({ navigation }) {
 
       <TextInput
         style={styles.input}
-        placeholder="E-Mail"
+        placeholder="E-Mail oder Benutzername"
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+        autoCorrect={false}
+        value={identifier}
+        onChangeText={setIdentifier}
       />
       <TextInput
         style={styles.input}

@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
+import VerifiedCelebration from "../components/VerifiedCelebration";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import CameraScreen from "../screens/CameraScreen";
@@ -66,6 +67,7 @@ export default function RootNavigator() {
         <>
           <NewMessageBanner />
           <LevelUpCelebration />
+          <VerifiedCelebration />
         </>
       ) : null}
       {needsProfileSetup ? (

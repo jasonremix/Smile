@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   onAuthStateChanged,
+  signInAnonymously,
   signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
@@ -41,7 +42,14 @@ export function AuthProvider({ children }) {
   }, [initializing]);
 
   useEffect(() => {
-    if (!authUser) return;
+    // Anonyme Sessions (siehe login() unten - kurzer Bruecken-Login fuer die
+    // Benutzername-Aufloesung) sind nie ein "richtiger" App-Nutzer und
+    // brauchen kein Profil-Listening.
+    if (!authUser || authUser.isAnonymous) {
+      setProfile(null);
+      setProfileLoaded(false);
+      return;
+    }
     setProfileLoaded(false);
     const unsubscribe = onSnapshot(doc(db, "users", authUser.uid), (snap) => {
       setProfile(snap.exists() ? snap.data() : null);
@@ -52,15 +60,48 @@ export function AuthProvider({ children }) {
 
   // "user" kombiniert die Firebase-Auth-Identitaet mit dem Firestore-Profil
   // (username, avatarColor, nataScore), damit Screens nur eine Quelle brauchen.
-  const user = authUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
+  // Anonyme Sessions zaehlen nie als angemeldeter Nutzer.
+  const isRealAuthUser = !!authUser && !authUser.isAnonymous;
+  const user = isRealAuthUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
 
   // Falls die Firestore-Profildoc trotz vorhandenem Auth-Account fehlt (z.B.
   // durch einen voruebergehenden Netzwerkfehler beim Registrieren), landet
   // der Account sonst dauerhaft unbrauchbar und unsichtbar in der Suche.
-  const needsProfileSetup = !!authUser && profileLoaded && !profile;
+  const needsProfileSetup = isRealAuthUser && profileLoaded && !profile;
 
-  const login = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+  // Login funktioniert sowohl mit E-Mail als auch mit Benutzername. Fuer
+  // Benutzername gibt es in Firebase Auth selbst keinen direkten Weg - die
+  // zugehoerige E-Mail muss vorher aus Firestore nachgeschlagen werden. Das
+  // "users"-Read setzt isSignedIn() voraus (siehe firestore.rules), noch
+  // bevor die eigentliche Anmeldung stattgefunden hat - deshalb kurz anonym
+  // anmelden, nur um den Lookup zu erlauben. Schlaegt der Lookup oder die
+  // eigentliche Anmeldung fehl, wird die anonyme Session wieder abgemeldet,
+  // damit sie nirgends faelschlich als "eingeloggt" durchgeht.
+  const login = async (identifier, password) => {
+    const trimmed = identifier.trim();
+    let email = trimmed;
+    let bridgedAnonymously = false;
+
+    if (!trimmed.includes("@")) {
+      await signInAnonymously(auth);
+      bridgedAnonymously = true;
+      const match = await findUserByUsername(trimmed);
+      if (!match?.email) {
+        await signOut(auth).catch(() => {});
+        throw Object.assign(new Error("Benutzername nicht gefunden."), {
+          code: "auth/user-not-found",
+        });
+      }
+      email = match.email;
+    }
+
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (e) {
+      if (bridgedAnonymously) await signOut(auth).catch(() => {});
+      throw e;
+    }
+  };
 
   // Fuer neue Accounts greift danach automatisch derselbe
   // needsProfileSetup/CompleteProfileScreen-Reparaturweg wie bei
