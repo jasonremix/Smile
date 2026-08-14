@@ -19,16 +19,16 @@ const MESSAGE_MAX = 1000;
 // dieser Benutzername dient nur der UI-Sichtbarkeitspruefung im Client).
 export const FOUNDER_USERNAME = "jasonbuerger";
 
-// Der Bot antwortet lokal und sofort (keine Cloud Function) - die Antwort
-// wird direkt beim Erstellen mit dem Ticket gespeichert. "escalatedToFounder"
-// markiert das Ticket nur fuer die manuelle Durchsicht durch den Gruender
-// (@jasonbuerger) ueber die Firebase-Konsole - es gibt KEINE Push-/E-Mail-
-// Benachrichtigung an ihn, da dafuer keine Cloud Functions eingerichtet
-// sind. Das wird im UI auch so kommuniziert, um nichts vorzutaeuschen.
+// Der Bot antwortet direkt beim Erstellen (per Gemini, siehe ticketBot.js,
+// mit Fallback auf eine feste Antwort) - die Antwort wird sofort mit dem
+// Ticket gespeichert. "escalatedToFounder" markiert das Ticket nur fuer die
+// manuelle Durchsicht durch den Gruender (@jasonbuerger) - es gibt KEINE
+// Push-/E-Mail-Benachrichtigung an ihn ausser bei aktivem Push-Backend
+// (siehe functions/). Das wird im UI so kommuniziert, um nichts vorzutaeuschen.
 export async function createTicket({ uid, category, subject, message }) {
   const trimmedSubject = (subject || "").trim().slice(0, SUBJECT_MAX);
   const trimmedMessage = (message || "").trim().slice(0, MESSAGE_MAX);
-  const botResponse = generateBotResponse(category);
+  const botResponse = await generateBotResponse(category, trimmedSubject, trimmedMessage);
 
   const ref = await addDoc(collection(db, "tickets"), {
     uid,

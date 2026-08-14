@@ -307,6 +307,19 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Nata-AI-Chatverlauf (siehe NataAIScreen.js/nataAiService.js) - rein
+      // privat, nur die eigene Person liest/schreibt ihn. "role" ist "user"
+      // oder "model" (Gemini-Antwort) - beide werden vom Client geschrieben,
+      // da es keinen Server/keine Cloud Function fuer den Gemini-Aufruf gibt.
+      match /aiMessages/{messageId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.role in ['user', 'model']
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 4000;
+        allow update, delete: if false;
+      }
+
       // Wer blockiert wurde, steht hier - nur der blockierende Nutzer selbst
       // darf seine eigene Liste sehen/aendern.
       match /blocked/{blockedUid} {

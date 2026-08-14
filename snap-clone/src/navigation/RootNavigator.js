@@ -31,6 +31,7 @@ import FounderTicketsScreen from "../screens/FounderTicketsScreen";
 import FounderUsersScreen from "../screens/FounderUsersScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
+import NataAIScreen from "../screens/NataAIScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
 import QRCodeScreen from "../screens/QRCodeScreen";
@@ -249,6 +250,7 @@ export default function RootNavigator() {
           <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
           <Stack.Screen name="SavedPosts" component={SavedPostsScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CloseFriends" component={CloseFriendsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="NataAI" component={NataAIScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Tickets" component={TicketsScreen} options={{ headerShown: false }} />
           <Stack.Screen
             name="FounderTickets"

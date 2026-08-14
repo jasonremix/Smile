@@ -93,6 +93,16 @@ export default function ChatListScreen({ navigation }) {
         }
       />
 
+      <ChatListItem
+        name="Nata AI"
+        avatarColor={colors.primary}
+        lastMessage="Dein KI-Assistent in der App"
+        isMine={false}
+        streakCount={0}
+        unread={false}
+        onPress={() => navigation.navigate("NataAI")}
+      />
+
       {visibleSnaps.length > 0 ? (
         <View style={styles.snapsSection}>
           <Text style={styles.sectionTitle}>Neue Snaps</Text>
