@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import GradientView from "./GradientView";
 import MessageReactionBadge from "./MessageReactionBadge";
 import VoiceMessageBubble from "./VoiceMessageBubble";
 import { colors } from "../theme/colors";
@@ -28,8 +29,14 @@ export default function MessageBubble({
       <TouchableOpacity
         activeOpacity={0.85}
         onLongPress={() => onLongPress(message)}
-        style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}
+        style={[styles.bubble, isMine ? styles.bubbleMineWrap : styles.bubbleTheirs]}
       >
+        {isMine ? (
+          <GradientView
+            colors={[colors.bubbleMine, colors.primaryDark]}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
         {!isMine && senderName ? <Text style={styles.senderName}>{senderName}</Text> : null}
         {message.voiceUrl ? (
           <VoiceMessageBubble voiceUrl={message.voiceUrl} durationMs={message.voiceDurationMs} />
@@ -69,9 +76,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-  bubbleMine: {
-    backgroundColor: colors.bubbleMine,
+  bubbleMineWrap: {
     borderBottomRightRadius: 6,
+    overflow: "hidden",
   },
   bubbleTheirs: {
     backgroundColor: colors.bubbleTheirs,

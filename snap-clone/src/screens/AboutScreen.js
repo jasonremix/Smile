@@ -1,10 +1,9 @@
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import ScreenHeader from "../components/ScreenHeader";
 import SettingsRow from "../components/SettingsRow";
 import SettingsSection from "../components/SettingsSection";
 import { colors } from "../theme/colors";
-import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
@@ -19,10 +18,7 @@ export default function AboutScreen({ navigation }) {
       <ScreenHeader onBack={() => navigation.goBack()} title="Über Nata" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.brandBlock}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>N</Text>
-          </View>
-          <Text style={styles.appName}>Nata</Text>
+          <Image source={require("../../assets/logo-full.png")} style={styles.logoImage} resizeMode="contain" />
           <Text style={styles.tagline}>Weniger Elemente. Bessere Elemente. Mehr Persönlichkeit.</Text>
           <Text style={styles.version}>Version {APP_VERSION} · Beta</Text>
         </View>
@@ -67,23 +63,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.xxl,
   },
-  logo: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.xl,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  logoText: {
-    color: colors.text,
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  appName: {
-    color: colors.text,
-    ...typography.largeTitle,
+  logoImage: {
+    width: 220,
+    height: 73,
+    marginBottom: spacing.sm,
   },
   tagline: {
     color: colors.textMuted,

@@ -654,6 +654,54 @@ service cloud.firestore {
     // FounderAnnouncementBanner.js, gleiches Prinzip wie
     // UpdateAnnouncementBanner.js) - es gibt also KEINE Push-/E-Mail-
     // Benachrichtigung, nur einen Banner beim naechsten App-Start.
+    // Verifizierungs-Anfragen (Beta-Funktion, siehe VerificationRequestScreen.js/
+    // verificationService.js) - feste Dokument-ID = eigene uid statt
+    // Zufalls-ID, damit sich "hat diese Person schon eine Anfrage" ohne
+    // Query direkt am Dokumentpfad pruefen laesst (Regeln koennen keine
+    // Query ausfuehren, nur bekannte Pfade lesen).
+    match /verificationRequests/{uid} {
+      allow read: if isOwner(uid) || isFounder();
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.username is string
+        && request.resource.data.displayName is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.links is list
+        && request.resource.data.links.size() <= 5
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'username', 'displayName', 'reason', 'links', 'status', 'createdAt']
+           );
+      allow update: if (
+        // Nach einer Ablehnung darf dieselbe Person erneut einreichen -
+        // dabei aendert sich nichts an den Gruender-Feldern.
+        (isOwner(uid) && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.username is string
+          && request.resource.data.displayName is string
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() > 0
+          && request.resource.data.reason.size() <= 500
+          && request.resource.data.links is list
+          && request.resource.data.links.size() <= 5
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['username', 'displayName', 'reason', 'links', 'status', 'createdAt', 'founderNote', 'reviewedAt']
+             ))
+        ||
+        // Gruender entscheidet - darf nur Status/Notiz/Zeitpunkt aendern,
+        // nie die von der Person eingereichten Inhalte.
+        (isFounder()
+          && resource.data.status == 'pending'
+          && request.resource.data.status in ['approved', 'rejected']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['status', 'founderNote', 'reviewedAt']
+             ))
+      );
+      allow delete: if false;
+    }
+
     match /announcements/{announcementId} {
       allow read: if isSignedIn();
       allow create: if isFounder()

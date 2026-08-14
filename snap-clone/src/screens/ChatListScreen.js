@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import Icon from "../components/Icon";
+import NataAIListRow from "../components/NataAIListRow";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { isStreakActive } from "../services/chatService";
@@ -93,15 +94,7 @@ export default function ChatListScreen({ navigation }) {
         }
       />
 
-      <ChatListItem
-        name="Nata AI"
-        avatarColor={colors.primary}
-        lastMessage="Dein KI-Assistent in der App"
-        isMine={false}
-        streakCount={0}
-        unread={false}
-        onPress={() => navigation.navigate("NataAI")}
-      />
+      <NataAIListRow onPress={() => navigation.navigate("NataAI")} />
 
       {visibleSnaps.length > 0 ? (
         <View style={styles.snapsSection}>

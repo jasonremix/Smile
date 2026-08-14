@@ -255,6 +255,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     marginBottom: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
   header: {
     flexDirection: "row",

@@ -1,14 +1,16 @@
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import GradientView from "./GradientView";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { shadow } from "../theme/shadow";
 import { spacing } from "../theme/spacing";
 
-// Flacher, iOS-naeher gestalteter Haupt-Button: kraeftige Fuellfarbe, kein
-// Glanz-Streifen/starker Farb-Glow mehr, nur ein dezenter Schatten und ein
-// einfaches Press-Dimming statt Scale-Animation - naeher an einem nativen
-// UIButton, ohne dabei den Lila-Ton zu veraendern.
+// Flacher, iOS-naeher gestalteter Haupt-Button: dezenter Farbverlauf statt
+// platter Flaeche fuer etwas mehr Tiefe, aber bewusst weiterhin kein
+// Glanz-Streifen/starker Glow und kein Scale-Pop beim Druecken - nur
+// Press-Dimming, naeher an einem nativen UIButton als an einem auffaelligen
+// Marketing-Button.
 export default function PrimaryButton({ title, onPress, disabled, loading, style, variant = "solid" }) {
   const isOutline = variant === "outline";
 
@@ -24,6 +26,12 @@ export default function PrimaryButton({ title, onPress, disabled, loading, style
         style,
       ]}
     >
+      {isOutline ? null : (
+        <GradientView
+          colors={[colors.primaryLight, colors.primaryDark]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       {loading ? (
         <ActivityIndicator color={isOutline ? colors.primary : colors.text} />
       ) : (
@@ -39,9 +47,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg - 1,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   solid: {
-    backgroundColor: colors.primary,
     ...shadow.sm,
   },
   outline: {

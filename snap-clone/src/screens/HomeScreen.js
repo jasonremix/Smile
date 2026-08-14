@@ -157,6 +157,14 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.brand}>Nata</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
+            style={styles.aiButton}
+            onPress={() => navigation.navigate("NataAI")}
+            accessibilityRole="button"
+            accessibilityLabel="Nata AI oeffnen"
+          >
+            <Icon name="sparkle" size={17} color={colors.primaryLight} />
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.messagesButton}
             onPress={() => navigation.navigate("Notifications")}
             accessibilityRole="button"
@@ -327,6 +335,16 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: "center",
     alignItems: "center",
+  },
+  aiButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(147, 51, 234, 0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.4)",
   },
   messagesBadge: {
     position: "absolute",

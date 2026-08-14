@@ -29,6 +29,7 @@ import FounderReportsScreen from "../screens/FounderReportsScreen";
 import FounderStatsScreen from "../screens/FounderStatsScreen";
 import FounderTicketsScreen from "../screens/FounderTicketsScreen";
 import FounderUsersScreen from "../screens/FounderUsersScreen";
+import FounderVerificationRequestsScreen from "../screens/FounderVerificationRequestsScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
 import NataAIScreen from "../screens/NataAIScreen";
@@ -45,6 +46,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import TicketsScreen from "../screens/TicketsScreen";
 import UserProfileScreen from "../screens/UserProfileScreen";
+import VerificationRequestScreen from "../screens/VerificationRequestScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
 import StoryViewerScreen from "../screens/StoryViewerScreen";
 import { colors } from "../theme/colors";
@@ -275,6 +277,16 @@ export default function RootNavigator() {
           <Stack.Screen
             name="FounderAnnouncement"
             component={FounderAnnouncementScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderVerificationRequests"
+            component={FounderVerificationRequestsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="VerificationRequest"
+            component={VerificationRequestScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen

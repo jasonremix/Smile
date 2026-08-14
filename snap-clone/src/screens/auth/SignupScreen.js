@@ -52,7 +52,7 @@ export default function SignupScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
+          <Image source={require("../../../assets/logo-full.png")} style={styles.logoImage} resizeMode="contain" />
           <Text style={styles.logo}>Konto erstellen</Text>
           <Text style={styles.greeting}>Schön, dass du zu Nata kommst!</Text>
         </View>
@@ -156,11 +156,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 32,
   },
-  ghost: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    marginBottom: 12,
+  logoImage: {
+    width: 200,
+    height: 67,
+    marginBottom: 8,
   },
   logo: {
     fontSize: 28,

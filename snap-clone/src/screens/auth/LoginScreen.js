@@ -43,8 +43,7 @@ export default function LoginScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.header}>
-        <Image source={require("../../../assets/icon.png")} style={styles.ghost} />
-        <Text style={styles.logo}>Nata</Text>
+        <Image source={require("../../../assets/logo-full.png")} style={styles.logoImage} resizeMode="contain" />
         <Text style={styles.greeting}>Hey, schön dass du wieder da bist!</Text>
       </View>
 
@@ -112,17 +111,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 40,
   },
-  ghost: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    marginBottom: 12,
-  },
-  logo: {
-    fontSize: 34,
-    fontWeight: "800",
-    color: colors.primary,
-    textAlign: "center",
+  logoImage: {
+    width: 260,
+    height: 87,
+    marginBottom: 4,
   },
   greeting: {
     marginTop: 8,

@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
@@ -171,9 +172,11 @@ export default function ProfileScreen({ navigation }) {
         ListHeaderComponent={
           <View>
             <View style={styles.identitySection}>
-              <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-                <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-              </View>
+              <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
+                <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+                  <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+                </View>
+              </GradientView>
 
               <View style={styles.nameRow}>
                 <Text style={styles.displayName}>{user?.displayName}</Text>
@@ -327,13 +330,20 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  avatarRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.lg,
+  },
+  avatar: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     color: "#000",

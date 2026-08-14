@@ -59,6 +59,14 @@ export default function SettingsScreen({ navigation }) {
           <SettingsRow icon="star" label="Enge Freunde" onPress={() => navigation.navigate("CloseFriends")} />
           <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
           <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
+          {!user?.verified ? (
+            <SettingsRow
+              icon="shield"
+              label="Verifizierung beantragen"
+              onPress={() => navigation.navigate("VerificationRequest")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : null}
         </SettingsSection>
 
         <Text style={styles.sectionLabel}>Privatsphäre</Text>
@@ -116,6 +124,11 @@ export default function SettingsScreen({ navigation }) {
                 icon="grid"
                 label="Statistiken"
                 onPress={() => navigation.navigate("FounderStats")}
+              />
+              <SettingsRow
+                icon="shield"
+                label="Verifizierungs-Anfragen"
+                onPress={() => navigation.navigate("FounderVerificationRequests")}
               />
               <SettingsRow
                 icon="bell"

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
@@ -68,21 +69,27 @@ export default function NataAIScreen({ navigation }) {
         data={messages}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.bubble,
-              item.role === "user" ? styles.bubbleMine : styles.bubbleAi,
-            ]}
-          >
-            <Text style={item.role === "user" ? styles.bubbleTextMine : styles.bubbleTextAi}>
-              {item.text}
-            </Text>
-          </View>
-        )}
+        renderItem={({ item }) =>
+          item.role === "user" ? (
+            <View style={[styles.bubble, styles.bubbleMine]}>
+              <Text style={styles.bubbleTextMine}>{item.text}</Text>
+            </View>
+          ) : (
+            <View style={styles.aiRow}>
+              <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.aiAvatar}>
+                <Icon name="sparkle" size={13} color={colors.text} />
+              </GradientView>
+              <View style={[styles.bubble, styles.bubbleAi]}>
+                <Text style={styles.bubbleTextAi}>{item.text}</Text>
+              </View>
+            </View>
+          )
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Icon name="sparkle" size={26} color={colors.primaryLight} />
+            <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.emptyIcon}>
+              <Icon name="sparkle" size={24} color={colors.text} />
+            </GradientView>
             <Text style={styles.emptyTitle}>Frag mich etwas</Text>
             <Text style={styles.emptyText}>
               Ich bin Nata AI - ein KI-Assistent in der App. Ich kann nichts an deinem Konto ändern,
@@ -110,13 +117,15 @@ export default function NataAIScreen({ navigation }) {
           maxLength={2000}
         />
         <TouchableOpacity
-          style={[styles.sendButton, (!text.trim() || sending) && styles.sendButtonDisabled]}
           onPress={handleSend}
           disabled={!text.trim() || sending}
           accessibilityRole="button"
           accessibilityLabel="Nachricht senden"
+          style={(!text.trim() || sending) && styles.sendButtonDisabled}
         >
-          <Icon name="send" size={16} color={colors.text} />
+          <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.sendButton}>
+            <Icon name="send" size={16} color={colors.text} />
+          </GradientView>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -152,8 +161,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bubbleMine,
   },
   bubbleAi: {
-    alignSelf: "flex-start",
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.25)",
+  },
+  aiRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    alignSelf: "flex-start",
+    maxWidth: "90%",
+    gap: spacing.xs,
+  },
+  aiAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.xs,
   },
   bubbleTextMine: {
     color: colors.text,
@@ -169,6 +194,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 60,
     paddingHorizontal: 32,
+  },
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyTitle: {
     color: colors.text,

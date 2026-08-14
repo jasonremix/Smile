@@ -12,6 +12,11 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Offizielles Logo in der App (Anmeldung, Registrierung, Über Nata)",
+  "Nata AI: eigener KI-Chat (Beta) für allgemeine Fragen, außerdem beantwortet der Support-Bot Tickets jetzt inhaltlich statt mit festen Textbausteinen",
+  "Verifizierung beantragen (Beta): Formular mit Begründung und Nachweis-Links, Gründer prüft und entscheidet",
+  "Beta-Ablauf-Countdown, überarbeiteter Home-Feed, Buttons/Profil/Beiträge/Nachrichten mit dezenten Farbverläufen aufgewertet",
+  "Mehrere echte Fehler behoben: Einladungs-Zähler, Punkte-Historie, eine Sicherheitslücke in den Storys-Regeln, unnötiges Feed-Neuladen, Konto-Löschung vollständiger",
   "Enge Freunde: dauerhafte Liste, die beim Teilen eines Moments automatisch als Empfänger:innen vorausgewählt wird",
   "Mehr Reaktionen auf Beiträge (5 Emojis statt nur Herz) sowie Fotos in Beiträgen mit denselben Filtern wie bei Snaps/Moments",
   "Gespeicherte Beiträge: eigene Übersicht in den Einstellungen",
