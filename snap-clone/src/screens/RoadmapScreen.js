@@ -32,11 +32,12 @@ const SHIPPED = [
 const PLANNED = [
   {
     title: "Push-Benachrichtigungen",
-    detail: "Benachrichtigungen auch, wenn die App im Hintergrund oder geschlossen ist.",
+    detail:
+      "Geraet fragt nach Login bereits die Berechtigung ab. Der tatsaechliche Versand braucht einen bezahlten Firebase-Plan (Blaze) fuer Cloud Functions - Code dafuer ist fertig, wartet auf Aktivierung.",
   },
   {
-    title: "Profilbilder & Sprachnachrichten-Versand",
-    detail: "Code ist fertig, wartet auf die Einrichtung des Cloud-Speichers.",
+    title: "Sprachnachrichten-Versand & Profilbilder",
+    detail: "Code ist fertig, wartet auf die Aktivierung von Firebase Storage.",
   },
   {
     title: "Feinere Inhaltsprüfung per Cloud Functions",
