@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import FounderAnnouncementBanner from "../components/FounderAnnouncementBanner";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
 import UpdateAnnouncementBanner from "../components/UpdateAnnouncementBanner";
@@ -20,7 +21,11 @@ import CreatePostScreen from "../screens/CreatePostScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
+import FounderAnnouncementScreen from "../screens/FounderAnnouncementScreen";
+import FounderReportsScreen from "../screens/FounderReportsScreen";
+import FounderStatsScreen from "../screens/FounderStatsScreen";
 import FounderTicketsScreen from "../screens/FounderTicketsScreen";
+import FounderUsersScreen from "../screens/FounderUsersScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
@@ -75,6 +80,7 @@ export default function RootNavigator() {
         <>
           <NewMessageBanner />
           <UpdateAnnouncementBanner />
+          <FounderAnnouncementBanner />
           <LevelUpCelebration />
           <VerifiedCelebration />
         </>
@@ -234,6 +240,26 @@ export default function RootNavigator() {
           <Stack.Screen
             name="FounderTickets"
             component={FounderTicketsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderReports"
+            component={FounderReportsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderUsers"
+            component={FounderUsersScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderStats"
+            component={FounderStatsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderAnnouncement"
+            component={FounderAnnouncementScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen

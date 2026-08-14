@@ -100,6 +100,26 @@ export default function SettingsScreen({ navigation }) {
                 label="Ticket-Verwaltung"
                 onPress={() => navigation.navigate("FounderTickets")}
               />
+              <SettingsRow
+                icon="flag"
+                label="Meldungen & Feedback"
+                onPress={() => navigation.navigate("FounderReports")}
+              />
+              <SettingsRow
+                icon="people"
+                label="Nutzer-Verwaltung"
+                onPress={() => navigation.navigate("FounderUsers")}
+              />
+              <SettingsRow
+                icon="grid"
+                label="Statistiken"
+                onPress={() => navigation.navigate("FounderStats")}
+              />
+              <SettingsRow
+                icon="bell"
+                label="Ankündigung senden"
+                onPress={() => navigation.navigate("FounderAnnouncement")}
+              />
             </SettingsSection>
           </>
         ) : null}

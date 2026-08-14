@@ -109,8 +109,16 @@ service cloud.firestore {
       // aufheben) - sonst nichts an einem fremden Profil.
       allow update: if (
           isFounder()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['restrictedUntil'])
-          && (request.resource.data.restrictedUntil == null || request.resource.data.restrictedUntil is timestamp)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['restrictedUntil', 'verified'])
+          && (
+            !('restrictedUntil' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.restrictedUntil == null
+            || request.resource.data.restrictedUntil is timestamp
+          )
+          && (
+            !('verified' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.verified is bool
+          )
         ) || (
         isOwner(userId)
         // "verified" ist auch beim Update fest gesperrt - nur Admin-Zugriff
@@ -512,9 +520,9 @@ service cloud.firestore {
       }
     }
 
-    // Meldungen sind ausschliesslich per create durch die meldende Person
-    // erreichbar - Einsicht/Bearbeitung nur ueber die Firebase-Konsole bzw.
-    // spaeter eine Admin-Cloud-Function, nie ueber die Client-App.
+    // Meldungen sind per create durch die meldende Person erreichbar -
+    // Einsicht nur durch den Gruender (Ticket-Verwaltung/Meldungen-Screen),
+    // Bearbeitung generell nie ueber die Client-App.
     match /reports/{reportId} {
       allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.reporterId
@@ -530,18 +538,42 @@ service cloud.firestore {
           || request.resource.data.incidentTiming == null
           || request.resource.data.incidentTiming in ['just_now', 'today', 'this_week', 'longer_ago']
         );
-      allow read, update, delete: if false;
+      allow read: if isFounder();
+      allow update, delete: if false;
     }
 
-    // Beta-Feedback: genau wie Meldungen nur per create durch die
-    // absendende Person, keine Einsicht ueber die Client-App.
+    // Beta-Feedback: per create durch die absendende Person, Einsicht nur
+    // durch den Gruender.
     match /feedback/{feedbackId} {
       allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.uid
         && request.resource.data.message is string
         && request.resource.data.message.size() > 0
         && request.resource.data.message.size() <= 2000;
-      allow read, update, delete: if false;
+      allow read: if isFounder();
+      allow update, delete: if false;
+    }
+
+    // Ankuendigungen des Gruenders an alle Nutzer:innen - bewusst EIN
+    // gemeinsames Dokument-Set statt Fan-out in jede einzelne
+    // notifications-Subcollection (kein zusaetzlicher Schreibaufwand pro
+    // Nutzer:in, kein Skalierungsproblem). Jede Person liest dieselben
+    // Dokumente; "gesehen" wird rein lokal auf dem Geraet gemerkt (siehe
+    // FounderAnnouncementBanner.js, gleiches Prinzip wie
+    // UpdateAnnouncementBanner.js) - es gibt also KEINE Push-/E-Mail-
+    // Benachrichtigung, nur einen Banner beim naechsten App-Start.
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create: if isFounder()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000;
+      allow update: if false;
+      allow delete: if isFounder();
     }
 
     // Support-Tickets: anders als Meldungen/Feedback darf die erstellende
