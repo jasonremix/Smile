@@ -12,7 +12,7 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
-  "Automatische Inhaltsprüfung für Beiträge, Kommentare, Nachrichten, Profil und Status",
+  "Automatische Inhaltsprüfung, client- und serverseitig (Firestore-Regeln) - greift auch bei direkten Schreibversuchen gegen die Datenbank",
   "Notification Center für Likes, Kommentare und Verbindungsanfragen",
   "Globale Suche über Personen und Beiträge",
   "Erweiterte Privatsphäre-Stufen (Sichtbarkeit in Suche, Connections-Liste)",
@@ -31,9 +31,9 @@ const PLANNED = [
     detail: "Code ist fertig, wartet auf die Einrichtung des Cloud-Speichers.",
   },
   {
-    title: "Serverseitige Inhaltsprüfung",
+    title: "Feinere Inhaltsprüfung per Cloud Functions",
     detail:
-      "Die automatische Prüfung läuft aktuell im Client, bevor etwas gesendet wird. Eine zusätzliche serverseitige Prüfung (per Cloud Functions) ist geplant, damit sie sich nicht umgehen lässt.",
+      "Die serverseitige Prüfung läuft aktuell über Firestore-Regeln (feste Begriffsliste). Komplexere Erkennung - z. B. Kontext, Bilder, Umgehungsversuche - würde echte Cloud Functions brauchen.",
   },
   {
     title: "Einreichung im App Store & Play Store",

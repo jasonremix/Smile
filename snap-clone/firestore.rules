@@ -18,6 +18,24 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(ownerId)/friends/$(request.auth.uid));
     }
 
+    // Serverseitige Haelfte der automatischen Inhaltspruefung (siehe
+    // src/utils/contentFilter.js fuer die clientseitige Vorab-Pruefung mit
+    // Leetspeak-Normalisierung und URL-/Kontakt-Heuristiken - das laesst
+    // sich in der begrenzten Firestore-Regelsprache nicht 1:1 nachbauen).
+    // Diese Funktion deckt die Kernliste an Begriffen/Phrasen ab und greift
+    // unabhaengig vom Client, also auch bei direkten Schreibversuchen gegen
+    // Firestore. Bewusst dieselbe Wortliste wie im Client, damit beide
+    // Ebenen konsistent bleiben.
+    function containsBlockedTerm(text) {
+      return text is string
+        && text.lower().matches(
+          '.*(hurensohn|wichser|missgeburt|untermensch|abschaum|spast|mongo|fotze'
+          + '|nigger|faggot|retard|chink|kike'
+          + '|klick hier|jetzt klicken|gratis geld|schnell reich werden|jetzt kaufen'
+          + '|bitcoin investment|kostenlos abstauben|nur heute kostenlos).*'
+        );
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
 
@@ -35,7 +53,8 @@ service cloud.firestore {
         && request.resource.data.username.size() <= 20
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() >= 1
-        && request.resource.data.displayName.size() <= 40;
+        && request.resource.data.displayName.size() <= 40
+        && !containsBlockedTerm(request.resource.data.displayName);
 
       // Manipulationsschutz auf Basis reiner Firestore-Regeln hat Grenzen:
       // nataScore darf sich pro Schreibvorgang nur um einen kleinen,
@@ -70,7 +89,8 @@ service cloud.firestore {
           !('displayName' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.displayName is string
               && request.resource.data.displayName.size() >= 1
-              && request.resource.data.displayName.size() <= 40)
+              && request.resource.data.displayName.size() <= 40
+              && !containsBlockedTerm(request.resource.data.displayName))
         )
         // betaTesterNumber/referredBy werden einmalig direkt nach der
         // Registrierung gesetzt und danach nie wieder geaendert.
@@ -95,12 +115,15 @@ service cloud.firestore {
           || request.resource.data.status == null
           || (request.resource.data.status.text is string
               && request.resource.data.status.text.size() > 0
-              && request.resource.data.status.text.size() <= 60)
+              && request.resource.data.status.text.size() <= 60
+              && !containsBlockedTerm(request.resource.data.status.text))
         )
         && (
           !('bio' in request.resource.data.diff(resource.data).affectedKeys())
           || request.resource.data.bio == null
-          || (request.resource.data.bio is string && request.resource.data.bio.size() <= 150)
+          || (request.resource.data.bio is string
+              && request.resource.data.bio.size() <= 150
+              && !containsBlockedTerm(request.resource.data.bio))
         )
         && (
           !('avatarColor' in request.resource.data.diff(resource.data).affectedKeys())
@@ -307,6 +330,7 @@ service cloud.firestore {
             (request.resource.data.text is string
               && request.resource.data.text.size() > 0
               && request.resource.data.text.size() <= 2000
+              && !containsBlockedTerm(request.resource.data.text)
               && !('voiceUrl' in request.resource.data))
             || (request.resource.data.voiceUrl is string
               && request.resource.data.voiceDurationMs is int
@@ -321,6 +345,7 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 2000
+          && !containsBlockedTerm(request.resource.data.text)
           && request.resource.data.edited == true;
         allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
 
@@ -346,13 +371,18 @@ service cloud.firestore {
         && request.resource.data.memberIds.size() <= 50
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1
-        && request.resource.data.name.size() <= 50;
+        && request.resource.data.name.size() <= 50
+        && !containsBlockedTerm(request.resource.data.name);
       // Jedes Mitglied darf umbenennen, selbst austreten oder neue Mitglieder
       // hinzufuegen (einfaches Modell ohne Admin-Rolle fuer die erste Version).
       allow update: if isSignedIn() && request.auth.uid in resource.data.memberIds
         && request.resource.data.memberIds.size() <= 50
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'memberIds', 'memberNames', 'name']);
+             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'memberIds', 'memberNames', 'name'])
+        && (
+          !('name' in request.resource.data.diff(resource.data).affectedKeys())
+          || !containsBlockedTerm(request.resource.data.name)
+        );
 
       match /messages/{messageId} {
         allow read: if isSignedIn() &&
@@ -366,6 +396,7 @@ service cloud.firestore {
             (request.resource.data.text is string
               && request.resource.data.text.size() > 0
               && request.resource.data.text.size() <= 2000
+              && !containsBlockedTerm(request.resource.data.text)
               && !('voiceUrl' in request.resource.data))
             || (request.resource.data.voiceUrl is string
               && request.resource.data.voiceDurationMs is int
@@ -378,6 +409,7 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 2000
+          && !containsBlockedTerm(request.resource.data.text)
           && request.resource.data.edited == true;
         allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
 
@@ -423,6 +455,7 @@ service cloud.firestore {
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 500
+        && !containsBlockedTerm(request.resource.data.text)
         && request.resource.data.likeCount == 0
         && request.resource.data.commentCount == 0;
       allow update: if isSignedIn()
@@ -449,7 +482,8 @@ service cloud.firestore {
           && request.resource.data.authorId == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 300;
+          && request.resource.data.text.size() <= 300
+          && !containsBlockedTerm(request.resource.data.text);
         allow delete: if isOwner(resource.data.authorId);
         allow update: if false;
       }

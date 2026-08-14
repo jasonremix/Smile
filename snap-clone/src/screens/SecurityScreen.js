@@ -67,7 +67,7 @@ const MEASURES = [
     badge: "Automatische Inhaltsprüfung",
     title: "Automatische Inhaltsprüfung",
     detail:
-      "Beiträge, Kommentare, Nachrichten und Profiltexte werden vor dem Absenden automatisch auf grobe Beleidigungen und offensichtlichen Spam geprüft. Läuft aktuell im Client - eine serverseitige Ergänzung ist geplant (siehe Roadmap).",
+      "Beiträge, Kommentare, Nachrichten und Profiltexte werden vor dem Absenden automatisch auf grobe Beleidigungen und offensichtlichen Spam geprüft - zusätzlich zur Prüfung in der App auch direkt in unseren Datenbank-Zugriffsregeln, greift also selbst bei einem direkten Schreibversuch gegen die Datenbank.",
   },
   {
     icon: "trash",
