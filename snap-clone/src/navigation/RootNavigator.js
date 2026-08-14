@@ -21,6 +21,7 @@ import EditProfileScreen from "../screens/EditProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
+import NotificationsScreen from "../screens/NotificationsScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
 import QRCodeScreen from "../screens/QRCodeScreen";
 import ReferralScreen from "../screens/ReferralScreen";
@@ -215,6 +216,11 @@ export default function RootNavigator() {
             name="ScanQR"
             component={ScanQRScreen}
             options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Referral"

@@ -11,6 +11,12 @@ import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
+// Fest verdrahtet statt ueber expo-constants gelesen: das Modul ist in
+// bisher ausgelieferten Builds nicht dabei, ein neues natives Modul nur fuer
+// die Versionsanzeige waere unnoetig riskant. Muss beim Aendern der Version
+// in app.json manuell mitgezogen werden.
+const APP_VERSION = "1.0.1";
+
 // Eigener Screen statt eingebetteter Liste in ProfileScreen - Profil bleibt
 // so eine reine Identitaets-/Beitraege-Ansicht, waehrend Einstellungen ihre
 // eigene, uebersichtliche Gruppenliste im iOS-Stil bekommen.
@@ -48,16 +54,11 @@ export default function SettingsScreen({ navigation }) {
         <SettingsSection>
           <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
           <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
-        </SettingsSection>
-
-        <Text style={styles.sectionLabel}>Verbindungen</Text>
-        <SettingsSection>
           <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
           <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
-          <SettingsRow icon="block" label="Blockierte Nutzer" onPress={() => navigation.navigate("BlockedUsers")} />
         </SettingsSection>
 
-        <Text style={styles.sectionLabel}>Privatsphäre & Rechtliches</Text>
+        <Text style={styles.sectionLabel}>Privatsphäre</Text>
         <SettingsSection>
           <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
           <SettingsRow
@@ -67,19 +68,18 @@ export default function SettingsScreen({ navigation }) {
           />
         </SettingsSection>
 
-        <Text style={styles.sectionLabel}>Support</Text>
+        <Text style={styles.sectionLabel}>Benachrichtigungen</Text>
         <SettingsSection>
           <SettingsRow
-            icon="chat"
-            label="Feedback geben"
-            onPress={() => navigation.navigate("Feedback")}
-            badge={<BetaBadge style={styles.feedbackBadge} />}
+            icon="bell"
+            label="Benachrichtigungen ansehen"
+            onPress={() => navigation.navigate("Notifications")}
           />
         </SettingsSection>
 
-        <Text style={styles.sectionLabel}>Konto verwalten</Text>
+        <Text style={styles.sectionLabel}>Sicherheit</Text>
         <SettingsSection>
-          <SettingsRow icon="logout" label="Abmelden" onPress={handleLogout} tint={colors.danger} />
+          <SettingsRow icon="block" label="Blockierte Nutzer" onPress={() => navigation.navigate("BlockedUsers")} />
           <SettingsRow
             icon="trash"
             label="Konto löschen"
@@ -88,9 +88,21 @@ export default function SettingsScreen({ navigation }) {
           />
         </SettingsSection>
 
-        {user?.betaTesterNumber ? (
-          <Text style={styles.footerText}>Beta-Tester #{user.betaTesterNumber} · Nata</Text>
-        ) : null}
+        <Text style={styles.sectionLabel}>App</Text>
+        <SettingsSection>
+          <SettingsRow
+            icon="chat"
+            label="Feedback geben"
+            onPress={() => navigation.navigate("Feedback")}
+            badge={<BetaBadge style={styles.feedbackBadge} />}
+          />
+          <SettingsRow icon="logout" label="Abmelden" onPress={handleLogout} tint={colors.danger} />
+        </SettingsSection>
+
+        <Text style={styles.footerText}>
+          Nata {APP_VERSION}
+          {user?.betaTesterNumber ? ` · Beta-Tester #${user.betaTesterNumber}` : ""}
+        </Text>
       </ScrollView>
     </View>
   );

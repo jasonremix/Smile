@@ -18,7 +18,7 @@ import { colors } from "../theme/colors";
 import { shadow } from "../theme/shadow";
 
 export default function CommentsScreen({ route, navigation }) {
-  const { postId } = route.params;
+  const { postId, postAuthorId } = route.params;
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
@@ -35,7 +35,12 @@ export default function CommentsScreen({ route, navigation }) {
     setSending(true);
     setText("");
     try {
-      await addComment(postId, { authorId: user.uid, authorName: user.displayName, text: trimmed });
+      await addComment(
+        postId,
+        { authorId: user.uid, authorName: user.displayName, text: trimmed },
+        postAuthorId,
+        { uid: user.uid, displayName: user.displayName, username: user.username, avatarColor: user.avatarColor }
+      );
     } finally {
       setSending(false);
     }

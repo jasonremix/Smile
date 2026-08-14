@@ -37,7 +37,12 @@ export default function PostCard({ post, navigation }) {
     if (liked) {
       unlikePost(post.id, user.uid);
     } else {
-      likePost(post.id, user.uid);
+      likePost(post.id, user.uid, post.authorId, {
+        uid: user.uid,
+        displayName: user.displayName,
+        username: user.username,
+        avatarColor: user.avatarColor,
+      });
     }
   };
 
@@ -119,7 +124,7 @@ export default function PostCard({ post, navigation }) {
         </Pressable>
         <Pressable
           style={styles.actionButton}
-          onPress={() => navigation.navigate("Comments", { postId: post.id })}
+          onPress={() => navigation.navigate("Comments", { postId: post.id, postAuthorId: post.authorId })}
         >
           <Icon name="chat" size={16} color={colors.textMuted} />
           <Text style={styles.actionCount}>{post.commentCount || 0}</Text>

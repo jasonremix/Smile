@@ -179,6 +179,31 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers']);
         allow delete: if isOwner(userId);
       }
+
+      // In-App-Benachrichtigungen: die aktive Person schreibt direkt in die
+      // notifications-Subcollection der Zielperson (kein Server/Cloud
+      // Function vorhanden). Deshalb streng auf eine feste Feldliste und
+      // erlaubte Typen begrenzt, damit niemand beliebige Inhalte in fremde
+      // Postfaecher schreiben kann. Gelesen/verwaltet wird ausschliesslich
+      // vom Empfaenger selbst; "read" darf er danach nur noch auf true
+      // setzen (quittieren), sonst nichts am Eintrag aendern.
+      match /notifications/{notificationId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.fromUid
+          && request.resource.data.fromUid != userId
+          && request.resource.data.type in ['like', 'comment', 'friend_request', 'friend_accept']
+          && request.resource.data.fromDisplayName is string
+          && request.resource.data.fromDisplayName.size() <= 40
+          && request.resource.data.read == false
+          && request.resource.data.keys().hasOnly([
+            'type', 'fromUid', 'fromDisplayName', 'fromUsername', 'fromAvatarColor',
+            'postId', 'preview', 'read', 'createdAt'
+          ]);
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+          && request.resource.data.read == true;
+      }
     }
 
     // Gemeinsamer Zaehler fuer die fortlaufende Beta-Tester-Nummer. Ohne

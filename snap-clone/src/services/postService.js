@@ -14,6 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { createNotification } from "./notificationService";
 import { bumpNataScore } from "./userService";
 
 export async function createPost({
@@ -82,9 +83,15 @@ export function listenIsLiked(postId, uid, callback) {
   return onSnapshot(doc(db, "posts", postId, "likes", uid), (snap) => callback(snap.exists()));
 }
 
-export async function likePost(postId, uid) {
+// postAuthorId + actor sind optional, damit bestehende Aufrufer ohne
+// Notification-Kontext (falls es welche gibt) nicht brechen - createNotification
+// selbst ignoriert leere toUid/actor bereits sicher.
+export async function likePost(postId, uid, postAuthorId, actor) {
   await setDoc(doc(db, "posts", postId, "likes", uid), { createdAt: serverTimestamp() });
   await updateDoc(doc(db, "posts", postId), { likeCount: increment(1) });
+  if (postAuthorId && actor) {
+    await createNotification(postAuthorId, actor, { type: "like", postId });
+  }
 }
 
 export async function unlikePost(postId, uid) {
@@ -99,7 +106,7 @@ export function listenComments(postId, callback) {
   });
 }
 
-export async function addComment(postId, { authorId, authorName, text }) {
+export async function addComment(postId, { authorId, authorName, text }, postAuthorId, actor) {
   await addDoc(collection(db, "posts", postId, "comments"), {
     authorId,
     authorName,
@@ -107,6 +114,9 @@ export async function addComment(postId, { authorId, authorName, text }) {
     createdAt: serverTimestamp(),
   });
   await updateDoc(doc(db, "posts", postId), { commentCount: increment(1) });
+  if (postAuthorId && actor) {
+    await createNotification(postAuthorId, actor, { type: "comment", postId, preview: text.slice(0, 120) });
+  }
 }
 
 export function listenIsSaved(uid, postId, callback) {

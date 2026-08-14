@@ -52,3 +52,19 @@ export function getLevelIcon(level) {
   if (level >= 2) return "flame";
   return "sparkle";
 }
+
+// Namen fuer die Level-Stufen - vorbereitet, nicht ueberall gross
+// beworben (kein riesiges Gaming-Badge-System, nur ein ruhiger Titel neben
+// der Levelzahl). Ab Level 5 teilt sich ein Name mehrere Level, bis der
+// naechste Meilenstein kommt.
+const LEVEL_NAMES = [
+  { minLevel: 12, name: "Nata Pioneer" },
+  { minLevel: 8, name: "Community" },
+  { minLevel: 5, name: "Insider" },
+  { minLevel: 2, name: "Connector" },
+  { minLevel: 1, name: "Newcomer" },
+];
+
+export function getLevelName(level) {
+  return LEVEL_NAMES.find((tier) => level >= tier.minLevel)?.name || "Newcomer";
+}

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
 import Icon from "./Icon";
 import { useAuth } from "../context/AuthContext";
-import { getLevelIcon, getLevelInfo } from "../utils/nataLevel";
+import { getLevelIcon, getLevelInfo, getLevelName } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { shadow } from "../theme/shadow";
@@ -64,7 +64,7 @@ export default function LevelUpCelebration() {
       <Animated.View style={[styles.card, { transform: [{ translateY }] }]}>
         <Icon name={getLevelIcon(celebrationLevel)} size={24} color={colors.primary} style={styles.icon} />
         <Text style={styles.title}>Level {celebrationLevel}</Text>
-        <Text style={styles.subtitle}>Weiter so</Text>
+        <Text style={styles.subtitle}>{getLevelName(celebrationLevel)}</Text>
       </Animated.View>
     </Animated.View>
   );

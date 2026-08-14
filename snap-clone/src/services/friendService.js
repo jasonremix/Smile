@@ -13,6 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { createNotification } from "./notificationService";
 
 // Sucht Nutzer per Praefix - sowohl ueber den Benutzernamen als auch den
 // Anzeigenamen, damit man mit beidem faendig wird. Firestore kann kein ODER
@@ -60,6 +61,7 @@ export async function sendFriendRequest(fromUser, toUser) {
     status: "pending",
     createdAt: serverTimestamp(),
   });
+  await createNotification(toUser.uid, fromUser, { type: "friend_request" });
 }
 
 export function listenIncomingRequests(uid, callback) {
@@ -89,6 +91,8 @@ export async function acceptFriendRequest(request, currentUser) {
     username: currentUser.username,
     addedAt: serverTimestamp(),
   });
+
+  await createNotification(request.from, currentUser, { type: "friend_accept" });
 }
 
 export async function declineFriendRequest(request) {

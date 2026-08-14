@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "./Icon";
-import { getLevelIcon, getLevelInfo } from "../utils/nataLevel";
+import { getLevelIcon, getLevelInfo, getLevelName } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -26,7 +26,7 @@ export default function NataScoreCard({ score, weeklyPoints = 0, onPress }) {
             <Icon name={getLevelIcon(level)} size={20} color={colors.primary} />
           </View>
           <View style={styles.scoreBlock}>
-            <Text style={styles.label}>Nata Score · Level {level}</Text>
+            <Text style={styles.label}>Nata Score · Level {level} · {getLevelName(level)}</Text>
             <Text style={styles.score}>{score}</Text>
           </View>
           <TouchableOpacity

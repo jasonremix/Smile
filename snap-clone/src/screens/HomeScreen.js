@@ -10,6 +10,7 @@ import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { useUnreadChats } from "../hooks/useUnreadChats";
 import { listenFriends, listenIncomingRequests } from "../services/friendService";
+import { listenUnreadNotificationCount } from "../services/notificationService";
 import { listenFeed, listenFollowingFeed } from "../services/postService";
 import { listenScoreEventsSince } from "../services/userService";
 import { colors } from "../theme/colors";
@@ -36,6 +37,7 @@ export default function HomeScreen({ navigation }) {
   const [friends, setFriends] = useState([]);
   const [feedTab, setFeedTab] = useState("forYou"); // "forYou" | "following"
   const [posts, setPosts] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     const unsubscribe = listenIncomingRequests(user.uid, setIncomingRequests);
@@ -49,6 +51,11 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const unsubscribe = listenFriends(user.uid, setFriends);
+    return unsubscribe;
+  }, [user.uid]);
+
+  useEffect(() => {
+    const unsubscribe = listenUnreadNotificationCount(user.uid, setUnreadNotifications);
     return unsubscribe;
   }, [user.uid]);
 
@@ -87,14 +94,29 @@ export default function HomeScreen({ navigation }) {
     <View>
       <View style={styles.topRow}>
         <Text style={styles.brand}>Nata</Text>
-        <TouchableOpacity style={styles.messagesButton} onPress={() => navigation.navigate("Chats")}>
-          <Icon name="chat" size={20} color={colors.text} />
-          {unreadCount > 0 ? (
-            <View style={styles.messagesBadge}>
-              <Text style={styles.messagesBadgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
-            </View>
-          ) : null}
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.messagesButton}
+            onPress={() => navigation.navigate("Notifications")}
+          >
+            <Icon name="bell" size={20} color={colors.text} />
+            {unreadNotifications > 0 ? (
+              <View style={styles.messagesBadge}>
+                <Text style={styles.messagesBadgeText}>
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.messagesButton} onPress={() => navigation.navigate("Chats")}>
+            <Icon name="chat" size={20} color={colors.text} />
+            {unreadCount > 0 ? (
+              <View style={styles.messagesBadge}>
+                <Text style={styles.messagesBadgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.greetingRow}>
@@ -211,6 +233,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1.5,
     textTransform: "uppercase",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   messagesButton: {
     width: 36,
