@@ -1,17 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
+import { PostCardSkeletonList } from "../components/PostCardSkeleton";
 import StatusStrip from "../components/StatusStrip";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { useUnreadChats } from "../hooks/useUnreadChats";
 import { listenFriends, listenIncomingRequests } from "../services/friendService";
 import { listenUnreadNotificationCount } from "../services/notificationService";
-import { listenFeed, listenFollowingFeed } from "../services/postService";
+import {
+  fetchMoreFollowingPosts,
+  fetchMorePosts,
+  listenFeed,
+  listenFollowingFeed,
+  POSTS_PAGE_SIZE,
+} from "../services/postService";
 import { listenScoreEventsSince } from "../services/userService";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -36,7 +43,12 @@ export default function HomeScreen({ navigation }) {
   const [weeklyEvents, setWeeklyEvents] = useState([]);
   const [friends, setFriends] = useState([]);
   const [feedTab, setFeedTab] = useState("forYou"); // "forYou" | "following"
-  const [posts, setPosts] = useState([]);
+  const [livePosts, setLivePosts] = useState([]);
+  const [morePosts, setMorePosts] = useState([]);
+  const [postsLastDoc, setPostsLastDoc] = useState(null);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
@@ -60,12 +72,45 @@ export default function HomeScreen({ navigation }) {
   }, [user.uid]);
 
   useEffect(() => {
+    setPostsLoading(true);
+    setMorePosts([]);
+    setHasMore(true);
+    const handlePage = (newPosts, lastDoc) => {
+      setLivePosts(newPosts);
+      setPostsLastDoc(lastDoc);
+      if (newPosts.length < POSTS_PAGE_SIZE) setHasMore(false);
+      setPostsLoading(false);
+    };
     const unsubscribe =
       feedTab === "forYou"
-        ? listenFeed(setPosts)
-        : listenFollowingFeed(friends.map((f) => f.uid), setPosts);
+        ? listenFeed(handlePage)
+        : listenFollowingFeed(friends.map((f) => f.uid), handlePage);
     return unsubscribe;
   }, [feedTab, friends]);
+
+  // Live erste Seite + einmalig nachgeladene aeltere Seiten getrennt halten,
+  // damit ein Realtime-Update der ersten Seite (z.B. neuer Beitrag) nicht die
+  // schon nachgeladenen aelteren Beitraege ueberschreibt.
+  const posts = useMemo(() => {
+    const seen = new Set(livePosts.map((p) => p.id));
+    return [...livePosts, ...morePosts.filter((p) => !seen.has(p.id))];
+  }, [livePosts, morePosts]);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || !postsLastDoc || postsLoading) return;
+    setLoadingMore(true);
+    try {
+      const result =
+        feedTab === "forYou"
+          ? await fetchMorePosts(postsLastDoc)
+          : await fetchMoreFollowingPosts(friends.map((f) => f.uid), postsLastDoc);
+      setMorePosts((prev) => [...prev, ...result.posts]);
+      if (result.lastDoc) setPostsLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const weeklyPoints = useMemo(
     () => weeklyEvents.reduce((sum, e) => sum + (e.amount || 0), 0),
@@ -209,15 +254,24 @@ export default function HomeScreen({ navigation }) {
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => <PostCard post={item} navigation={navigation} />}
       ListHeaderComponent={ListHeader}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        loadingMore ? <ActivityIndicator color={colors.primary} style={styles.loadMoreSpinner} /> : null
+      }
       ListEmptyComponent={
-        <View style={styles.feedEmpty}>
-          <Icon name="document" size={26} color={colors.textMuted} />
-          <Text style={styles.feedEmptyText}>
-            {feedTab === "forYou"
-              ? "Noch keine Beitraege."
-              : "Deine Connections haben noch nichts gepostet."}
-          </Text>
-        </View>
+        postsLoading ? (
+          <PostCardSkeletonList />
+        ) : (
+          <View style={styles.feedEmpty}>
+            <Icon name="document" size={26} color={colors.textMuted} />
+            <Text style={styles.feedEmptyText}>
+              {feedTab === "forYou"
+                ? "Noch keine Beitraege."
+                : "Deine Connections haben noch nichts gepostet."}
+            </Text>
+          </View>
+        )
       }
     />
   );
@@ -373,6 +427,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 30,
     paddingHorizontal: 20,
+  },
+  loadMoreSpinner: {
+    marginVertical: spacing.xl,
   },
   feedEmptyText: {
     color: colors.textMuted,

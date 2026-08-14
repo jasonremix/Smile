@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import PostCard from "../components/PostCard";
+import { PostCardSkeletonList } from "../components/PostCardSkeleton";
 import ReportModal from "../components/ReportModal";
 import ScreenHeader from "../components/ScreenHeader";
 import VerifiedBadge from "../components/VerifiedBadge";
@@ -9,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { getChatId } from "../services/chatService";
 import { hasPendingRequest, listenFriends, sendFriendRequest } from "../services/friendService";
 import { blockUser, reportContent } from "../services/moderationService";
-import { listenUserPosts } from "../services/postService";
+import { fetchMoreUserPosts, getUserPostCount, listenUserPosts, POSTS_PAGE_SIZE } from "../services/postService";
 import { getUserProfile } from "../services/userService";
 import { colors } from "../theme/colors";
 import { shadow } from "../theme/shadow";
@@ -18,7 +19,13 @@ export default function UserProfileScreen({ route, navigation }) {
   const { uid } = route.params;
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [livePosts, setLivePosts] = useState([]);
+  const [morePosts, setMorePosts] = useState([]);
+  const [postsLastDoc, setPostsLastDoc] = useState(null);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [postCount, setPostCount] = useState(0);
   const [isFriend, setIsFriend] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -28,9 +35,38 @@ export default function UserProfileScreen({ route, navigation }) {
   }, [uid]);
 
   useEffect(() => {
-    const unsubscribe = listenUserPosts(uid, setPosts);
+    setPostsLoading(true);
+    setMorePosts([]);
+    setHasMore(true);
+    const unsubscribe = listenUserPosts(uid, (newPosts, lastDoc) => {
+      setLivePosts(newPosts);
+      setPostsLastDoc(lastDoc);
+      if (newPosts.length < POSTS_PAGE_SIZE) setHasMore(false);
+      setPostsLoading(false);
+      getUserPostCount(uid)
+        .then(setPostCount)
+        .catch(() => {});
+    });
     return unsubscribe;
   }, [uid]);
+
+  const posts = useMemo(() => {
+    const seen = new Set(livePosts.map((p) => p.id));
+    return [...livePosts, ...morePosts.filter((p) => !seen.has(p.id))];
+  }, [livePosts, morePosts]);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || !postsLastDoc || postsLoading) return;
+    setLoadingMore(true);
+    try {
+      const result = await fetchMoreUserPosts(uid, postsLastDoc);
+      setMorePosts((prev) => [...prev, ...result.posts]);
+      if (result.lastDoc) setPostsLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     hasPendingRequest(currentUser.uid, uid).then(setRequestSent);
@@ -114,7 +150,7 @@ export default function UserProfileScreen({ route, navigation }) {
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{posts.length}</Text>
+              <Text style={styles.statValue}>{postCount}</Text>
               <Text style={styles.statLabel}>Beiträge</Text>
             </View>
           </View>
@@ -147,7 +183,18 @@ export default function UserProfileScreen({ route, navigation }) {
           <Text style={styles.postsHeading}>Beitraege</Text>
         </View>
       }
-      ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beitraege.</Text>}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        loadingMore ? <ActivityIndicator color={colors.primary} style={styles.loadMoreSpinner} /> : null
+      }
+      ListEmptyComponent={
+        postsLoading ? (
+          <PostCardSkeletonList />
+        ) : (
+          <Text style={styles.emptyText}>Noch keine Beitraege.</Text>
+        )
+      }
       showsVerticalScrollIndicator={false}
     />
     <ReportModal
@@ -308,5 +355,8 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: "center",
     marginTop: 12,
+  },
+  loadMoreSpinner: {
+    marginVertical: 24,
   },
 });

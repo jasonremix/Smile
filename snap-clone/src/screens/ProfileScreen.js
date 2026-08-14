@@ -1,5 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Alert, Animated, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
@@ -8,8 +17,14 @@ import ScreenHeader from "../components/ScreenHeader";
 import StatusEditor from "../components/StatusEditor";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
+import { PostCardSkeletonList } from "../components/PostCardSkeleton";
 import { listenFriends } from "../services/friendService";
-import { listenUserPosts } from "../services/postService";
+import {
+  fetchMoreUserPosts,
+  getUserPostCount,
+  listenUserPosts,
+  POSTS_PAGE_SIZE,
+} from "../services/postService";
 import { clearStatus, isStatusActive, setStatus } from "../services/userService";
 import { colors } from "../theme/colors";
 import { getLevelInfo } from "../utils/nataLevel";
@@ -21,7 +36,13 @@ export default function ProfileScreen({ navigation }) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const isModal = navigation.canGoBack();
-  const [posts, setPosts] = useState([]);
+  const [livePosts, setLivePosts] = useState([]);
+  const [morePosts, setMorePosts] = useState([]);
+  const [postsLastDoc, setPostsLastDoc] = useState(null);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [postCount, setPostCount] = useState(0);
   const [friends, setFriends] = useState([]);
   const [statusEditorVisible, setStatusEditorVisible] = useState(false);
   const activeStatus = isStatusActive(user?.status) ? user.status : null;
@@ -39,9 +60,40 @@ export default function ProfileScreen({ navigation }) {
 
   useEffect(() => {
     if (!user?.uid) return;
-    const unsubscribe = listenUserPosts(user.uid, setPosts);
+    setPostsLoading(true);
+    setMorePosts([]);
+    setHasMore(true);
+    const unsubscribe = listenUserPosts(user.uid, (newPosts, lastDoc) => {
+      setLivePosts(newPosts);
+      setPostsLastDoc(lastDoc);
+      if (newPosts.length < POSTS_PAGE_SIZE) setHasMore(false);
+      setPostsLoading(false);
+      getUserPostCount(user.uid)
+        .then(setPostCount)
+        .catch(() => {});
+    });
     return unsubscribe;
   }, [user?.uid]);
+
+  // Live erste Seite + einmalig nachgeladene aeltere Seiten getrennt halten,
+  // siehe HomeScreen fuer den gleichen Ansatz beim "Fuer dich"-Feed.
+  const posts = useMemo(() => {
+    const seen = new Set(livePosts.map((p) => p.id));
+    return [...livePosts, ...morePosts.filter((p) => !seen.has(p.id))];
+  }, [livePosts, morePosts]);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || !postsLastDoc || postsLoading) return;
+    setLoadingMore(true);
+    try {
+      const result = await fetchMoreUserPosts(user.uid, postsLastDoc);
+      setMorePosts((prev) => [...prev, ...result.posts]);
+      if (result.lastDoc) setPostsLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -140,7 +192,7 @@ export default function ProfileScreen({ navigation }) {
 
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{posts.length}</Text>
+                  <Text style={styles.statValue}>{postCount}</Text>
                   <Text style={styles.statLabel}>Beiträge</Text>
                 </View>
                 <View style={styles.statDivider} />
@@ -200,7 +252,18 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.postsHeading}>Meine Beiträge</Text>
           </View>
         }
-        ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beiträge.</Text>}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? <ActivityIndicator color={colors.primary} style={styles.loadMoreSpinner} /> : null
+        }
+        ListEmptyComponent={
+          postsLoading ? (
+            <PostCardSkeletonList />
+          ) : (
+            <Text style={styles.emptyText}>Noch keine Beiträge.</Text>
+          )
+        }
       />
 
       <StatusEditor
@@ -407,5 +470,8 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: "center",
     marginTop: spacing.md,
+  },
+  loadMoreSpinner: {
+    marginVertical: spacing.xl,
   },
 });

@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getCountFromServer,
   getDoc,
   getDocs,
   increment,
@@ -12,12 +13,20 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { createNotification } from "./notificationService";
 import { bumpNataScore } from "./userService";
+
+// Statt jeden jemals erstellten Beitrag live zu abonnieren (waechst
+// unbegrenzt mit der App-Nutzung), laedt jeder Feed nur eine Seite auf
+// einmal. Die erste Seite bleibt echtzeit-aktuell (onSnapshot), weitere
+// Seiten werden bei Bedarf einmalig nachgeladen (fetchMore*) - aeltere
+// Beitraege muessen nicht live aktualisiert werden.
+export const POSTS_PAGE_SIZE = 20;
 
 export async function createPost({
   authorId,
@@ -42,39 +51,116 @@ export async function createPost({
   return postRef.id;
 }
 
-// "Fuer dich": alle Beitraege, neueste zuerst.
-export function listenFeed(callback) {
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+// "Fuer dich": neueste Beitraege zuerst, seitenweise.
+export function listenFeed(callback, pageSize = POSTS_PAGE_SIZE) {
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(pageSize));
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    callback(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      snap.docs[snap.docs.length - 1] || null
+    );
   });
+}
+
+export async function fetchMorePosts(lastDoc, pageSize = POSTS_PAGE_SIZE) {
+  if (!lastDoc) return { posts: [], lastDoc: null, hasMore: false };
+  const q = query(
+    collection(db, "posts"),
+    orderBy("createdAt", "desc"),
+    startAfter(lastDoc),
+    limit(pageSize)
+  );
+  const snap = await getDocs(q);
+  return {
+    posts: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs[snap.docs.length - 1] || null,
+    hasMore: snap.docs.length === pageSize,
+  };
 }
 
 // "Following": nur Beitraege der eigenen Connections - Firestore "in"
 // unterstuetzt maximal 30 Werte, fuer eine Beta mit wenigen Nutzer:innen
 // ausreichend.
-export function listenFollowingFeed(connectionIds, callback) {
+export function listenFollowingFeed(connectionIds, callback, pageSize = POSTS_PAGE_SIZE) {
   if (!connectionIds || connectionIds.length === 0) {
-    callback([]);
+    callback([], null);
     return () => {};
   }
   const q = query(
     collection(db, "posts"),
     where("authorId", "in", connectionIds.slice(0, 30)),
-    orderBy("createdAt", "desc")
+    orderBy("createdAt", "desc"),
+    limit(pageSize)
   );
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    callback(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      snap.docs[snap.docs.length - 1] || null
+    );
   });
+}
+
+export async function fetchMoreFollowingPosts(connectionIds, lastDoc, pageSize = POSTS_PAGE_SIZE) {
+  if (!lastDoc || !connectionIds || connectionIds.length === 0) {
+    return { posts: [], lastDoc: null, hasMore: false };
+  }
+  const q = query(
+    collection(db, "posts"),
+    where("authorId", "in", connectionIds.slice(0, 30)),
+    orderBy("createdAt", "desc"),
+    startAfter(lastDoc),
+    limit(pageSize)
+  );
+  const snap = await getDocs(q);
+  return {
+    posts: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs[snap.docs.length - 1] || null,
+    hasMore: snap.docs.length === pageSize,
+  };
 }
 
 // Eigene Beitraege einer bestimmten Person - fuers Profil (eigenes oder
 // fremdes).
-export function listenUserPosts(uid, callback) {
-  const q = query(collection(db, "posts"), where("authorId", "==", uid), orderBy("createdAt", "desc"));
+export function listenUserPosts(uid, callback, pageSize = POSTS_PAGE_SIZE) {
+  const q = query(
+    collection(db, "posts"),
+    where("authorId", "==", uid),
+    orderBy("createdAt", "desc"),
+    limit(pageSize)
+  );
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    callback(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      snap.docs[snap.docs.length - 1] || null
+    );
   });
+}
+
+export async function fetchMoreUserPosts(uid, lastDoc, pageSize = POSTS_PAGE_SIZE) {
+  if (!lastDoc) return { posts: [], lastDoc: null, hasMore: false };
+  const q = query(
+    collection(db, "posts"),
+    where("authorId", "==", uid),
+    orderBy("createdAt", "desc"),
+    startAfter(lastDoc),
+    limit(pageSize)
+  );
+  const snap = await getDocs(q);
+  return {
+    posts: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs[snap.docs.length - 1] || null,
+    hasMore: snap.docs.length === pageSize,
+  };
+}
+
+// Echte Gesamtanzahl fuer die Profil-Statistik, unabhaengig von der
+// paginierten Beitragsliste (die nach dem ersten Laden nur eine Seite
+// enthaelt) - eine Aggregat-Abfrage kostet nur eine einzelne Lese-Operation,
+// unabhaengig von der Menge der Beitraege.
+export async function getUserPostCount(uid) {
+  const q = query(collection(db, "posts"), where("authorId", "==", uid));
+  const snap = await getCountFromServer(q);
+  return snap.data().count;
 }
 
 export async function deletePost(postId) {
