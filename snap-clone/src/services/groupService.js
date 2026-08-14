@@ -47,17 +47,20 @@ export function listenGroups(uid, callback) {
   });
 }
 
-export async function sendGroupMessage(groupId, senderId, senderName, text) {
+// visibleAt (optional): Zeitkapsel-Nachricht, siehe chatService.sendMessage
+// fuer die Begruendung.
+export async function sendGroupMessage(groupId, senderId, senderName, text, visibleAt) {
   const messagesRef = collection(db, "groups", groupId, "messages");
   await addDoc(messagesRef, {
     senderId,
     senderName,
     text,
     createdAt: serverTimestamp(),
+    ...(visibleAt ? { visibleAt } : {}),
   });
 
   await updateDoc(doc(db, "groups", groupId), {
-    lastMessage: text,
+    lastMessage: visibleAt ? "🕐 Zeitkapsel-Nachricht" : text,
     lastSenderId: senderId,
     updatedAt: serverTimestamp(),
   });

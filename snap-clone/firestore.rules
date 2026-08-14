@@ -29,6 +29,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(ownerId)/friends/$(request.auth.uid));
     }
 
+    // Dieselbe Sichtbarkeits-Logik wie beim Story-Lesen (siehe unten bei
+    // stories/{storyId}), aber fuer die verschachtelte reactions-Subcollection
+    // wiederverwendbar, wo resource.data die Reaktion ist, nicht die Story.
+    function canViewStory(ownerId, storyId) {
+      let story = get(/databases/$(database)/documents/users/$(ownerId)/stories/$(storyId)).data;
+      return isOwner(ownerId)
+        || (story.visibility == 'friends' && isFriendOf(ownerId))
+        || (story.visibility == 'custom' && request.auth.uid in story.visibleTo);
+    }
+
     // Automatische Sperr-/Timeout-Durchsetzung (siehe moderationService.js
     // fuer die Strike-Vergabe): unabhaengig davon, ob der Client brav
     // mitspielt, kann eine bereits gesetzte Sperre serverseitig nicht
@@ -252,6 +262,14 @@ service cloud.firestore {
           || (request.resource.data.restrictedUntil is timestamp
               && request.resource.data.restrictedUntil >= resource.data.get('restrictedUntil', request.time))
         )
+        // Selbst gewaehlte Interessens-Badges (siehe EditProfileScreen) - nur
+        // aus einer festen Liste, keine freien Texte, deshalb reicht eine
+        // Groessen-/Typpruefung ohne Inhaltsfilter.
+        && (
+          !('interests' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.interests is list
+              && request.resource.data.interests.size() <= 5)
+        )
       );
 
       allow delete: if isOwner(userId);
@@ -366,6 +384,23 @@ service cloud.firestore {
         allow update: if false;
       }
 
+      // Live-Standort (striktes Opt-in, siehe locationService.js) - nur die
+      // eigenen "engen Freunde" (closeFriends-Liste auf DIESEM Profil) duerfen
+      // mitlesen, nicht alle Connections. Vordergrund-Standort, kein
+      // Hintergrund-Tracking - "current" wird bei jedem manuellen/App-offenen
+      // Update ueberschrieben, nie eine Historie angelegt.
+      match /liveLocation/{docId} {
+        allow read: if isOwner(userId)
+          || (request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.get('closeFriends', []));
+        allow create, update: if isOwner(userId)
+          && request.resource.data.ownerId == userId
+          && request.resource.data.lat is number
+          && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+          && request.resource.data.lng is number
+          && request.resource.data.lng >= -180 && request.resource.data.lng <= 180;
+        allow delete: if isOwner(userId);
+      }
+
       match /stories/{storyId} {
         // Eigene Storys immer sichtbar; sonst nur laut gewaehlter Sichtbarkeit:
         // "friends" braucht eine bestehende Freundschaft, "custom" braucht
@@ -409,6 +444,18 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived', 'archivedAt'])
           && request.resource.data.archived is bool;
         allow delete: if isOwner(userId);
+
+        // Doppel-Tipp-Reaktion (siehe StoryViewerScreen.js) - docId = uid der
+        // reagierenden Person, damit pro Person und Moment nur eine Reaktion
+        // existiert. Nur wer die Story ueberhaupt sehen darf, darf reagieren.
+        match /reactions/{reactorUid} {
+          allow read: if canViewStory(userId, storyId);
+          allow create: if isOwner(reactorUid)
+            && canViewStory(userId, storyId)
+            && request.resource.data.type in ['heart'];
+          allow delete: if isOwner(reactorUid);
+          allow update: if false;
+        }
       }
 
       // In-App-Benachrichtigungen: die aktive Person schreibt direkt in die
@@ -546,6 +593,16 @@ service cloud.firestore {
               && request.resource.data.voiceDurationMs > 0
               && request.resource.data.voiceDurationMs <= 120000
               && !('text' in request.resource.data))
+          )
+          // Zeitkapsel-Nachricht (siehe ChatScreen.js/GroupChatScreen.js) -
+          // optionaler Zeitpunkt, ab dem die Nachricht erst sichtbar wird.
+          // Nur clientseitig ausgeblendet (kein echter Verschluesselungs-
+          // schutz), deshalb hier nur eine plausible Obergrenze statt
+          // beliebig weit in der Zukunft liegender Werte.
+          && (
+            !('visibleAt' in request.resource.data)
+            || (request.resource.data.visibleAt is timestamp
+                && request.resource.data.visibleAt <= request.time + duration.value(30, 'd'))
           );
         // Nur die sendende Person darf ihre eigene Nachricht bearbeiten -
         // ausschliesslich Text + "edited"-Markierung, sonst nichts.
@@ -613,6 +670,16 @@ service cloud.firestore {
               && request.resource.data.voiceDurationMs > 0
               && request.resource.data.voiceDurationMs <= 120000
               && !('text' in request.resource.data))
+          )
+          // Zeitkapsel-Nachricht (siehe ChatScreen.js/GroupChatScreen.js) -
+          // optionaler Zeitpunkt, ab dem die Nachricht erst sichtbar wird.
+          // Nur clientseitig ausgeblendet (kein echter Verschluesselungs-
+          // schutz), deshalb hier nur eine plausible Obergrenze statt
+          // beliebig weit in der Zukunft liegender Werte.
+          && (
+            !('visibleAt' in request.resource.data)
+            || (request.resource.data.visibleAt is timestamp
+                && request.resource.data.visibleAt <= request.time + duration.value(30, 'd'))
           );
         allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])

@@ -138,18 +138,24 @@ export function listenChats(uid, callback) {
   });
 }
 
-export async function sendMessage(chatId, senderId, text) {
+// visibleAt (optional): Zeitkapsel-Nachricht - die Nachricht existiert ab
+// sofort in Firestore, wird aber erst ab diesem Zeitpunkt im Chat
+// angezeigt (siehe MessageBubble.js). Rein clientseitig verzoegert, kein
+// echter Verschluesselungsschutz. Die Vorschau in der Chat-Liste zeigt in
+// dem Fall bewusst nicht den echten Text, sonst waere die Ueberraschung hin.
+export async function sendMessage(chatId, senderId, text, visibleAt) {
   const messagesRef = collection(db, "chats", chatId, "messages");
   await addDoc(messagesRef, {
     senderId,
     text,
     createdAt: serverTimestamp(),
+    ...(visibleAt ? { visibleAt } : {}),
   });
 
   await setDoc(
     doc(db, "chats", chatId),
     {
-      lastMessage: text,
+      lastMessage: visibleAt ? "🕐 Zeitkapsel-Nachricht" : text,
       lastSenderId: senderId,
       updatedAt: serverTimestamp(),
     },

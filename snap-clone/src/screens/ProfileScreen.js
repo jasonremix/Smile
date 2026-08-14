@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
+import InterestChips from "../components/InterestChips";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
 import ScreenHeader from "../components/ScreenHeader";
@@ -185,6 +186,8 @@ export default function ProfileScreen({ navigation }) {
               <Text style={styles.username}>@{user?.username}</Text>
 
               {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+
+              <InterestChips interests={user?.interests} style={styles.interestChips} />
 
               {user?.location?.city ? (
                 <View style={styles.locationRow}>
@@ -372,6 +375,11 @@ const styles = StyleSheet.create({
     ...typography.body,
     textAlign: "center",
     marginTop: spacing.md,
+    maxWidth: "90%",
+  },
+  interestChips: {
+    justifyContent: "center",
+    marginTop: spacing.sm,
     maxWidth: "90%",
   },
   locationRow: {

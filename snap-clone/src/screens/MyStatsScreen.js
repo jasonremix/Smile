@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { listenChats } from "../services/chatService";
 import { listenUserPosts } from "../services/postService";
 import { listenScoreEventsSince } from "../services/userService";
+import { generateYearRecapPdf } from "../utils/yearRecapPdf";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -142,6 +143,11 @@ export default function MyStatsScreen({ navigation }) {
           </View>
         ) : null}
 
+        <TouchableOpacity style={styles.recapButton} onPress={() => generateYearRecapPdf(user)}>
+          <Icon name="sparkle" size={16} color={colors.primaryLight} />
+          <Text style={styles.recapButtonText}>Jahresrückblick {new Date().getFullYear()} als PDF teilen</Text>
+        </TouchableOpacity>
+
         <Text style={styles.footnote}>
           Punkte-Historie berücksichtigt bis zu 20 gespeicherte Ereignisse pro Woche · Beiträge:
           letzte {RECENT_POSTS_SAMPLE}.
@@ -243,5 +249,22 @@ const styles = StyleSheet.create({
     ...typography.caption,
     textAlign: "center",
     marginTop: spacing.sm,
+  },
+  recapButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.35)",
+  },
+  recapButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

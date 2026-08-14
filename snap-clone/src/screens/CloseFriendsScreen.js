@@ -44,7 +44,15 @@ export default function CloseFriendsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader onBack={() => navigation.goBack()} title="Enge Freunde" />
+      <ScreenHeader
+        onBack={() => navigation.goBack()}
+        title="Enge Freunde"
+        right={
+          <TouchableOpacity onPress={() => navigation.navigate("CloseFriendsLocation")}>
+            <Icon name="pin" size={18} color={colors.primaryLight} />
+          </TouchableOpacity>
+        }
+      />
       <Text style={styles.intro}>
         {count > 0
           ? `${count} enge ${count === 1 ? "Freund:in" : "Freund:innen"} - werden beim Teilen eines Moments automatisch vorausgewählt.`

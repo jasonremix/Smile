@@ -2,6 +2,7 @@ import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
+import { auth } from "../config/firebase";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -111,7 +112,20 @@ const CATEGORIES = [
 
 const ALL_ITEMS = CATEGORIES.flatMap((c) => c.items);
 
+function formatMetaDate(iso) {
+  if (!iso) return "-";
+  const date = new Date(iso);
+  return date.toLocaleDateString("de-DE") + ", " + date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
 export default function SecurityScreen({ navigation }) {
+  // Firebase Auth liefert nur einen einzelnen "letzte Anmeldung"-Zeitstempel,
+  // keine Liste einzelner Geraete/Sitzungen - das braeuchte eine eigene
+  // Backend-Infrastruktur (Admin SDK), die es fuer Nata nicht gibt. Deshalb
+  // hier ehrlich nur die echten, tatsaechlich verfuegbaren Werte statt einer
+  // vorgetaeuschten Geraete-Liste mit erfundenen "Abmelden"-Buttons.
+  const metadata = auth.currentUser?.metadata;
+
   return (
     <View style={styles.container}>
       <ScreenHeader onBack={() => navigation.goBack()} title="Sicherheit" />
@@ -153,6 +167,28 @@ export default function SecurityScreen({ navigation }) {
             </View>
           </View>
         ))}
+
+        <Text style={styles.sectionLabel}>Konto-Aktivität</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Icon name="person" size={16} color={colors.primaryLight} style={styles.rowIcon} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowTitle}>Konto erstellt</Text>
+              <Text style={styles.rowDetail}>{formatMetaDate(metadata?.creationTime)}</Text>
+            </View>
+          </View>
+          <View style={[styles.row, styles.noBorder]}>
+            <Icon name="check" size={16} color={colors.primaryLight} style={styles.rowIcon} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowTitle}>Letzte Anmeldung</Text>
+              <Text style={styles.rowDetail}>{formatMetaDate(metadata?.lastSignInTime)}</Text>
+              <Text style={styles.metaCaveat}>
+                Firebase liefert nur diesen einen Zeitstempel, keine Liste einzelner Geräte -
+                dafür bräuchte es ein eigenes Backend, das es für Nata noch nicht gibt.
+              </Text>
+            </View>
+          </View>
+        </View>
 
         <Text style={styles.footnote}>
           Fragen, eine automatische Sperre unklar oder ein Sicherheitshinweis? Eröffne ein
@@ -246,6 +282,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     ...typography.caption,
     lineHeight: 17,
+  },
+  metaCaveat: {
+    color: colors.textMuted,
+    ...typography.caption,
+    fontStyle: "italic",
+    lineHeight: 16,
+    marginTop: 4,
   },
   footnote: {
     color: colors.textMuted,

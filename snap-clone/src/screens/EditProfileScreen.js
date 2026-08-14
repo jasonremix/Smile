@@ -8,6 +8,7 @@ import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../serv
 import { clearLocation, shareLocationCity, updateProfileFields } from "../services/userService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticSelection } from "../utils/haptics";
+import { INTEREST_OPTIONS, MAX_INTERESTS } from "../utils/interests";
 import { colors } from "../theme/colors";
 import { AVATAR_PALETTE } from "../theme/avatarPalette";
 import { radius } from "../theme/radius";
@@ -34,9 +35,19 @@ export default function EditProfileScreen({ navigation }) {
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [avatarColor, setAvatarColor] = useState(user?.avatarColor || AVATAR_PALETTE[0]);
+  const [interests, setInterests] = useState(user?.interests || []);
   const [saving, setSaving] = useState(false);
   const [locationBusy, setLocationBusy] = useState(false);
   const locationEnabled = !!user?.location?.city;
+
+  const toggleInterest = (id) => {
+    hapticSelection();
+    setInterests((prev) => {
+      if (prev.includes(id)) return prev.filter((i) => i !== id);
+      if (prev.length >= MAX_INTERESTS) return prev;
+      return [...prev, id];
+    });
+  };
 
   const handleSave = async () => {
     if (!displayName.trim()) {
@@ -58,7 +69,7 @@ export default function EditProfileScreen({ navigation }) {
     }
     setSaving(true);
     try {
-      await updateProfileFields(user.uid, { displayName, bio, avatarColor });
+      await updateProfileFields(user.uid, { displayName, bio, avatarColor, interests });
       navigation.goBack();
     } catch (e) {
       Alert.alert("Fehler", "Profil konnte nicht gespeichert werden. Bitte erneut versuchen.");
@@ -167,6 +178,28 @@ export default function EditProfileScreen({ navigation }) {
         />
         <Text style={styles.counter}>{bio.length}/{BIO_MAX}</Text>
 
+        <View style={styles.interestsHeader}>
+          <Text style={styles.sectionLabel}>Interessen (optional)</Text>
+          <Text style={styles.interestsCounter}>{interests.length}/{MAX_INTERESTS}</Text>
+        </View>
+        <View style={styles.interestsWrap}>
+          {INTEREST_OPTIONS.map((option) => {
+            const selected = interests.includes(option.id);
+            return (
+              <TouchableOpacity
+                key={option.id}
+                style={[styles.interestChip, selected && styles.interestChipSelected]}
+                onPress={() => toggleInterest(option.id)}
+              >
+                <Text style={styles.interestEmoji}>{option.emoji}</Text>
+                <Text style={[styles.interestLabel, selected && styles.interestLabelSelected]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
         <View style={styles.locationCard}>
           <View style={styles.locationHeader}>
             <Icon name="pin" size={18} color={colors.primaryLight} />
@@ -270,6 +303,48 @@ const styles = StyleSheet.create({
     ...typography.caption,
     textAlign: "right",
     marginBottom: spacing.xxl,
+  },
+  interestsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  interestsCounter: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginBottom: spacing.sm,
+  },
+  interestsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.xxl,
+  },
+  interestChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  interestChipSelected: {
+    backgroundColor: `${colors.primary}22`,
+    borderColor: colors.primary,
+  },
+  interestEmoji: {
+    fontSize: 14,
+  },
+  interestLabel: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  interestLabelSelected: {
+    color: colors.text,
   },
   locationCard: {
     backgroundColor: colors.surface,

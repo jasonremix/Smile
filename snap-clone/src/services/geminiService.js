@@ -19,13 +19,21 @@ const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODE
 
 // history: [{ role: "user"|"model", text }] - aeltestes zuerst. systemInstruction
 // ist optionaler, fester Kontext (z.B. Ton/Regeln), zaehlt nicht zur Historie.
-export async function generateGeminiReply(history, systemInstruction) {
+// imagePart (optional): { mimeType, base64 } - wird NUR der letzten
+// user-Nachricht angehaengt (Gemini Vision), damit ein Bild sich auf die
+// aktuelle Frage bezieht statt auf die ganze Historie.
+export async function generateGeminiReply(history, systemInstruction, imagePart) {
   if (!API_KEY) throw new Error("Gemini-API-Schluessel fehlt (app.json extra.geminiApiKey)");
 
+  const lastUserIndex = history.reduce((acc, m, i) => (m.role === "user" ? i : acc), -1);
+
   const body = {
-    contents: history.map((m) => ({
+    contents: history.map((m, i) => ({
       role: m.role === "model" ? "model" : "user",
-      parts: [{ text: m.text }],
+      parts:
+        imagePart && i === lastUserIndex
+          ? [{ text: m.text }, { inlineData: { mimeType: imagePart.mimeType, data: imagePart.base64 } }]
+          : [{ text: m.text }],
     })),
     ...(systemInstruction
       ? { systemInstruction: { parts: [{ text: systemInstruction }] } }

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -8,13 +9,16 @@ import {
   View,
 } from "react-native";
 import FilteredMedia from "../components/FilteredMedia";
+import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { reportContent } from "../services/moderationService";
-import { archiveStory, markStoryViewed, unarchiveStory } from "../services/storyService";
+import { archiveStory, markStoryViewed, reactToStory, unarchiveStory } from "../services/storyService";
+import { hapticLight } from "../utils/haptics";
 import { colors } from "../theme/colors";
 
 const PHOTO_DURATION_MS = 5000;
+const DOUBLE_TAP_MS = 280;
 
 export default function StoryViewerScreen({ route, navigation }) {
   const { group } = route.params;
@@ -25,11 +29,60 @@ export default function StoryViewerScreen({ route, navigation }) {
     Object.fromEntries(group.items.map((it) => [it.id, !!it.archived]))
   );
   const timerRef = useRef(null);
+  const lastTapRef = useRef(0);
+  const tapTimerRef = useRef(null);
+  const heartScale = useRef(new Animated.Value(0)).current;
+  const [heartVisible, setHeartVisible] = useState(false);
 
   const items = group.items;
   const current = items[index];
   const isOwn = group.ownerId === user.uid;
   const isArchived = current ? !!archivedState[current.id] : false;
+
+  const showHeartBurst = () => {
+    setHeartVisible(true);
+    heartScale.setValue(0);
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, friction: 4 }),
+      Animated.delay(350),
+      Animated.timing(heartScale, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setHeartVisible(false));
+  };
+
+  const handleDoubleTap = () => {
+    if (!current) return;
+    hapticLight();
+    showHeartBurst();
+    reactToStory(current.ref, user.uid).catch(() => {});
+  };
+
+  // Kein react-native-gesture-handler-Rig fuer die Vor-/Zurueck-Zonen -
+  // deshalb Doppel-Tipp per Zeitstempel erkannt: kommt ein zweiter Tap
+  // innerhalb DOUBLE_TAP_MS, wird die eigentlich geplante Einzel-Tap-Aktion
+  // (naechster/vorheriger Moment) verworfen und stattdessen reagiert.
+  const handleZoneTap = (singleTapAction) => {
+    const now = Date.now();
+    const isDoubleTap = now - lastTapRef.current < DOUBLE_TAP_MS;
+    lastTapRef.current = now;
+    if (isDoubleTap) {
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+      }
+      handleDoubleTap();
+    } else {
+      tapTimerRef.current = setTimeout(() => {
+        tapTimerRef.current = null;
+        singleTapAction();
+      }, DOUBLE_TAP_MS);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    };
+  }, []);
 
   const toggleArchive = async () => {
     try {
@@ -121,13 +174,28 @@ export default function StoryViewerScreen({ route, navigation }) {
       />
 
       <View style={styles.tapZones}>
-        <TouchableWithoutFeedback onPress={goPrev}>
+        <TouchableWithoutFeedback onPress={() => handleZoneTap(goPrev)}>
           <View style={styles.tapZoneLeft} />
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback onPress={goNext}>
+        <TouchableWithoutFeedback onPress={() => handleZoneTap(goNext)}>
           <View style={styles.tapZoneRight} />
         </TouchableWithoutFeedback>
       </View>
+
+      {heartVisible ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.heartBurst,
+            {
+              opacity: heartScale,
+              transform: [{ scale: heartScale.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1.3] }) }],
+            },
+          ]}
+        >
+          <Icon name="heart" size={72} color="#fff" />
+        </Animated.View>
+      ) : null}
 
       <ReportModal
         visible={reporting}
@@ -241,5 +309,13 @@ const styles = StyleSheet.create({
   },
   tapZoneRight: {
     flex: 2,
+  },
+  heartBurst: {
+    position: "absolute",
+    top: "45%",
+    left: "50%",
+    marginLeft: -36,
+    marginTop: -36,
+    zIndex: 3,
   },
 });

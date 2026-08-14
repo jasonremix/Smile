@@ -5,6 +5,7 @@ import { navigationRef } from "../navigation/navigationRef";
 import { listenChats } from "../services/chatService";
 import { getActiveChatId } from "../state/activeChat";
 import { playReceiveSound } from "../utils/soundEffects";
+import { getQuietHours, isWithinQuietHoursNow } from "../utils/quietHours";
 import { colors } from "../theme/colors";
 
 function toMillis(timestamp) {
@@ -24,6 +25,13 @@ export default function NewMessageBanner() {
   const hasLoadedOnce = useRef(false);
   const hideTimeoutRef = useRef(null);
   const translateY = useRef(new Animated.Value(-120)).current;
+  const quietPrefsRef = useRef(null);
+
+  useEffect(() => {
+    getQuietHours().then((prefs) => {
+      quietPrefsRef.current = prefs;
+    });
+  }, []);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -40,8 +48,10 @@ export default function NewMessageBanner() {
         if (!chat.lastSenderId || chat.lastSenderId === user.uid) continue;
         if (updatedMs <= (previous.get(chat.id) || 0)) continue;
 
-        playReceiveSound();
+        const inQuietHours = isWithinQuietHoursNow(quietPrefsRef.current);
+        if (!inQuietHours) playReceiveSound();
         if (chat.id === getActiveChatId()) continue;
+        if (inQuietHours) continue;
 
         const otherId = chat.participants.find((id) => id !== user.uid);
         showBanner({

@@ -10,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { FOUNDER_USERNAME } from "../services/ticketService";
 import { getSoundEffectsEnabled, setSoundEffectsEnabled } from "../utils/soundEffects";
 import { generateDataExportPdf } from "../utils/dataExportPdf";
+import { getQuietHours, setQuietHours } from "../utils/quietHours";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -27,14 +28,22 @@ const APP_VERSION = "1.0.1";
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [quietHours, setQuietHoursState] = useState({ enabled: false, startHour: 22, endHour: 8 });
 
   useEffect(() => {
     getSoundEffectsEnabled().then(setSoundEnabled);
+    getQuietHours().then(setQuietHoursState);
   }, []);
 
   const handleToggleSound = (value) => {
     setSoundEnabled(value);
     setSoundEffectsEnabled(value);
+  };
+
+  const updateQuietHours = (partial) => {
+    const next = { ...quietHours, ...partial };
+    setQuietHoursState(next);
+    setQuietHours(next);
   };
 
   const handleDataExport = () => {
@@ -119,7 +128,37 @@ export default function SettingsScreen({ navigation }) {
             value={soundEnabled}
             onValueChange={handleToggleSound}
           />
+          <SettingsToggleRow
+            icon="bell"
+            label="Nicht-stören-Zeiten"
+            value={quietHours.enabled}
+            onValueChange={(value) => updateQuietHours({ enabled: value })}
+          />
         </SettingsSection>
+        {quietHours.enabled ? (
+          <View style={styles.quietHoursCard}>
+            <Text style={styles.quietHoursText}>
+              Stumm von {String(quietHours.startHour).padStart(2, "0")}:00 bis{" "}
+              {String(quietHours.endHour).padStart(2, "0")}:00 Uhr
+            </Text>
+            <Text style={styles.quietHoursHint}>
+              Gilt für In-App-Hinweise (Banner, Ton) - echte Push-Benachrichtigungen sind noch
+              nicht aktiv, greifen aber automatisch mit, sobald es sie gibt.
+            </Text>
+            <View style={styles.quietHoursRow}>
+              <HourStepper
+                label="Von"
+                value={quietHours.startHour}
+                onChange={(h) => updateQuietHours({ startHour: h })}
+              />
+              <HourStepper
+                label="Bis"
+                value={quietHours.endHour}
+                onChange={(h) => updateQuietHours({ endHour: h })}
+              />
+            </View>
+          </View>
+        ) : null}
 
         <Text style={styles.sectionLabel}>Sicherheit</Text>
         <SettingsSection>
@@ -165,6 +204,24 @@ export default function SettingsScreen({ navigation }) {
           {user?.betaTesterNumber ? ` · Beta-Tester #${user.betaTesterNumber}` : ""}
         </Text>
       </ScrollView>
+    </View>
+  );
+}
+
+function HourStepper({ label, value, onChange }) {
+  const step = (delta) => onChange((value + delta + 24) % 24);
+  return (
+    <View style={styles.stepper}>
+      <Text style={styles.stepperLabel}>{label}</Text>
+      <View style={styles.stepperControls}>
+        <TouchableOpacity style={styles.stepperButton} onPress={() => step(-1)} hitSlop={8}>
+          <Text style={styles.stepperButtonText}>–</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepperValue}>{String(value).padStart(2, "0")}:00</Text>
+        <TouchableOpacity style={styles.stepperButton} onPress={() => step(1)} hitSlop={8}>
+          <Text style={styles.stepperButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -231,5 +288,65 @@ const styles = StyleSheet.create({
     ...typography.caption,
     textAlign: "center",
     marginTop: spacing.xxl,
+  },
+  quietHoursCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  quietHoursText: {
+    color: colors.text,
+    ...typography.subhead,
+    fontWeight: "700",
+  },
+  quietHoursHint: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginTop: 4,
+    marginBottom: spacing.md,
+    lineHeight: 16,
+  },
+  quietHoursRow: {
+    flexDirection: "row",
+    gap: spacing.xl,
+  },
+  stepper: {
+    flex: 1,
+  },
+  stepperLabel: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginBottom: 6,
+  },
+  stepperControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  stepperButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.background,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stepperButtonText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  stepperValue: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

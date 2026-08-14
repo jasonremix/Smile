@@ -3,10 +3,12 @@ import {
   arrayUnion,
   collection,
   collectionGroup,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -104,6 +106,16 @@ export async function archiveStory(storyRef) {
 
 export async function unarchiveStory(storyRef) {
   await updateDoc(storyRef, { archived: false, archivedAt: null });
+}
+
+// Doppel-Tipp-Reaktion (siehe StoryViewerScreen.js) - eine Person kann pro
+// Moment maximal eine Reaktion hinterlassen (docId = eigene uid), erneutes
+// Doppel-Tippen ueberschreibt einfach dasselbe Dokument.
+export async function reactToStory(storyRef, uid) {
+  await setDoc(doc(storyRef, "reactions", uid), {
+    type: "heart",
+    createdAt: serverTimestamp(),
+  });
 }
 
 export function listenMyArchivedStories(uid, callback) {

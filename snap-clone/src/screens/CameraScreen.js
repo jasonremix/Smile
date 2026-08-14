@@ -53,6 +53,11 @@ export default function CameraScreen({ navigation, route }) {
       // Empfaenger-/Timer-Auswahl wie bei Snaps/Momenten) - direkt zurueck
       // zum Beitrag-erstellen-Screen mit dem aufgenommenen Foto.
       navigation.navigate("CreatePost", { photoUri: photo.uri, filter });
+    } else if (intent === "nataAiVision") {
+      // Nata AI mit Bild: keine Vorschau/Timer noetig, direkt zurueck zum
+      // Chat - das Bild wird dort nur inline an Gemini geschickt, nicht
+      // hochgeladen (Firebase Storage ist noch nicht aktiv).
+      navigation.navigate("NataAI", { photoUri: photo.uri });
     } else {
       navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent, filter });
     }

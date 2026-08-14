@@ -8,6 +8,15 @@ import { colors } from "../theme/colors";
 // Wiederverwendbare Nachrichtenblase fuer 1:1- und Gruppen-Chats -
 // listenReactions/toggleReaction werden injiziert, damit dieselbe
 // Komponente beide Backends (chats/… und groups/…) bedienen kann.
+function formatVisibleAt(timestamp) {
+  const date = timestamp?.toDate ? timestamp.toDate() : null;
+  if (!date) return "";
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return sameDay ? `heute, ${time} Uhr` : `${date.toLocaleDateString("de-DE")}, ${time} Uhr`;
+}
+
 export default function MessageBubble({
   message,
   isMine,
@@ -18,6 +27,19 @@ export default function MessageBubble({
   toggleReaction,
 }) {
   const [reactorUids, setReactorUids] = useState([]);
+  // Zeitkapsel-Nachricht: fuer alle ausser die sendende Person clientseitig
+  // gesperrt, bis visibleAt erreicht ist. Ein Tick alle 15s reicht, damit die
+  // Nachricht sichtbar wird, ohne auf eine neue Firestore-Aenderung warten
+  // zu muessen (reines Zeit-Ereignis, kein Datenwechsel).
+  const visibleAtMs = message.visibleAt?.toMillis ? message.visibleAt.toMillis() : null;
+  const [nowMs, setNowMs] = useState(Date.now());
+  const isLocked = !isMine && visibleAtMs && visibleAtMs > nowMs;
+
+  useEffect(() => {
+    if (!visibleAtMs || isMine) return;
+    const interval = setInterval(() => setNowMs(Date.now()), 15000);
+    return () => clearInterval(interval);
+  }, [visibleAtMs, isMine]);
 
   useEffect(() => {
     const unsubscribe = listenReactions(message.id, setReactorUids);
@@ -38,11 +60,16 @@ export default function MessageBubble({
           />
         ) : null}
         {!isMine && senderName ? <Text style={styles.senderName}>{senderName}</Text> : null}
-        {message.voiceUrl ? (
+        {isLocked ? (
+          <Text style={styles.bubbleText}>🕐 Zeitkapsel-Nachricht - sichtbar ab {formatVisibleAt(message.visibleAt)}</Text>
+        ) : message.voiceUrl ? (
           <VoiceMessageBubble voiceUrl={message.voiceUrl} durationMs={message.voiceDurationMs} />
         ) : (
           <Text style={styles.bubbleText}>{message.text}</Text>
         )}
+        {isMine && visibleAtMs && visibleAtMs > Date.now() ? (
+          <Text style={styles.editedLabel}>⏳ wird sichtbar ab {formatVisibleAt(message.visibleAt)}</Text>
+        ) : null}
         {message.edited ? <Text style={styles.editedLabel}>bearbeitet</Text> : null}
       </TouchableOpacity>
       <MessageReactionBadge

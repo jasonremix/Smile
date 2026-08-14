@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
+import InterestChips from "../components/InterestChips";
 import PostCard from "../components/PostCard";
 import { PostCardSkeletonList } from "../components/PostCardSkeleton";
 import ReportModal from "../components/ReportModal";
@@ -144,6 +145,8 @@ export default function UserProfileScreen({ route, navigation }) {
 
           {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
+          <InterestChips interests={profile.interests} style={styles.interestChips} />
+
           {profile.location?.city ? (
             <View style={styles.locationRow}>
               <Icon name="pin" size={12} color={colors.textMuted} />
@@ -279,6 +282,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     maxWidth: "85%",
+  },
+  interestChips: {
+    justifyContent: "center",
+    marginTop: 8,
+    maxWidth: "90%",
   },
   locationRow: {
     flexDirection: "row",

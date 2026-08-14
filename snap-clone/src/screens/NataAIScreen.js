@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -23,17 +24,27 @@ import { typography } from "../theme/typography";
 // Eigener, schlanker Chat-Screen statt Wiederverwendung von MessageBubble/
 // ChatScreen - dort haengen Reaktionen, Bearbeiten/Loeschen, Streaks etc.
 // dran, die fuer einen 1:1-KI-Chat ohne zweite Person keinen Sinn ergeben.
-export default function NataAIScreen({ navigation }) {
+export default function NataAIScreen({ navigation, route }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [pendingImageUri, setPendingImageUri] = useState(null);
   const listRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = listenAiMessages(user.uid, setMessages);
     return unsubscribe;
   }, [user.uid]);
+
+  // Kommt von CameraScreen (intent "nataAiVision") mit dem aufgenommenen
+  // Foto zurueck - wird nur lokal als Vorschau gehalten, nicht hochgeladen.
+  useEffect(() => {
+    if (route.params?.photoUri) {
+      setPendingImageUri(route.params.photoUri);
+      navigation.setParams({ photoUri: undefined });
+    }
+  }, [route.params?.photoUri]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -43,11 +54,13 @@ export default function NataAIScreen({ navigation }) {
 
   const handleSend = async () => {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    if ((!trimmed && !pendingImageUri) || sending) return;
     setText("");
+    const imageUri = pendingImageUri;
+    setPendingImageUri(null);
     setSending(true);
     try {
-      await sendAiMessage(user.uid, trimmed, messages);
+      await sendAiMessage(user.uid, trimmed, messages, imageUri);
     } finally {
       setSending(false);
     }
@@ -72,6 +85,12 @@ export default function NataAIScreen({ navigation }) {
         renderItem={({ item }) =>
           item.role === "user" ? (
             <View style={[styles.bubble, styles.bubbleMine]}>
+              {item.hasImage ? (
+                <View style={styles.imageTag}>
+                  <Icon name="camera" size={11} color={colors.text} />
+                  <Text style={styles.imageTagText}>Bild</Text>
+                </View>
+              ) : null}
               <Text style={styles.bubbleTextMine}>{item.text}</Text>
             </View>
           ) : (
@@ -106,22 +125,40 @@ export default function NataAIScreen({ navigation }) {
         </View>
       ) : null}
 
+      {pendingImageUri ? (
+        <View style={styles.pendingImageRow}>
+          <Image source={{ uri: pendingImageUri }} style={styles.pendingImage} />
+          <Text style={styles.pendingImageText}>Bild bereit zum Senden</Text>
+          <TouchableOpacity onPress={() => setPendingImageUri(null)} hitSlop={8}>
+            <Icon name="close" size={14} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <View style={styles.inputRow}>
+        <TouchableOpacity
+          style={styles.cameraButton}
+          onPress={() => navigation.navigate("Camera", { intent: "nataAiVision" })}
+          accessibilityRole="button"
+          accessibilityLabel="Foto an Nata AI schicken"
+        >
+          <Icon name="camera" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
         <TextInput
           style={styles.input}
           value={text}
           onChangeText={setText}
-          placeholder="Nachricht an Nata AI..."
+          placeholder={pendingImageUri ? "Frag etwas zum Bild (optional)..." : "Nachricht an Nata AI..."}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
         />
         <TouchableOpacity
           onPress={handleSend}
-          disabled={!text.trim() || sending}
+          disabled={(!text.trim() && !pendingImageUri) || sending}
           accessibilityRole="button"
           accessibilityLabel="Nachricht senden"
-          style={(!text.trim() || sending) && styles.sendButtonDisabled}
+          style={!text.trim() && !pendingImageUri && styles.sendButtonDisabled}
         >
           <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.sendButton}>
             <Icon name="send" size={16} color={colors.text} />
@@ -233,6 +270,47 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
+  },
+  cameraButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pendingImageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xs,
+  },
+  pendingImage: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+  },
+  pendingImageText: {
+    flex: 1,
+    color: colors.textMuted,
+    ...typography.caption,
+  },
+  imageTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: radius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: "flex-start",
+    marginBottom: 4,
+  },
+  imageTagText: {
+    color: colors.text,
+    fontSize: 10,
+    fontWeight: "700",
   },
   input: {
     flex: 1,

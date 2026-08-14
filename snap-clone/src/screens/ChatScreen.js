@@ -47,6 +47,20 @@ import { colors } from "../theme/colors";
 
 const TYPING_TIMEOUT_MS = 3000;
 
+function atTimeToday(hour) {
+  const d = new Date();
+  d.setHours(hour, 0, 0, 0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+function atTimeTomorrow(hour) {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
+
 export default function ChatScreen({ route, navigation }) {
   const { chatId: initialChatId, otherUser } = route.params;
   const { user } = useAuth();
@@ -58,6 +72,7 @@ export default function ChatScreen({ route, navigation }) {
   const [otherIsTyping, setOtherIsTyping] = useState(false);
   const [otherVerified, setOtherVerified] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
+  const [scheduledFor, setScheduledFor] = useState(null);
   const listRef = useRef(null);
   const chatIdRef = useRef(chatId);
   const isTypingRef = useRef(false);
@@ -230,8 +245,20 @@ export default function ChatScreen({ route, navigation }) {
       setTypingStatus(id, user.uid, false).catch(() => {});
     }
 
-    await sendMessage(id, user.uid, trimmed);
+    await sendMessage(id, user.uid, trimmed, scheduledFor);
+    setScheduledFor(null);
     playSendSound();
+  };
+
+  const handlePickSchedule = () => {
+    Alert.alert("Zeitkapsel-Nachricht", "Wann soll die Nachricht sichtbar werden?", [
+      { text: "In 1 Stunde", onPress: () => setScheduledFor(new Date(Date.now() + 60 * 60 * 1000)) },
+      { text: "Heute Abend (20 Uhr)", onPress: () => setScheduledFor(atTimeToday(20)) },
+      { text: "Morgen früh (9 Uhr)", onPress: () => setScheduledFor(atTimeTomorrow(9)) },
+      { text: "In 3 Tagen", onPress: () => setScheduledFor(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)) },
+      scheduledFor ? { text: "Zeitkapsel entfernen", style: "destructive", onPress: () => setScheduledFor(null) } : null,
+      { text: "Abbrechen", style: "cancel" },
+    ].filter(Boolean));
   };
 
   const handleSendVoice = async (localUri, durationMs) => {
@@ -325,7 +352,28 @@ export default function ChatScreen({ route, navigation }) {
         </View>
       ) : null}
 
+      {scheduledFor ? (
+        <View style={styles.editingRow}>
+          <Text style={styles.editingText}>
+            🕐 Wird sichtbar am {scheduledFor.toLocaleDateString("de-DE")}, {scheduledFor.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr
+          </Text>
+          <TouchableOpacity onPress={() => setScheduledFor(null)}>
+            <Icon name="close" size={13} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <View style={styles.inputRow}>
+        {!editingMessage ? (
+          <TouchableOpacity
+            style={styles.scheduleButton}
+            onPress={handlePickSchedule}
+            accessibilityRole="button"
+            accessibilityLabel="Zeitkapsel-Nachricht planen"
+          >
+            <Icon name="ticket" size={16} color={scheduledFor ? colors.primaryLight : colors.textMuted} />
+          </TouchableOpacity>
+        ) : null}
         <TextInput
           style={styles.input}
           placeholder="Nachricht senden..."
@@ -439,5 +487,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     ...shadow.sm,
+  },
+  scheduleButton: {
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
