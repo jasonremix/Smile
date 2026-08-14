@@ -1,20 +1,23 @@
 // Automatische, clientseitige Inhaltspruefung - prueft Texte vor dem
-// Absenden auf Beleidigungen/Hassrede, Drohungen und offensichtliches
-// Spam-Verhalten (Massen-Links, Kontaktaufnahme-Spam-Phrasen).
+// Absenden auf Beleidigungen/Hassrede, Drohungen, Anzeichen von
+// Selbstgefaehrdung und offensichtliches Spam-/Betrugsverhalten.
 //
 // Bewusst streng eingestellt (mehr Kategorien, tiefere Normalisierung,
 // niedrigere Schwellenwerte) - im Zweifel eher einmal zu viel blockieren
 // als eine Drohung/Hassrede durchlassen. Wer faelschlich blockiert wird,
 // kann den Text ueberarbeiten oder ueber "Feedback geben" melden.
 //
+// Kategorien nach Prioritaet geordnet und gepruefte (self_harm zuerst,
+// danach threat, dann language, zuletzt spam) - eine Krisensituation soll
+// nie als "nur Spam" durchrutschen, falls sich mehrere Muster ueberschneiden.
+//
 // Ehrlich eingeordnet: das ist eine Vorab-Pruefung im Client, keine
 // serverseitige Garantie - wer die App umgeht oder direkt gegen Firestore
 // schreibt, kommt daran vorbei (dafuer gibt es zusaetzlich eine serverseitige
-// Kernpruefung in firestore.rules). Ergaenzt die bestehende Melden/
-// Blockieren-Funktion, ersetzt sie nicht.
+// Kernpruefung in firestore.rules, siehe dort fuer denselben Wortstamm).
+// Ergaenzt die bestehende Melden/Blockieren-Funktion, ersetzt sie nicht.
 
-const BLOCKED_TERMS = [
-  // Grobe Beleidigungen
+const INSULT_TERMS = [
   "hurensohn",
   "wichser",
   "arschloch",
@@ -26,9 +29,16 @@ const BLOCKED_TERMS = [
   "hure",
   "bastard",
   "wixer",
+  "wixxer",
   "hackfresse",
-  // Diskriminierung/Hassrede (Behinderung, Herkunft, Religion, Geschlecht,
-  // sexuelle Orientierung)
+  "spacko",
+  "vollidiot",
+  "penner",
+];
+
+// Diskriminierung/Hassrede (Behinderung, Herkunft, Religion, Geschlecht,
+// sexuelle Orientierung) - deutsch und englisch.
+const DISCRIMINATION_TERMS = [
   "spast",
   "spasti",
   "mongo",
@@ -40,7 +50,6 @@ const BLOCKED_TERMS = [
   "schwuchtel",
   "kampflesbe",
   "tunte",
-  // engl. Slurs
   "nigger",
   "nigga",
   "faggot",
@@ -53,12 +62,17 @@ const BLOCKED_TERMS = [
   "slut",
   "bitch",
   "cunt",
-  // Sexuelle Belaestigung / unerwuenschte sexuelle Anspielungen
+];
+
+// Sexuelle Belaestigung / unerwuenschte sexuelle Anspielungen.
+const SEXUAL_HARASSMENT_TERMS = [
   "schick mir nacktbilder",
   "zeig mir deine titten",
   "schick nudes",
   "nacktfoto von dir",
 ];
+
+const BLOCKED_TERMS = [...INSULT_TERMS, ...DISCRIMINATION_TERMS, ...SEXUAL_HARASSMENT_TERMS];
 
 // Drohungen/Gewaltandrohungen - eigene, strengste Kategorie: nichts davon
 // hat einen legitimen Anwendungsfall in normaler Kommunikation, deshalb
@@ -70,7 +84,10 @@ const THREAT_PATTERNS = [
   "ich tote dich",
   "ich schlage dich",
   "ich steche dich",
+  "ich erstech dich",
   "du wirst sterben",
+  "du bist tot",
+  "ich mach dich fertig",
   "ich finde dich und",
   "ich weiss wo du wohnst",
   "ich weiß wo du wohnst",
@@ -78,6 +95,27 @@ const THREAT_PATTERNS = [
   "bring dich um",
   "ritz dich",
   "du solltest dich umbringen",
+  "du solltest sterben",
+];
+
+// Sprache, die auf akute Selbstgefaehrdung hindeutet - bewusst NICHT wie
+// Hassrede/Spam behandelt (kein "Verstoss", keine Bestrafung): siehe
+// getBlockAlert() unten fuer die einfuehlsame Reaktion mit Hinweis auf die
+// Telefonseelsorge, statt den Text nur als "regelwidrig" abzulehnen.
+const SELF_HARM_PATTERNS = [
+  "ich will nicht mehr leben",
+  "ich will sterben",
+  "ich bring mich um",
+  "ich bringe mich um",
+  "ich toete mich",
+  "ich töte mich",
+  "ich mache schluss mit allem",
+  "ich will mir das leben nehmen",
+  "suizid begehen",
+  "selbstmord begehen",
+  "ich ritze mich",
+  "ich schneide mich",
+  "keinen grund mehr weiterzuleben",
 ];
 
 const SPAM_PHRASES = [
@@ -95,6 +133,11 @@ const SPAM_PHRASES = [
   "gewinnspiel teilnehmen jetzt",
   "verdiene 500€ am tag",
   "kostenloses iphone",
+  // Phishing-artige Formulierungen.
+  "verifiziere dein konto hier",
+  "dein konto wird gesperrt",
+  "bestätige deine daten hier",
+  "dein paket konnte nicht zugestellt werden",
 ];
 
 const URL_PATTERN = /https?:\/\/|www\./gi;
@@ -107,8 +150,7 @@ const REPEATED_CHAR_PATTERN = /(.)\1{6,}/;
 const SHOUTING_MIN_LENGTH = 20;
 
 // Einfache Leetspeak-Normalisierung, damit simple Umgehungsversuche wie
-// "h0ur3nsohn" oder "n1gg4" trotzdem erkannt werden. Bewusst breiter als
-// vorher (zusaetzlich 4->a, 5->s, 7->t, @->a).
+// "h0ur3nsohn" oder "n1gg4" trotzdem erkannt werden.
 // Bewusst keine Lookbehind-/Lookahead-Regex hier (z.B. fuer "h u r e n s
 // o h n" -> "hurensohn"): das laeuft ueber Hermes auf bereits verteilten
 // Alt-Builds, deren genaue Regex-Engine-Version wir per OTA nicht
@@ -126,16 +168,17 @@ function normalize(text) {
     .replace(/[7]/g, "t");
 }
 
-export const BLOCK_REASON_MESSAGES = {
-  language: "Dein Text enthält Formulierungen, die gegen unsere Richtlinien verstoßen. Bitte überarbeite ihn.",
-  threat: "Dein Text wurde als Drohung oder Gewaltandrohung erkannt und kann nicht gesendet werden.",
-  spam: "Das sieht nach Spam oder Werbung aus und wurde automatisch blockiert.",
-};
-
-// { blocked: false } oder { blocked: true, reason: "language" | "threat" | "spam" }
+// { blocked: false } oder
+// { blocked: true, reason: "self_harm" | "threat" | "language" | "spam" }
 export function checkContent(text) {
   if (!text) return { blocked: false };
   const normalized = normalize(text);
+
+  for (const pattern of SELF_HARM_PATTERNS) {
+    if (normalized.includes(pattern)) {
+      return { blocked: true, reason: "self_harm" };
+    }
+  }
 
   for (const pattern of THREAT_PATTERNS) {
     if (normalized.includes(pattern)) {
@@ -177,4 +220,36 @@ export function checkContent(text) {
   }
 
   return { blocked: false };
+}
+
+// Zentrale Stelle fuer Titel+Text des Hinweis-Dialogs, damit nicht jeder
+// Aufrufer (CreatePostScreen, ChatScreen, ...) seinen eigenen, ggf.
+// inkonsistenten Text pflegt. "self_harm" bekommt bewusst einen warmen,
+// nicht strafenden Ton mit einer echten Hilfe-Nummer statt einer
+// Regelverstoss-Meldung.
+export function getBlockAlert(reason) {
+  switch (reason) {
+    case "self_harm":
+      return {
+        title: "Du bist nicht allein",
+        message:
+          "Dein Text klingt, als könntest du gerade in einer schweren Krise stecken. Bitte hol dir Hilfe - die Telefonseelsorge ist kostenlos, anonym und rund um die Uhr erreichbar: 0800 111 0 111 oder 0800 111 0 222 (auch per Chat: telefonseelsorge.de). Dein Text wurde nicht gesendet.",
+      };
+    case "threat":
+      return {
+        title: "Nicht möglich",
+        message: "Dein Text wurde als Drohung oder Gewaltandrohung erkannt und kann nicht gesendet werden.",
+      };
+    case "spam":
+      return {
+        title: "Nicht möglich",
+        message: "Das sieht nach Spam oder Werbung aus und wurde automatisch blockiert.",
+      };
+    case "language":
+    default:
+      return {
+        title: "Nicht möglich",
+        message: "Dein Text enthält Formulierungen, die gegen unsere Richtlinien verstoßen. Bitte überarbeite ihn.",
+      };
+  }
 }

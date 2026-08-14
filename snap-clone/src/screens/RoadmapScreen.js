@@ -12,7 +12,8 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
-  "Automatische Inhaltsprüfung, client- und serverseitig (Firestore-Regeln) - greift auch bei direkten Schreibversuchen gegen die Datenbank",
+  "Automatische Inhaltsprüfung, client- und serverseitig (Firestore-Regeln) - deutlich erweiterte Begriffsliste, eigene Kategorie für Drohungen sowie einfühlsame Krisen-Unterstützung mit Telefonseelsorge-Hinweis statt reiner Regelverstoß-Meldung",
+  "Strukturiertes Melden-Formular (was/wann/Beschreibung) mit optionalem PDF-Vorfallsbericht",
   "Notification Center für Likes, Kommentare und Verbindungsanfragen",
   "Globale Suche über Personen und Beiträge",
   "Erweiterte Privatsphäre-Stufen (Sichtbarkeit in Suche, Connections-Liste)",

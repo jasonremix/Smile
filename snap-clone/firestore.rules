@@ -29,19 +29,27 @@ service cloud.firestore {
     function containsBlockedTerm(text) {
       return text is string
         && text.lower().matches(
-          '.*(hurensohn|wichser|arschloch|missgeburt|untermensch|abschaum|fotze'
-          + '|schlampe|hure|bastard|wixer|hackfresse'
+          '.*(hurensohn|wichser|wixxer|arschloch|missgeburt|untermensch|abschaum|fotze'
+          + '|schlampe|hure|bastard|wixer|hackfresse|spacko|vollidiot|penner'
           + '|spast|spasti|mongo|kanake|kameltreiber|judensau|zigeuner'
           + '|schwuchtel|kampflesbe|tunte'
           + '|nigger|nigga|faggot|retard|chink|kike|spic|tranny|whore|slut|bitch|cunt'
+          + '|schick mir nacktbilder|zeig mir deine titten|schick nudes|nacktfoto von dir'
           + '|ich bringe dich um|ich toete dich|ich töte dich|ich tote dich'
-          + '|ich schlage dich|ich steche dich|du wirst sterben|ich finde dich und'
+          + '|ich schlage dich|ich steche dich|ich erstech dich|du wirst sterben|du bist tot'
+          + '|ich mach dich fertig|ich finde dich und'
           + '|ich weiss wo du wohnst|ich weiß wo du wohnst|ich vergewaltige dich'
-          + '|bring dich um|ritz dich|du solltest dich umbringen'
+          + '|bring dich um|ritz dich|du solltest dich umbringen|du solltest sterben'
+          + '|ich will nicht mehr leben|ich will sterben|ich bring mich um|ich bringe mich um'
+          + '|ich toete mich|ich töte mich|ich mache schluss mit allem'
+          + '|ich will mir das leben nehmen|suizid begehen|selbstmord begehen'
+          + '|ich ritze mich|ich schneide mich|keinen grund mehr weiterzuleben'
           + '|klick hier|jetzt klicken|gratis geld|schnell reich werden'
           + '|geld verdienen von zuhause|jetzt kaufen|bitcoin investment|krypto investment'
           + '|kostenlos abstauben|nur heute kostenlos|folge mir für follower'
-          + '|gewinnspiel teilnehmen jetzt|kostenloses iphone).*'
+          + '|gewinnspiel teilnehmen jetzt|kostenloses iphone'
+          + '|verifiziere dein konto hier|dein konto wird gesperrt|bestätige deine daten hier'
+          + '|dein paket konnte nicht zugestellt werden).*'
         );
     }
 

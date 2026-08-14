@@ -14,69 +14,95 @@ import { typography } from "../theme/typography";
 // diese Seite ehrlich auf, welche konkreten technischen Massnahmen
 // tatsaechlich umgesetzt sind (siehe Master-Prompt Sektion 51: keine
 // vorgetaeuschte Funktionalitaet).
-// badge = kurzes Label fuer die Chip-Ansicht oben, title/detail fuer die
-// ausfuehrliche Liste darunter - dieselbe Quelle fuer beides, damit nichts
-// auseinanderlaufen kann. Bewusst keine kreisrunden "Siegel"-Formen oder
-// goldene Farben fuer die Chips - das wuerde optisch eine offizielle
-// Zertifizierung suggerieren, die es nicht gibt.
-const MEASURES = [
+// badge = kurzes Label fuer die Chip-Uebersicht oben, title/detail fuer die
+// ausfuehrliche, nach Kategorie gruppierte Liste darunter - dieselbe
+// Quelle fuer beides, damit nichts auseinanderlaufen kann. Bewusst keine
+// kreisrunden "Siegel"-Formen oder goldene Farben fuer die Chips - das
+// wuerde optisch eine offizielle Zertifizierung suggerieren, die es nicht
+// gibt. Drei Kategorien statt einer langen Liste, damit die Seite mit
+// wachsender Anzahl an Massnahmen uebersichtlich bleibt.
+const CATEGORIES = [
   {
-    icon: "lock",
-    badge: "TLS-verschlüsselt",
-    title: "Verschlüsselte Übertragung",
-    detail:
-      "Jede Verbindung zwischen der App und unseren Servern läuft ausschließlich über HTTPS/TLS-Verschlüsselung.",
+    label: "Kommunikation & Inhalte",
+    items: [
+      {
+        icon: "lock",
+        badge: "TLS-verschlüsselt",
+        title: "Verschlüsselte Übertragung",
+        detail:
+          "Jede Verbindung zwischen der App und unseren Servern läuft ausschließlich über HTTPS/TLS-Verschlüsselung.",
+      },
+      {
+        icon: "warning",
+        badge: "Inhaltsprüfung",
+        title: "Automatische Inhaltsprüfung",
+        detail:
+          "Beiträge, Kommentare, Nachrichten und Profiltexte werden vor dem Absenden automatisch auf Beleidigungen, Drohungen und offensichtlichen Spam geprüft - zusätzlich zur Prüfung in der App auch direkt in unseren Datenbank-Zugriffsregeln, greift also selbst bei einem direkten Schreibversuch gegen die Datenbank.",
+      },
+      {
+        icon: "info",
+        badge: "Krisen-Unterstützung",
+        title: "Unterstützung bei Krisen",
+        detail:
+          "Erkennt unsere Prüfung Anzeichen akuter Selbstgefährdung, wird der Text nicht gesendet - stattdessen bekommst du einen einfühlsamen Hinweis mit der kostenlosen, anonymen Telefonseelsorge statt einer reinen Regelverstoß-Meldung.",
+      },
+      {
+        icon: "block",
+        badge: "Blockieren & Melden",
+        title: "Blockieren & Melden",
+        detail:
+          "Jede Person, jeder Beitrag und jede Nachricht lässt sich melden oder blockieren - blockierte Personen sehen dich nicht mehr. Meldungen lassen sich als PDF-Vorfallsbericht dokumentieren.",
+      },
+    ],
   },
   {
-    icon: "shield",
-    badge: "Gehashte Passwörter",
-    title: "Passwörter nie im Klartext",
-    detail:
-      "Passwörter werden von Google Firebase Authentication gehasht gespeichert - selbst wir können dein Passwort nicht einsehen.",
+    label: "Dein Konto",
+    items: [
+      {
+        icon: "shield",
+        badge: "Gehashte Passwörter",
+        title: "Passwörter nie im Klartext",
+        detail:
+          "Passwörter werden von Google Firebase Authentication gehasht gespeichert - selbst wir können dein Passwort nicht einsehen.",
+      },
+      {
+        icon: "check",
+        badge: "Google-/Apple-Login",
+        title: "Google- & Apple-Anmeldung",
+        detail:
+          "Alternative zur Passwort-Anmeldung über etablierte Identitätsanbieter, kein eigenes Passwort nötig.",
+      },
+      {
+        icon: "trash",
+        badge: "Jederzeit löschbar",
+        title: "Konto jederzeit löschbar",
+        detail:
+          "Löschung direkt in der App, ohne Support-Anfrage - dein Profil, deine Beiträge und Verbindungen werden entfernt.",
+      },
+    ],
   },
   {
-    icon: "shield",
-    badge: "Zugriffsregeln",
-    title: "Zugriffsregeln auf Datenbank-Ebene",
-    detail:
-      "Jede Anfrage an unsere Datenbank wird gegen strikte Sicherheitsregeln geprüft: Nutzer sehen nur, was sie laut Regel sehen dürfen - z. B. eigene Nachrichten, Benachrichtigungen nur im eigenen Postfach.",
-  },
-  {
-    icon: "pin",
-    badge: "Standort-Opt-in",
-    title: "Standort nur mit Zustimmung",
-    detail:
-      "Standort-Teilen ist Opt-in und speichert nie exakte Koordinaten, nur den Stadtnamen - jederzeit widerrufbar.",
-  },
-  {
-    icon: "check",
-    badge: "Google-/Apple-Login",
-    title: "Google- & Apple-Anmeldung",
-    detail:
-      "Alternative zur Passwort-Anmeldung über etablierte Identitätsanbieter, kein eigenes Passwort nötig.",
-  },
-  {
-    icon: "block",
-    badge: "Blockieren & Melden",
-    title: "Blockieren & Melden",
-    detail:
-      "Jede Person, jeder Beitrag und jede Nachricht lässt sich melden oder blockieren - blockierte Personen sehen dich nicht mehr.",
-  },
-  {
-    icon: "warning",
-    badge: "Automatische Inhaltsprüfung",
-    title: "Automatische Inhaltsprüfung",
-    detail:
-      "Beiträge, Kommentare, Nachrichten und Profiltexte werden vor dem Absenden automatisch auf grobe Beleidigungen und offensichtlichen Spam geprüft - zusätzlich zur Prüfung in der App auch direkt in unseren Datenbank-Zugriffsregeln, greift also selbst bei einem direkten Schreibversuch gegen die Datenbank.",
-  },
-  {
-    icon: "trash",
-    badge: "Jederzeit löschbar",
-    title: "Konto jederzeit löschbar",
-    detail:
-      "Löschung direkt in der App, ohne Support-Anfrage - dein Profil, deine Beiträge und Verbindungen werden entfernt.",
+    label: "Privatsphäre & Datenzugriff",
+    items: [
+      {
+        icon: "shield",
+        badge: "Zugriffsregeln",
+        title: "Zugriffsregeln auf Datenbank-Ebene",
+        detail:
+          "Jede Anfrage an unsere Datenbank wird gegen strikte Sicherheitsregeln geprüft: Nutzer sehen nur, was sie laut Regel sehen dürfen - z. B. eigene Nachrichten, Benachrichtigungen nur im eigenen Postfach.",
+      },
+      {
+        icon: "pin",
+        badge: "Standort-Opt-in",
+        title: "Standort nur mit Zustimmung",
+        detail:
+          "Standort-Teilen ist Opt-in und speichert nie exakte Koordinaten, nur den Stadtnamen - jederzeit widerrufbar.",
+      },
+    ],
   },
 ];
+
+const ALL_ITEMS = CATEGORIES.flatMap((c) => c.items);
 
 export default function SecurityScreen({ navigation }) {
   return (
@@ -90,7 +116,7 @@ export default function SecurityScreen({ navigation }) {
         </Text>
 
         <View style={styles.badgeRow}>
-          {MEASURES.map((item) => (
+          {ALL_ITEMS.map((item) => (
             <View key={item.badge} style={styles.badge}>
               <Icon name={item.icon} size={13} color={colors.primaryLight} style={styles.badgeIcon} />
               <Text style={styles.badgeText}>{item.badge}</Text>
@@ -101,17 +127,25 @@ export default function SecurityScreen({ navigation }) {
           Eigene Einschätzung unseres Teams, keine externe Prüfstelle hat das zertifiziert.
         </Text>
 
-        <View style={styles.card}>
-          {MEASURES.map((item, i) => (
-            <View key={item.title} style={[styles.row, i === MEASURES.length - 1 && styles.noBorder]}>
-              <Icon name="shield" size={16} color={colors.primaryLight} style={styles.rowIcon} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>{item.title}</Text>
-                <Text style={styles.rowDetail}>{item.detail}</Text>
-              </View>
+        {CATEGORIES.map((category) => (
+          <View key={category.label}>
+            <Text style={styles.sectionLabel}>{category.label}</Text>
+            <View style={styles.card}>
+              {category.items.map((item, i) => (
+                <View
+                  key={item.title}
+                  style={[styles.row, i === category.items.length - 1 && styles.noBorder]}
+                >
+                  <Icon name={item.icon} size={16} color={colors.primaryLight} style={styles.rowIcon} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>{item.title}</Text>
+                    <Text style={styles.rowDetail}>{item.detail}</Text>
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </View>
+        ))}
 
         <Text style={styles.footnote}>
           Fragen oder einen Sicherheitshinweis melden? Nutze "Feedback geben" in den
@@ -166,7 +200,14 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     ...typography.caption,
     fontStyle: "italic",
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
+  },
+  sectionLabel: {
+    color: colors.textMuted,
+    ...typography.sectionLabel,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.xs,
   },
   card: {
     backgroundColor: colors.surface,

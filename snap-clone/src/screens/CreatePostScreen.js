@@ -4,7 +4,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { createPost } from "../services/postService";
-import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
+import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
 const MAX_LENGTH = 500;
@@ -20,7 +20,8 @@ export default function CreatePostScreen({ navigation }) {
 
     const check = checkContent(trimmed);
     if (check.blocked) {
-      Alert.alert("Beitrag nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      const alertInfo = getBlockAlert(check.reason);
+      Alert.alert(alertInfo.title, alertInfo.message);
       return;
     }
 

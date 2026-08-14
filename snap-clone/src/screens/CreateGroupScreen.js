@@ -12,7 +12,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { listenFriends } from "../services/friendService";
 import { createGroup } from "../services/groupService";
-import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
+import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
 export default function CreateGroupScreen({ navigation }) {
@@ -37,7 +37,8 @@ export default function CreateGroupScreen({ navigation }) {
     if (!canCreate) return;
     const check = checkContent(name.trim());
     if (check.blocked) {
-      Alert.alert("Gruppe nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      const alertInfo = getBlockAlert(check.reason);
+      Alert.alert(alertInfo.title, alertInfo.message);
       return;
     }
     setCreating(true);

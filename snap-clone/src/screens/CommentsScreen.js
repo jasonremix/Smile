@@ -14,7 +14,7 @@ import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { addComment, listenComments } from "../services/postService";
-import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
+import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
@@ -38,7 +38,8 @@ export default function CommentsScreen({ route, navigation }) {
 
     const check = checkContent(trimmed);
     if (check.blocked) {
-      Alert.alert("Kommentar nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      const alertInfo = getBlockAlert(check.reason);
+      Alert.alert(alertInfo.title, alertInfo.message);
       return;
     }
 
