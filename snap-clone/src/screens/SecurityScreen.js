@@ -63,6 +63,13 @@ const MEASURES = [
       "Jede Person, jeder Beitrag und jede Nachricht lässt sich melden oder blockieren - blockierte Personen sehen dich nicht mehr.",
   },
   {
+    icon: "warning",
+    badge: "Automatische Inhaltsprüfung",
+    title: "Automatische Inhaltsprüfung",
+    detail:
+      "Beiträge, Kommentare, Nachrichten und Profiltexte werden vor dem Absenden automatisch auf grobe Beleidigungen und offensichtlichen Spam geprüft. Läuft aktuell im Client - eine serverseitige Ergänzung ist geplant (siehe Roadmap).",
+  },
+  {
     icon: "trash",
     badge: "Jederzeit löschbar",
     title: "Konto jederzeit löschbar",

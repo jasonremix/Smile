@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { createPost } from "../services/postService";
+import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
 const MAX_LENGTH = 500;
@@ -16,6 +17,13 @@ export default function CreatePostScreen({ navigation }) {
   const handlePost = async () => {
     const trimmed = text.trim();
     if (!trimmed || posting) return;
+
+    const check = checkContent(trimmed);
+    if (check.blocked) {
+      Alert.alert("Beitrag nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      return;
+    }
+
     setPosting(true);
     try {
       await createPost({

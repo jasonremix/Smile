@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import PrimaryButton from "./PrimaryButton";
+import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
 const SUGGESTIONS = ["Gerade unterwegs", "Gerade am Lernen", "Gerade frei", "Gerade beschaeftigt"];
@@ -12,6 +13,11 @@ export default function StatusEditor({ visible, onClose, currentText, onSave, on
   const handleSave = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    const check = checkContent(trimmed);
+    if (check.blocked) {
+      Alert.alert("Status nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      return;
+    }
     await onSave(trimmed);
     onClose();
   };

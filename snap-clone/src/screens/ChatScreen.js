@@ -34,6 +34,7 @@ import {
 import { blockUser, reportContent } from "../services/moderationService";
 import { getActiveChatId, setActiveChatId } from "../state/activeChat";
 import { getUserProfile } from "../services/userService";
+import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
 import { colors } from "../theme/colors";
 
@@ -181,6 +182,13 @@ export default function ChatScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    const check = checkContent(trimmed);
+    if (check.blocked) {
+      Alert.alert("Nachricht nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      return;
+    }
+
     hapticLight();
 
     if (editingMessage) {

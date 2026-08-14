@@ -12,6 +12,7 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Automatische Inhaltsprüfung für Beiträge, Kommentare, Nachrichten, Profil und Status",
   "Notification Center für Likes, Kommentare und Verbindungsanfragen",
   "Globale Suche über Personen und Beiträge",
   "Erweiterte Privatsphäre-Stufen (Sichtbarkeit in Suche, Connections-Liste)",
@@ -30,8 +31,9 @@ const PLANNED = [
     detail: "Code ist fertig, wartet auf die Einrichtung des Cloud-Speichers.",
   },
   {
-    title: "Automatische Inhaltsprüfung",
-    detail: "Zusätzlich zum bestehenden Melden/Blockieren.",
+    title: "Serverseitige Inhaltsprüfung",
+    detail:
+      "Die automatische Prüfung läuft aktuell im Client, bevor etwas gesendet wird. Eine zusätzliche serverseitige Prüfung (per Cloud Functions) ist geplant, damit sie sich nicht umgehen lässt.",
   },
   {
     title: "Einreichung im App Store & Play Store",

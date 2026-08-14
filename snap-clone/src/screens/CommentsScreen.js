@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +14,7 @@ import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { addComment, listenComments } from "../services/postService";
+import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
@@ -33,6 +35,13 @@ export default function CommentsScreen({ route, navigation }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
+
+    const check = checkContent(trimmed);
+    if (check.blocked) {
+      Alert.alert("Kommentar nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      return;
+    }
+
     hapticLight();
     setSending(true);
     setText("");

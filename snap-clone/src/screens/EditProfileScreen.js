@@ -5,6 +5,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { clearLocation, shareLocationCity, updateProfileFields } from "../services/userService";
+import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
 import { hapticSelection } from "../utils/haptics";
 import { colors } from "../theme/colors";
 import { AVATAR_PALETTE } from "../theme/avatarPalette";
@@ -39,6 +40,11 @@ export default function EditProfileScreen({ navigation }) {
   const handleSave = async () => {
     if (!displayName.trim()) {
       Alert.alert("Name fehlt", "Bitte gib einen Anzeigenamen ein.");
+      return;
+    }
+    const check = checkContent(`${displayName} ${bio}`);
+    if (check.blocked) {
+      Alert.alert("Speichern nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
       return;
     }
     setSaving(true);

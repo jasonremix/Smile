@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { listenFriends } from "../services/friendService";
 import { createGroup } from "../services/groupService";
+import { BLOCK_REASON_MESSAGES, checkContent } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
 
 export default function CreateGroupScreen({ navigation }) {
@@ -33,6 +35,11 @@ export default function CreateGroupScreen({ navigation }) {
 
   const handleCreate = async () => {
     if (!canCreate) return;
+    const check = checkContent(name.trim());
+    if (check.blocked) {
+      Alert.alert("Gruppe nicht möglich", BLOCK_REASON_MESSAGES[check.reason]);
+      return;
+    }
     setCreating(true);
     try {
       const members = friends.filter((f) => selected.includes(f.uid));
