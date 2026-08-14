@@ -174,12 +174,6 @@ service cloud.firestore {
           !('referredBy' in request.resource.data.diff(resource.data).affectedKeys())
           || (!('referredBy' in resource.data) && request.resource.data.referredBy is string)
         )
-        && (
-          !('referralCount' in request.resource.data.diff(resource.data).affectedKeys())
-          || (request.resource.data.referralCount is int
-              && request.resource.data.referralCount >= 0
-              && request.resource.data.referralCount <= resource.data.get('referralCount', 0) + 1)
-        )
         // "Was ist gerade los" - reiner Text-Status, kein Standort-Feld.
         // Nur kurze Texte, kein beliebiger Payload.
         && (
@@ -288,9 +282,30 @@ service cloud.firestore {
         allow create: if isOwner(userId)
           && request.resource.data.amount is int
           && request.resource.data.amount > 0
-          && request.resource.data.amount <= 5
+          // Muss zu MAX_SCORE_PER_ACTION in userService.js passen - stand
+          // vorher bei 5, obwohl echte Aufrufstellen (z.B. Beitrag posten
+          // mit 6, oder Snap an mehrere Empfaenger mit recipientIds.length*3)
+          // schon laenger hoehere Betraege schicken. Der scoreEvents-Write
+          // schlug dadurch fuer diese Aktionen bisher still fehl (in
+          // bumpNataScore() abgefangen) - der nataScore-Zaehler selbst war
+          // korrekt, aber die Punkte-Historie hat diese Ereignisse verloren.
+          && request.resource.data.amount <= 20
           && request.resource.data.reason is string
           && request.resource.data.reason.size() <= 60;
+        allow update, delete: if false;
+      }
+
+      // Einladungs-Nachweis (siehe betaService.js applyReferral()) - die
+      // NEU registrierte Person legt hier einen Eintrag in der
+      // Subcollection DER WERBENDEN Person an, mit der eigenen uid als
+      // Dokument-ID. Bewusst kein Zaehlerfeld auf dem Nutzerdokument der
+      // werbenden Person (das koennte nur diese selbst beschreiben, aber
+      // die neu registrierte Person muesste den Schreibvorgang ausloesen -
+      // ein permission-mismatch, der vorher jede Einladung stumm scheitern
+      // liess). Die Anzahl ergibt sich aus der Groesse dieser Subcollection.
+      match /referrals/{referredUid} {
+        allow read: if isOwner(userId);
+        allow create: if isSignedIn() && request.auth.uid == referredUid;
         allow update, delete: if false;
       }
 
@@ -353,9 +368,25 @@ service cloud.firestore {
             || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
           );
         // Erlaubt anderen Nutzern, sich als "viewer" einzutragen - dabei darf
-        // sich ausschliesslich das viewers-Feld aendern.
+        // sich ausschliesslich das viewers-Feld aendern. Zuvor fehlten hier
+        // zwei Dinge: (1) dieselbe Sichtbarkeits-Bedingung wie beim Lesen -
+        // jede signed-in Person konnte das Feld aendern, auch ohne die Story
+        // ueberhaupt sehen zu duerfen; (2) eine Einschraenkung auf den
+        // tatsaechlichen arrayUnion(eigene uid)-Effekt - der neue Wert
+        // konnte beliebig sein (z.B. komplett geleert oder fremde UIDs
+        // eingeschleust). Jetzt exakt auf das begrenzt, was
+        // markStoryViewed() in storyService.js wirklich tut.
         allow update: if isSignedIn()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers']);
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers'])
+          && (
+            isOwner(userId)
+            || (resource.data.visibility == 'friends' && isFriendOf(userId))
+            || (resource.data.visibility == 'custom' && request.auth.uid in resource.data.visibleTo)
+          )
+          && (
+            request.resource.data.viewers == resource.data.viewers
+            || request.resource.data.viewers == resource.data.viewers.concat([request.auth.uid])
+          );
         allow delete: if isOwner(userId);
       }
 

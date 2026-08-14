@@ -2,10 +2,12 @@ import {
   collection,
   doc,
   getDocs,
-  increment,
   limit,
+  onSnapshot,
   query,
   runTransaction,
+  serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -38,7 +40,22 @@ export async function findUserByUsername(username) {
   return snap.empty ? null : snap.docs[0].data();
 }
 
+// Vorher wurde referralCount per increment() direkt auf dem Dokument der
+// werbenden Person erhoeht - das schlug aber IMMER fehl (still abgefangen
+// im aufrufenden AuthContext.js), weil zu diesem Zeitpunkt die neu
+// registrierte Person angemeldet ist, nicht die werbende - die
+// Firestore-Regel erlaubt einer Person aber nur Aenderungen am eigenen
+// Dokument. Stattdessen legt die neu registrierte Person ein Dokument in
+// der referrals-Subcollection DER WERBENDEN PERSON an, mit der eigenen uid
+// als Dokument-ID (das darf sie, siehe firestore.rules) - die Anzahl ergibt
+// sich aus der Groesse dieser Subcollection statt aus einem Zaehlerfeld.
 export async function applyReferral(newUid, referrerUid) {
   await updateDoc(doc(db, "users", newUid), { referredBy: referrerUid });
-  await updateDoc(doc(db, "users", referrerUid), { referralCount: increment(1) });
+  await setDoc(doc(db, "users", referrerUid, "referrals", newUid), {
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function listenReferralCount(uid, callback) {
+  return onSnapshot(collection(db, "users", uid, "referrals"), (snap) => callback(snap.size));
 }

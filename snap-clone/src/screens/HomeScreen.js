@@ -75,6 +75,17 @@ export default function HomeScreen({ navigation }) {
     return unsubscribe;
   }, [user.uid]);
 
+  // Stabiler Schluessel statt der rohen friends-Liste als Abhaengigkeit:
+  // listenFriends() liefert bei jeder Aenderung (auch z.B. nur Anzeigename
+  // oder Status einer Connection) ein neues Array-Objekt. Mit friends direkt
+  // als Dependency riss das den kompletten Feed-Listener bei jeder solchen
+  // Nebensaechlichkeit ab und neu auf - inklusive kurzem Skeleton-Aufblitzen -
+  // sogar im "Fuer dich"-Tab, wo friends gar nicht verwendet wird.
+  const friendIdsKey = useMemo(
+    () => friends.map((f) => f.uid).sort().join(","),
+    [friends]
+  );
+
   useEffect(() => {
     setPostsLoading(true);
     setMorePosts([]);
@@ -88,9 +99,10 @@ export default function HomeScreen({ navigation }) {
     const unsubscribe =
       feedTab === "forYou"
         ? listenFeed(handlePage)
-        : listenFollowingFeed(friends.map((f) => f.uid), handlePage);
+        : listenFollowingFeed(friendIdsKey ? friendIdsKey.split(",") : [], handlePage);
     return unsubscribe;
-  }, [feedTab, friends]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedTab, friendIdsKey]);
 
   // Live erste Seite + einmalig nachgeladene aeltere Seiten getrennt halten,
   // damit ein Realtime-Update der ersten Seite (z.B. neuer Beitrag) nicht die

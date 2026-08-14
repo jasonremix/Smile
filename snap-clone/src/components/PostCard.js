@@ -56,7 +56,7 @@ export default function PostCard({ post, navigation }) {
   const applyReaction = (type) => {
     hapticLight();
     setPickerOpen(false);
-    setReaction(post.id, user.uid, type, myReaction, post.authorId, actor);
+    setReaction(post.id, user.uid, type, myReaction, post.authorId, actor).catch(() => {});
   };
 
   // Kurzer Tap: vorhandene Reaktion (egal welcher Typ) entfernen, sonst
@@ -78,9 +78,9 @@ export default function PostCard({ post, navigation }) {
 
   const toggleSave = () => {
     if (saved) {
-      unsavePost(user.uid, post.id);
+      unsavePost(user.uid, post.id).catch(() => {});
     } else {
-      savePost(user.uid, post.id);
+      savePost(user.uid, post.id).catch(() => {});
     }
   };
 

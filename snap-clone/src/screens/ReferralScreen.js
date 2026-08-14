@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { listenReferralCount } from "../services/betaService";
 import { colors } from "../theme/colors";
 import { shadow } from "../theme/shadow";
 
 export default function ReferralScreen() {
   const { user } = useAuth();
+  const [referralCount, setReferralCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = listenReferralCount(user.uid, setReferralCount);
+    return unsubscribe;
+  }, [user.uid]);
 
   const handleShare = () => {
     Share.share({
@@ -33,9 +40,9 @@ export default function ReferralScreen() {
       </View>
 
       <View style={styles.statCard}>
-        <Text style={styles.statValue}>{user?.referralCount ?? 0}</Text>
+        <Text style={styles.statValue}>{referralCount}</Text>
         <Text style={styles.statLabel}>
-          {(user?.referralCount ?? 0) === 1 ? "Person eingeladen" : "Personen eingeladen"}
+          {referralCount === 1 ? "Person eingeladen" : "Personen eingeladen"}
         </Text>
       </View>
 
