@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { sendFriendRequest } from "../services/friendService";
 import { getUserProfile } from "../services/userService";
 import { colors } from "../theme/colors";
+import { shadow } from "../theme/shadow";
 
 export default function ScanQRScreen({ navigation }) {
   const { user } = useAuth();
@@ -236,11 +237,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingVertical: 14,
     alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...shadow.sm,
   },
   addButtonText: {
     color: colors.text,

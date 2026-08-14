@@ -138,11 +138,6 @@ const styles = StyleSheet.create({
   },
   categoryChipActive: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
   categoryText: {
     color: colors.textMuted,

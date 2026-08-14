@@ -15,6 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { addComment, listenComments } from "../services/postService";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
+import { shadow } from "../theme/shadow";
 
 export default function CommentsScreen({ route, navigation }) {
   const { postId } = route.params;
@@ -146,10 +147,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    ...shadow.sm,
   },
 });

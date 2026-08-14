@@ -142,11 +142,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
   },
   addButtonDisabled: {
     backgroundColor: colors.surfaceLight,

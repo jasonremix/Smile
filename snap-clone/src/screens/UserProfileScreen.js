@@ -12,6 +12,7 @@ import { blockUser, reportContent } from "../services/moderationService";
 import { listenUserPosts } from "../services/postService";
 import { getUserProfile } from "../services/userService";
 import { colors } from "../theme/colors";
+import { shadow } from "../theme/shadow";
 
 export default function UserProfileScreen({ route, navigation }) {
   const { uid } = route.params;
@@ -199,11 +200,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     paddingHorizontal: 28,
     paddingVertical: 12,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...shadow.sm,
   },
   connectButtonDisabled: {
     backgroundColor: colors.surfaceLight,

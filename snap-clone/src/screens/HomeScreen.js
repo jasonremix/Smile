@@ -139,17 +139,6 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       ) : null}
 
-      <View style={styles.quickActionsRow}>
-        <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate("AddFriends")}>
-          <Icon name="plus" size={20} color={colors.primaryLight} style={styles.quickActionIcon} />
-          <Text style={styles.quickActionText}>Verbinden</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickAction} onPress={() => navigation.navigate("Feedback")}>
-          <Icon name="bulb" size={20} color={colors.primaryLight} style={styles.quickActionIcon} />
-          <Text style={styles.quickActionText}>Feedback geben</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.feedTabRow}>
         <TouchableOpacity
           style={[styles.feedTab, feedTab === "forYou" && styles.feedTabActive]}
@@ -310,31 +299,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  quickActionsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 24,
-  },
-  quickAction: {
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    paddingVertical: 16,
-    marginHorizontal: 4,
-  },
-  quickActionIcon: {
-    marginBottom: 8,
-  },
-  quickActionText: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: "600",
-    textAlign: "center",
-  },
   feedTabRow: {
     flexDirection: "row",
-    marginTop: 28,
+    marginTop: 24,
     marginBottom: 14,
     gap: 8,
   },

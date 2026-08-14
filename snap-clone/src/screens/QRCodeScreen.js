@@ -5,6 +5,7 @@ import QRCodeView from "../components/QRCodeView";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
+import { shadow } from "../theme/shadow";
 
 export default function QRCodeScreen({ navigation }) {
   const { user } = useAuth();
@@ -72,11 +73,7 @@ const styles = StyleSheet.create({
   },
   qrWrapper: {
     marginBottom: 20,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    ...shadow.md,
   },
   hint: {
     color: colors.textMuted,

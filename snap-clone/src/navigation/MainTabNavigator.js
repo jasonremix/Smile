@@ -9,6 +9,7 @@ import FriendsScreen from "../screens/FriendsScreen";
 import HomeScreen from "../screens/HomeScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { colors } from "../theme/colors";
+import { shadow } from "../theme/shadow";
 
 const Tab = createBottomTabNavigator();
 
@@ -27,11 +28,7 @@ function CreateTabIcon({ focused }) {
         justifyContent: "center",
         alignItems: "center",
         marginTop: -14,
-        shadowColor: colors.primary,
-        shadowOpacity: 0.28,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 3 },
-        elevation: 3,
+        ...shadow.sm,
       }}
     >
       <Icon name="plus" size={20} color={colors.text} />

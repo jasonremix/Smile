@@ -2,6 +2,7 @@ import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
+import { shadow } from "../theme/shadow";
 import { spacing } from "../theme/spacing";
 
 // Flacher, iOS-naeher gestalteter Haupt-Button: kraeftige Fuellfarbe, kein
@@ -41,11 +42,7 @@ const styles = StyleSheet.create({
   },
   solid: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...shadow.sm,
   },
   outline: {
     backgroundColor: "transparent",

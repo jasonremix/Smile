@@ -233,11 +233,6 @@ const styles = StyleSheet.create({
   },
   timerChipActive: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
   timerText: {
     color: "#fff",
@@ -267,11 +262,6 @@ const styles = StyleSheet.create({
   },
   visibilityChipActive: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
   visibilityText: {
     color: colors.textMuted,

@@ -2,6 +2,7 @@ import React from "react";
 import { Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
+import { shadow } from "../theme/shadow";
 
 export default function ReferralScreen() {
   const { user } = useAuth();
@@ -59,11 +60,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 24,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
   testerBadgeText: {
     color: colors.text,
@@ -126,11 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     paddingHorizontal: 32,
     paddingVertical: 16,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
+    ...shadow.sm,
   },
   shareButtonText: {
     color: colors.text,

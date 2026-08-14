@@ -15,6 +15,7 @@ import MessageBubble from "../components/MessageBubble";
 import ReportModal from "../components/ReportModal";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
+import { shadow } from "../theme/shadow";
 import {
   deleteMessage,
   editMessage,
@@ -385,10 +386,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    ...shadow.sm,
   },
 });
