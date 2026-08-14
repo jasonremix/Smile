@@ -56,6 +56,32 @@ export async function getUserProfile(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
+// Nur die tatsaechlich geaenderten Felder mitschicken (nicht das ganze
+// Profil), damit die Firestore-Regel-Diffs pro Feld greifen und man sich
+// nicht versehentlich an unveraenderten Feldern (z.B. Score) stoert.
+export async function updateProfileFields(uid, { displayName, bio, avatarColor }) {
+  const data = {};
+  if (displayName !== undefined) data.displayName = displayName.trim();
+  if (displayName !== undefined) data.displayNameLower = displayName.trim().toLowerCase();
+  if (bio !== undefined) data.bio = bio.trim() ? bio.trim() : null;
+  if (avatarColor !== undefined) data.avatarColor = avatarColor;
+  if (Object.keys(data).length === 0) return;
+  await updateDoc(doc(db, "users", uid), data);
+}
+
+// Standort ist ausschliesslich Opt-in (nie automatisch/im Hintergrund) und
+// wird bewusst nur als Stadtname gespeichert, nie als exakte Koordinaten -
+// das eigentliche GPS-Ergebnis verlaesst das Geraet nie in voller Praezision.
+export async function shareLocationCity(uid, city, region) {
+  await updateDoc(doc(db, "users", uid), {
+    location: { city, region: region || null, updatedAt: serverTimestamp() },
+  });
+}
+
+export async function clearLocation(uid) {
+  await updateDoc(doc(db, "users", uid), { location: null });
+}
+
 // "verified" selbst ist per Firestore-Regel nie client-schreibbar (siehe
 // firestore.rules) - dieser Flag ist rein dafuer da, die Glueckwunsch-
 // Anzeige nach einer frischen Verifizierung genau einmal zu zeigen.

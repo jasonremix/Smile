@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import CreateSheet from "../components/CreateSheet";
 import Icon from "../components/Icon";
 import DiscoveryScreen from "../screens/DiscoveryScreen";
@@ -13,8 +13,16 @@ import { shadow } from "../theme/shadow";
 
 const Tab = createBottomTabNavigator();
 
-function TabIcon({ name, focused }) {
-  return <Icon name={name} size={22} color={focused ? colors.primary : colors.textMuted} />;
+// Labels unter den Icons statt reiner Icon-Leiste - eindeutiger als
+// Symbole allein zu deuten, gerade bei "Entdecken" vs. "Connections".
+function TabIcon({ name, label, focused }) {
+  const color = focused ? colors.primary : colors.textMuted;
+  return (
+    <View style={{ alignItems: "center", gap: 2 }}>
+      <Icon name={name} size={22} color={color} />
+      <Text style={{ fontSize: 10, fontWeight: "600", color }}>{label}</Text>
+    </View>
+  );
 }
 
 function CreateTabIcon({ focused }) {
@@ -47,19 +55,26 @@ export default function MainTabNavigator() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
-          tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+          tabBarStyle: {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            height: 64,
+            paddingTop: 8,
+          },
           tabBarActiveTintColor: colors.primary,
         }}
       >
         <Tab.Screen
           name="Home"
           component={HomeScreen}
-          options={{ tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }}
+          options={{ tabBarIcon: ({ focused }) => <TabIcon name="home" label="Home" focused={focused} /> }}
         />
         <Tab.Screen
           name="Discovery"
           component={DiscoveryScreen}
-          options={{ tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }}
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon name="search" label="Entdecken" focused={focused} />,
+          }}
         />
         <Tab.Screen
           name="Create"
@@ -75,12 +90,16 @@ export default function MainTabNavigator() {
         <Tab.Screen
           name="Friends"
           component={FriendsScreen}
-          options={{ tabBarIcon: ({ focused }) => <TabIcon name="people" focused={focused} /> }}
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon name="people" label="Connections" focused={focused} />,
+          }}
         />
         <Tab.Screen
           name="Profile"
           component={ProfileScreen}
-          options={{ tabBarIcon: ({ focused }) => <TabIcon name="person" focused={focused} /> }}
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon name="person" label="Profil" focused={focused} />,
+          }}
         />
       </Tab.Navigator>
 

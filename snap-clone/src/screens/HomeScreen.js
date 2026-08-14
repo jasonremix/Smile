@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
@@ -12,6 +13,9 @@ import { listenFriends, listenIncomingRequests } from "../services/friendService
 import { listenFeed, listenFollowingFeed } from "../services/postService";
 import { listenScoreEventsSince } from "../services/userService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
 
 function startOfWeek() {
   const now = new Date();
@@ -24,6 +28,7 @@ function startOfWeek() {
 }
 
 export default function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { unreadCount } = useUnreadChats();
   const [incomingRequests, setIncomingRequests] = useState([]);
@@ -139,6 +144,8 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       ) : null}
 
+      <View style={styles.divider} />
+
       <View style={styles.feedTabRow}>
         <TouchableOpacity
           style={[styles.feedTab, feedTab === "forYou" && styles.feedTabActive]}
@@ -163,7 +170,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <FlatList
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}
       showsVerticalScrollIndicator={false}
       data={posts}
       keyExtractor={(item) => item.id}
@@ -189,15 +196,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
   },
   topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   brand: {
     color: colors.text,
@@ -233,7 +239,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   greetingTextBlock: {
     flex: 1,
@@ -278,37 +284,41 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 12,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
   },
   highlightIcon: {
-    marginRight: 14,
+    marginRight: spacing.md + 2,
   },
   highlightTextBlock: {
     flex: 1,
   },
   highlightTitle: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "700",
+    ...typography.subhead,
   },
   highlightSubtitle: {
     color: colors.textMuted,
-    fontSize: 12,
+    ...typography.footnote,
     marginTop: 2,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginTop: spacing.xxl,
   },
   feedTabRow: {
     flexDirection: "row",
-    marginTop: 24,
-    marginBottom: 14,
-    gap: 8,
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   feedTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
   },
   feedTabActive: {

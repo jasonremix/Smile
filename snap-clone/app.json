@@ -17,14 +17,16 @@
       "bundleIdentifier": "com.natainc.nata",
       "infoPlist": {
         "NSCameraUsageDescription": "Nata braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
-        "NSMicrophoneUsageDescription": "Nata braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen."
+        "NSMicrophoneUsageDescription": "Nata braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen.",
+        "NSLocationWhenInUseUsageDescription": "Nata nutzt deinen Standort nur, wenn du in den Profileinstellungen aktiv deine Stadt teilst."
       }
     },
     "android": {
       "package": "com.natainc.nata",
       "permissions": [
         "CAMERA",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "ACCESS_COARSE_LOCATION"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -52,7 +54,13 @@
         }
       ],
       "expo-web-browser",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Nata nutzt deinen Standort nur, wenn du in den Profileinstellungen aktiv deine Stadt teilst."
+        }
+      ]
     ],
     "extra": {
       "eas": {

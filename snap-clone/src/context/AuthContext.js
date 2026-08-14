@@ -13,6 +13,7 @@ import {
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, firebaseInitError } from "../config/firebase";
 import { applyReferral, assignBetaTesterNumber, findUserByUsername } from "../services/betaService";
+import { randomAvatarColor } from "../theme/avatarPalette";
 
 const AuthContext = createContext(null);
 
@@ -198,11 +199,6 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-function randomAvatarColor() {
-  const palette = ["#A855F7", "#7C3AED", "#C084FC", "#F472B6", "#38BDF8", "#34D399"];
-  return palette[Math.floor(Math.random() * palette.length)];
 }
 
 export function useAuth() {

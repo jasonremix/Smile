@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { bumpNataScore } from "./userService";
+import { uploadVoiceMessage } from "./voiceService";
 
 export async function createGroup({ creatorUid, creatorName, name, members }) {
   const memberIds = Array.from(new Set([creatorUid, ...members.map((m) => m.uid)]));
@@ -62,6 +63,28 @@ export async function sendGroupMessage(groupId, senderId, senderName, text) {
   });
 
   await bumpNataScore(senderId, 3, "Nachricht gesendet");
+}
+
+// Sprachnachricht (Beta) - siehe chatService.sendVoiceMessage fuer den
+// gleichen Aufbau/dieselbe Storage-Fehlerbehandlung.
+export async function sendGroupVoiceMessage(groupId, senderId, senderName, localUri, durationMs) {
+  const voiceUrl = await uploadVoiceMessage(localUri, senderId);
+  const messagesRef = collection(db, "groups", groupId, "messages");
+  await addDoc(messagesRef, {
+    senderId,
+    senderName,
+    voiceUrl,
+    voiceDurationMs: durationMs,
+    createdAt: serverTimestamp(),
+  });
+
+  await updateDoc(doc(db, "groups", groupId), {
+    lastMessage: "Sprachnachricht",
+    lastSenderId: senderId,
+    updatedAt: serverTimestamp(),
+  });
+
+  await bumpNataScore(senderId, 3, "Sprachnachricht gesendet");
 }
 
 export function listenGroupMessages(groupId, callback) {

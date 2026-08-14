@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
+import UpdateAnnouncementBanner from "../components/UpdateAnnouncementBanner";
 import VerifiedCelebration from "../components/VerifiedCelebration";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
@@ -16,6 +17,7 @@ import CompleteProfileScreen from "../screens/CompleteProfileScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
 import CreatePostScreen from "../screens/CreatePostScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
+import EditProfileScreen from "../screens/EditProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
@@ -66,6 +68,7 @@ export default function RootNavigator() {
       {user && !needsProfileSetup ? (
         <>
           <NewMessageBanner />
+          <UpdateAnnouncementBanner />
           <LevelUpCelebration />
           <VerifiedCelebration />
         </>
@@ -223,6 +226,11 @@ export default function RootNavigator() {
             }}
           />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfileScreen}
+            options={{ headerShown: false, presentation: "modal" }}
+          />
         </Stack.Navigator>
       ) : (
         <AuthNavigator />

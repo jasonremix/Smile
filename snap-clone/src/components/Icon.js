@@ -360,6 +360,41 @@ const GLYPHS = {
       <Tri top={8} left={16.5} direction="right" size={7} color={c} />
     </>
   ),
+  pin: (c) => (
+    <>
+      <Box top={3} left={6} width={12} height={12} radius={6} color={c} filled />
+      <Tri top={13} left={8.5} direction="down" size={7} color={c} />
+      <Dot top={6.5} left={9.5} size={5} color={colors.background} />
+    </>
+  ),
+  mic: (c) => (
+    <>
+      <Box top={3} left={8.5} width={7} height={11} radius={3.5} color={c} filled />
+      <View
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 5,
+          width: 14,
+          height: 8,
+          borderWidth: STROKE,
+          borderColor: c,
+          borderTopWidth: 0,
+          borderBottomLeftRadius: 7,
+          borderBottomRightRadius: 7,
+        }}
+      />
+      <Bar top={18} left={11.1} width={STROKE} height={4} color={c} />
+      <Bar top={21} left={7} width={10} height={STROKE} color={c} />
+    </>
+  ),
+  play: (c) => <Tri top={5} left={6} direction="right" size={14} color={c} />,
+  pause: (c) => (
+    <>
+      <Bar top={4} left={7} width={4} height={16} radius={1.5} color={c} />
+      <Bar top={4} left={13} width={4} height={16} radius={1.5} color={c} />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 22, color = colors.text, style }) {

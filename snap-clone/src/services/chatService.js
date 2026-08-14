@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { bumpNataScore } from "./userService";
+import { uploadVoiceMessage } from "./voiceService";
 
 // Deterministische Chat-ID aus den beiden Nutzer-IDs, damit fuer ein Paar
 // immer derselbe Chat-Dokumentpfad verwendet wird.
@@ -135,6 +136,33 @@ export async function sendMessage(chatId, senderId, text) {
   );
 
   await bumpNataScore(senderId, 3, "Nachricht gesendet");
+}
+
+// Sprachnachricht (Beta) - braucht Firebase Storage. Wirft weiter, wenn der
+// Upload fehlschlaegt (z.B. weil Storage noch nicht eingerichtet ist),
+// damit ChatScreen der Person eine ehrliche Erklaerung statt eines
+// generischen Fehlers zeigen kann.
+export async function sendVoiceMessage(chatId, senderId, localUri, durationMs) {
+  const voiceUrl = await uploadVoiceMessage(localUri, senderId);
+  const messagesRef = collection(db, "chats", chatId, "messages");
+  await addDoc(messagesRef, {
+    senderId,
+    voiceUrl,
+    voiceDurationMs: durationMs,
+    createdAt: serverTimestamp(),
+  });
+
+  await setDoc(
+    doc(db, "chats", chatId),
+    {
+      lastMessage: "Sprachnachricht",
+      lastSenderId: senderId,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  await bumpNataScore(senderId, 3, "Sprachnachricht gesendet");
 }
 
 // "Tippt..."-Status pro Nutzer als verschachteltes Feld auf dem Chat-Dokument

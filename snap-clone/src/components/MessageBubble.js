@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MessageReactionBadge from "./MessageReactionBadge";
+import VoiceMessageBubble from "./VoiceMessageBubble";
 import { colors } from "../theme/colors";
 
 // Wiederverwendbare Nachrichtenblase fuer 1:1- und Gruppen-Chats -
@@ -30,7 +31,11 @@ export default function MessageBubble({
         style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}
       >
         {!isMine && senderName ? <Text style={styles.senderName}>{senderName}</Text> : null}
-        <Text style={styles.bubbleText}>{message.text}</Text>
+        {message.voiceUrl ? (
+          <VoiceMessageBubble voiceUrl={message.voiceUrl} durationMs={message.voiceDurationMs} />
+        ) : (
+          <Text style={styles.bubbleText}>{message.text}</Text>
+        )}
         {message.edited ? <Text style={styles.editedLabel}>bearbeitet</Text> : null}
       </TouchableOpacity>
       <MessageReactionBadge

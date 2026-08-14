@@ -13,6 +13,7 @@ import {
 import Icon from "../components/Icon";
 import MessageBubble from "../components/MessageBubble";
 import ReportModal from "../components/ReportModal";
+import VoiceRecorderButton from "../components/VoiceRecorderButton";
 import { useAuth } from "../context/AuthContext";
 import {
   deleteGroupMessage,
@@ -21,6 +22,7 @@ import {
   listenGroupMessageReactions,
   listenGroupMessages,
   sendGroupMessage,
+  sendGroupVoiceMessage,
   toggleGroupMessageReaction,
 } from "../services/groupService";
 import { reportContent } from "../services/moderationService";
@@ -90,6 +92,17 @@ export default function GroupChatScreen({ route, navigation }) {
 
     setText("");
     await sendGroupMessage(groupId, user.uid, user.displayName, trimmed);
+  };
+
+  const handleSendVoice = async (localUri, durationMs) => {
+    try {
+      await sendGroupVoiceMessage(groupId, user.uid, user.displayName, localUri, durationMs);
+    } catch (e) {
+      Alert.alert(
+        "Noch nicht bereit",
+        "Sprachnachrichten sind vorbereitet, aber der Cloud-Speicher dafür ist noch nicht eingerichtet. Bitte später erneut versuchen."
+      );
+    }
   };
 
   const cancelEditing = () => {
@@ -170,9 +183,13 @@ export default function GroupChatScreen({ route, navigation }) {
           onChangeText={setText}
           multiline
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-          <Icon name={editingMessage ? "check" : "send"} size={16} color={colors.text} />
-        </TouchableOpacity>
+        {!text.trim() && !editingMessage ? (
+          <VoiceRecorderButton onRecorded={handleSendVoice} />
+        ) : (
+          <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
+            <Icon name={editingMessage ? "check" : "send"} size={16} color={colors.text} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ReportModal

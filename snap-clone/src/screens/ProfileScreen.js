@@ -12,6 +12,7 @@ import { clearStatus, isStatusActive, setStatus } from "../services/userService"
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
 
 export default function ProfileScreen({ navigation }) {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ export default function ProfileScreen({ navigation }) {
 
   const settingsButton = (
     <TouchableOpacity
-      style={styles.settingsButton}
+      style={styles.headerIconButton}
       onPress={() => navigation.navigate("Settings")}
       hitSlop={8}
     >
@@ -60,39 +61,59 @@ export default function ProfileScreen({ navigation }) {
           </View>
         )}
         ListHeaderComponent={
-          <View style={{ alignItems: "center" }}>
-            <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-              <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-            </View>
-
-            <View style={styles.nameRow}>
-              <Text style={styles.displayName}>{user?.displayName}</Text>
-              {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
-            </View>
-            <Text style={styles.username}>@{user?.username}</Text>
-
-            <TouchableOpacity style={styles.statusRow} onPress={() => setStatusEditorVisible(true)}>
-              <Icon name="sparkle" size={13} color={colors.primaryLight} />
-              <Text style={styles.statusText} numberOfLines={1}>
-                {activeStatus ? activeStatus.text : "Was ist gerade los?"}
-              </Text>
-            </TouchableOpacity>
-
-            {user?.betaTesterNumber ? (
-              <View style={styles.testerBadge}>
-                <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
+          <View>
+            <View style={styles.identitySection}>
+              <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+                <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
               </View>
-            ) : null}
 
-            <NataScoreCard
-              score={user?.nataScore ?? 0}
-              onPress={() => navigation.navigate("ScoreHistory")}
-            />
+              <View style={styles.nameRow}>
+                <Text style={styles.displayName}>{user?.displayName}</Text>
+                {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
+              </View>
+              <Text style={styles.username}>@{user?.username}</Text>
 
-            <Text style={styles.postsHeading}>Meine Beitraege</Text>
+              {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+
+              {user?.location?.city ? (
+                <View style={styles.locationRow}>
+                  <Icon name="grid" size={12} color={colors.textMuted} />
+                  <Text style={styles.locationText}>{user.location.city}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity style={styles.statusRow} onPress={() => setStatusEditorVisible(true)}>
+                <Icon name="sparkle" size={13} color={colors.primaryLight} />
+                <Text style={styles.statusText} numberOfLines={1}>
+                  {activeStatus ? activeStatus.text : "Was ist gerade los?"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate("EditProfile")}
+              >
+                <Text style={styles.editButtonText}>Profil bearbeiten</Text>
+              </TouchableOpacity>
+
+              {user?.betaTesterNumber ? (
+                <View style={styles.testerBadge}>
+                  <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.scoreSection}>
+              <NataScoreCard
+                score={user?.nataScore ?? 0}
+                onPress={() => navigation.navigate("ScoreHistory")}
+              />
+            </View>
+
+            <Text style={styles.postsHeading}>Meine Beiträge</Text>
           </View>
         }
-        ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beitraege.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Noch keine Beiträge.</Text>}
       />
 
       <StatusEditor
@@ -112,20 +133,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scroll: {
-    alignItems: "center",
-    paddingTop: spacing.sm,
-    paddingHorizontal: 24,
-    paddingBottom: 48,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
   },
-  settingsButton: {
+  headerIconButton: {
     width: 32,
     height: 32,
     borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
   },
-  postWrapper: {
-    width: "100%",
+  identitySection: {
+    alignItems: "center",
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   avatar: {
     width: 96,
@@ -133,7 +154,7 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   avatarText: {
     color: "#000",
@@ -143,60 +164,90 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing.xs + 2,
   },
   displayName: {
     color: colors.text,
-    fontSize: 22,
-    fontWeight: "700",
+    ...typography.title,
   },
   verifiedBadge: {
     marginTop: 2,
   },
   username: {
     color: colors.textMuted,
-    fontSize: 15,
-    marginBottom: 8,
+    ...typography.body,
+    marginTop: 2,
+  },
+  bio: {
+    color: colors.text,
+    ...typography.body,
+    textAlign: "center",
+    marginTop: spacing.md,
+    maxWidth: "90%",
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  locationText: {
+    color: colors.textMuted,
+    ...typography.footnote,
   },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing.sm,
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 14,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.lg,
     maxWidth: "90%",
   },
   statusText: {
     color: colors.text,
-    fontSize: 12,
+    ...typography.footnote,
     fontWeight: "600",
+  },
+  editButton: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.sm + 2,
+    marginTop: spacing.lg,
+  },
+  editButtonText: {
+    color: colors.text,
+    ...typography.subhead,
   },
   testerBadge: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 20,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    marginTop: spacing.lg,
   },
   testerBadgeText: {
     color: colors.primaryLight,
-    fontSize: 11,
-    fontWeight: "700",
+    ...typography.caption,
+  },
+  scoreSection: {
+    marginBottom: spacing.xxl,
+  },
+  postWrapper: {
+    width: "100%",
   },
   postsHeading: {
     color: colors.textMuted,
-    fontSize: 13,
-    textTransform: "uppercase",
-    alignSelf: "flex-start",
-    marginTop: 28,
-    marginBottom: 12,
+    ...typography.sectionLabel,
+    marginBottom: spacing.md,
   },
   emptyText: {
     color: colors.textMuted,
     textAlign: "center",
-    marginTop: 12,
+    marginTop: spacing.md,
   },
 });

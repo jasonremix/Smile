@@ -88,15 +88,34 @@ service cloud.firestore {
               && request.resource.data.referralCount >= 0
               && request.resource.data.referralCount <= resource.data.get('referralCount', 0) + 1)
         )
-        // "Was ist gerade los" - reiner Text-Status ohne Standort (kein
-        // GPS-Zugriff im Client verbaut). Nur kurze Texte, kein beliebiger
-        // Payload.
+        // "Was ist gerade los" - reiner Text-Status, kein Standort-Feld.
+        // Nur kurze Texte, kein beliebiger Payload.
         && (
           !('status' in request.resource.data.diff(resource.data).affectedKeys())
           || request.resource.data.status == null
           || (request.resource.data.status.text is string
               && request.resource.data.status.text.size() > 0
               && request.resource.data.status.text.size() <= 60)
+        )
+        && (
+          !('bio' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.bio == null
+          || (request.resource.data.bio is string && request.resource.data.bio.size() <= 150)
+        )
+        && (
+          !('avatarColor' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.avatarColor is string
+              && request.resource.data.avatarColor.size() <= 9)
+        )
+        // Standort ist explizites Opt-in (siehe ProfileEditScreen) und wird
+        // nur grob als Stadtname gespeichert, nie als exakte Koordinaten -
+        // deshalb "city" statt lat/lng.
+        && (
+          !('location' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.location == null
+          || (request.resource.data.location.city is string
+              && request.resource.data.location.city.size() > 0
+              && request.resource.data.location.city.size() <= 60)
         );
 
       allow delete: if isOwner(userId);
@@ -234,12 +253,22 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isSignedIn() &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        // Eine Nachricht ist entweder Text ODER Sprachnachricht (Beta) -
+        // nie beides gleichzeitig. voiceDurationMs auf 2 Minuten gedeckelt.
         allow create: if isSignedIn()
           && request.auth.uid == request.resource.data.senderId
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
-          && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 2000;
+          && (
+            (request.resource.data.text is string
+              && request.resource.data.text.size() > 0
+              && request.resource.data.text.size() <= 2000
+              && !('voiceUrl' in request.resource.data))
+            || (request.resource.data.voiceUrl is string
+              && request.resource.data.voiceDurationMs is int
+              && request.resource.data.voiceDurationMs > 0
+              && request.resource.data.voiceDurationMs <= 120000
+              && !('text' in request.resource.data))
+          );
         // Nur die sendende Person darf ihre eigene Nachricht bearbeiten -
         // ausschliesslich Text + "edited"-Markierung, sonst nichts.
         allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
@@ -283,12 +312,22 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isSignedIn() &&
           request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+        // Eine Nachricht ist entweder Text ODER Sprachnachricht (Beta) -
+        // nie beides gleichzeitig. voiceDurationMs auf 2 Minuten gedeckelt.
         allow create: if isSignedIn()
           && request.auth.uid == request.resource.data.senderId
           && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds
-          && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 2000;
+          && (
+            (request.resource.data.text is string
+              && request.resource.data.text.size() > 0
+              && request.resource.data.text.size() <= 2000
+              && !('voiceUrl' in request.resource.data))
+            || (request.resource.data.voiceUrl is string
+              && request.resource.data.voiceDurationMs is int
+              && request.resource.data.voiceDurationMs > 0
+              && request.resource.data.voiceDurationMs <= 120000
+              && !('text' in request.resource.data))
+          );
         allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])
           && request.resource.data.text is string

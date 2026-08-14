@@ -103,6 +103,15 @@ export default function UserProfileScreen({ route, navigation }) {
           </View>
           <Text style={styles.username}>@{profile.username}</Text>
 
+          {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+
+          {profile.location?.city ? (
+            <View style={styles.locationRow}>
+              <Icon name="pin" size={12} color={colors.textMuted} />
+              <Text style={styles.locationText}>{profile.location.city}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.actionsRow}>
             {isFriend ? (
               <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
@@ -190,9 +199,26 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 14,
     marginTop: 2,
-    marginBottom: 18,
+  },
+  bio: {
+    color: colors.text,
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 10,
+    maxWidth: "85%",
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+  },
+  locationText: {
+    color: colors.textMuted,
+    fontSize: 12,
   },
   actionsRow: {
+    marginTop: 18,
     flexDirection: "row",
   },
   connectButton: {
