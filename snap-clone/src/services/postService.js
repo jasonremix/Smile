@@ -4,7 +4,9 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   increment,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -129,4 +131,19 @@ export async function savePost(uid, postId) {
 
 export async function unsavePost(uid, postId) {
   await deleteDoc(doc(db, "users", uid, "savedPosts", postId));
+}
+
+// Firestore kann keine Volltextsuche - ohne einen externen Suchdienst
+// (Algolia o.ae.) bleibt fuer eine Beta mit ueberschaubarer Postmenge nur
+// eine clientseitige Filterung ueber die letzten Beitraege. Bewusst
+// begrenzt (200 neueste), damit das nicht unbegrenzt Daten laedt.
+export async function searchRecentPosts(term) {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return [];
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(200));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((post) => (post.text || "").toLowerCase().includes(needle))
+    .slice(0, 20);
 }
