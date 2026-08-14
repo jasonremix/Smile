@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
@@ -7,9 +7,11 @@ import ScreenHeader from "../components/ScreenHeader";
 import StatusEditor from "../components/StatusEditor";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
+import { listenFriends } from "../services/friendService";
 import { listenUserPosts } from "../services/postService";
 import { clearStatus, isStatusActive, setStatus } from "../services/userService";
 import { colors } from "../theme/colors";
+import { getLevelInfo } from "../utils/nataLevel";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
@@ -18,6 +20,7 @@ export default function ProfileScreen({ navigation }) {
   const { user } = useAuth();
   const isModal = navigation.canGoBack();
   const [posts, setPosts] = useState([]);
+  const [friends, setFriends] = useState([]);
   const [statusEditorVisible, setStatusEditorVisible] = useState(false);
   const activeStatus = isStatusActive(user?.status) ? user.status : null;
 
@@ -26,6 +29,25 @@ export default function ProfileScreen({ navigation }) {
     const unsubscribe = listenUserPosts(user.uid, setPosts);
     return unsubscribe;
   }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubscribe = listenFriends(user.uid, setFriends);
+    return unsubscribe;
+  }, [user?.uid]);
+
+  const handleShare = () => {
+    Share.share({
+      message: `Ich bin auf Nata - schreib mir: @${user?.username}`,
+    }).catch(() => {});
+  };
+
+  const handleBetaBadgePress = () => {
+    Alert.alert(
+      "Beta-Tester",
+      "Du gehörst zu den ersten Menschen, die Nata testen."
+    );
+  };
 
   const settingsButton = (
     <TouchableOpacity
@@ -77,10 +99,27 @@ export default function ProfileScreen({ navigation }) {
 
               {user?.location?.city ? (
                 <View style={styles.locationRow}>
-                  <Icon name="grid" size={12} color={colors.textMuted} />
+                  <Icon name="pin" size={12} color={colors.textMuted} />
                   <Text style={styles.locationText}>{user.location.city}</Text>
                 </View>
               ) : null}
+
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{posts.length}</Text>
+                  <Text style={styles.statLabel}>Beiträge</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{friends.length}</Text>
+                  <Text style={styles.statLabel}>Connections</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{getLevelInfo(user?.nataScore ?? 0).score}</Text>
+                  <Text style={styles.statLabel}>Score</Text>
+                </View>
+              </View>
 
               <TouchableOpacity style={styles.statusRow} onPress={() => setStatusEditorVisible(true)}>
                 <Icon name="sparkle" size={13} color={colors.primaryLight} />
@@ -89,17 +128,23 @@ export default function ProfileScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate("EditProfile")}
-              >
-                <Text style={styles.editButtonText}>Profil bearbeiten</Text>
-              </TouchableOpacity>
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => navigation.navigate("EditProfile")}
+                >
+                  <Text style={styles.editButtonText}>Profil bearbeiten</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.shareButton} onPress={handleShare} hitSlop={8}>
+                  <Icon name="send" size={15} color={colors.text} />
+                </TouchableOpacity>
+              </View>
 
               {user?.betaTesterNumber ? (
-                <View style={styles.testerBadge}>
+                <TouchableOpacity style={styles.testerBadge} onPress={handleBetaBadgePress}>
+                  <Icon name="sparkle" size={11} color={colors.primaryLight} />
                   <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
-                </View>
+                </TouchableOpacity>
               ) : null}
             </View>
 
@@ -195,6 +240,29 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     ...typography.footnote,
   },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xl,
+  },
+  statItem: {
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+  },
+  statValue: {
+    color: colors.text,
+    ...typography.headline,
+  },
+  statLabel: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 24,
+    backgroundColor: colors.border,
+  },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -211,21 +279,40 @@ const styles = StyleSheet.create({
     ...typography.footnote,
     fontWeight: "600",
   },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
   editButton: {
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.sm + 2,
-    marginTop: spacing.lg,
   },
   editButtonText: {
     color: colors.text,
     ...typography.subhead,
   },
+  shareButton: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   testerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
     backgroundColor: colors.surfaceLight,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: `${colors.primary}44`,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     marginTop: spacing.lg,

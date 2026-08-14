@@ -2,7 +2,9 @@
 // "Bildschirmtitel" oder "Sektions-Label" ueberall gleich aussehen statt
 // mit leicht abweichenden Werten pro Datei neu erfunden zu werden.
 export const typography = {
-  largeTitle: { fontSize: 30, fontWeight: "800" },
+  // "Display" fuer grosse Screen-Titel (Entdecken, Connections, Profil) -
+  // leicht engeres Letter Spacing wirkt hochwertiger als reines Bold allein.
+  largeTitle: { fontSize: 30, fontWeight: "800", letterSpacing: -0.4 },
   title: { fontSize: 22, fontWeight: "700" },
   headline: { fontSize: 17, fontWeight: "700" },
   body: { fontSize: 15, fontWeight: "400" },

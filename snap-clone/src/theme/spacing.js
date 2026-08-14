@@ -8,6 +8,8 @@ export const spacing = {
   xl: 20,
   xxl: 24,
   xxxl: 32,
+  huge: 40,
+  massive: 48,
 };
 
 export default spacing;

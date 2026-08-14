@@ -7,6 +7,7 @@ import { getFriendSuggestions } from "../services/discoveryService";
 import { listenFriends, sendFriendRequest } from "../services/friendService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { colors } from "../theme/colors";
+import { avatarColorForUid } from "../theme/avatarPalette";
 
 export default function DiscoveryScreen({ navigation }) {
   const { user } = useAuth();
@@ -76,11 +77,21 @@ export default function DiscoveryScreen({ navigation }) {
             const alreadySent = sentTo.includes(item.uid);
             return (
               <View style={styles.row}>
-                <TouchableOpacity onPress={() => navigation.navigate("UserProfile", { uid: item.uid })}>
-                  <Text style={styles.name}>{item.displayName}</Text>
-                  <Text style={styles.mutual}>
-                    {item.mutualCount} gemeinsame Connection{item.mutualCount === 1 ? "" : "s"}
-                  </Text>
+                <TouchableOpacity
+                  style={styles.rowTouchable}
+                  onPress={() => navigation.navigate("UserProfile", { uid: item.uid })}
+                >
+                  <View style={[styles.rowAvatar, { backgroundColor: avatarColorForUid(item.uid) }]}>
+                    <Text style={styles.rowAvatarText}>
+                      {(item.displayName || "?").charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.rowTextBlock}>
+                    <Text style={styles.name}>{item.displayName}</Text>
+                    <Text style={styles.mutual}>
+                      {item.mutualCount} gemeinsame Connection{item.mutualCount === 1 ? "" : "s"}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.addButton, alreadySent && styles.addButtonDisabled]}
@@ -93,9 +104,19 @@ export default function DiscoveryScreen({ navigation }) {
             );
           }}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Noch keine Vorschlaege. Sobald deine Connections mehr Connections haben, tauchen hier Empfehlungen auf.
-            </Text>
+            <View style={styles.emptyState}>
+              <Icon name="people" size={26} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>Noch nichts für dich entdeckt.</Text>
+              <Text style={styles.emptyText}>
+                Verbinde dich mit Menschen, um personalisierte Empfehlungen zu erhalten.
+              </Text>
+              <TouchableOpacity
+                style={styles.emptyAction}
+                onPress={() => navigation.navigate("AddFriends")}
+              >
+                <Text style={styles.emptyActionText}>Menschen entdecken</Text>
+              </TouchableOpacity>
+            </View>
           }
         />
       )}
@@ -156,6 +177,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  rowTouchable: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: 12,
+  },
+  rowAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  rowAvatarText: {
+    color: "#000",
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  rowTextBlock: {
+    flex: 1,
+  },
   name: {
     color: colors.text,
     fontWeight: "600",
@@ -181,11 +224,33 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
+  emptyState: {
+    alignItems: "center",
+    marginTop: 32,
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: 12,
+  },
   emptyText: {
     color: colors.textMuted,
     textAlign: "center",
-    marginTop: 24,
-    paddingHorizontal: 16,
+    marginTop: 6,
     lineHeight: 20,
+  },
+  emptyAction: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginTop: 16,
+  },
+  emptyActionText: {
+    color: colors.primaryLight,
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

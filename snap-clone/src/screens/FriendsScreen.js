@@ -12,6 +12,7 @@ import {
 } from "../services/friendService";
 import { blockUser, listenBlockedUsers, reportContent } from "../services/moderationService";
 import { colors } from "../theme/colors";
+import { avatarColorForUid } from "../theme/avatarPalette";
 
 export default function FriendsScreen({ navigation }) {
   const { user } = useAuth();
@@ -81,23 +82,30 @@ export default function FriendsScreen({ navigation }) {
       <View style={styles.content}>
       {visibleRequests.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Verbindungsanfragen</Text>
+          <Text style={styles.sectionTitle}>
+            Anfragen {visibleRequests.length}
+          </Text>
           {visibleRequests.map((req) => (
             <View key={req.id} style={styles.requestRow}>
-              <Text style={styles.requestName}>{req.fromDisplayName}</Text>
-              <View style={styles.requestActions}>
-                <TouchableOpacity
-                  style={styles.acceptButton}
-                  onPress={() => acceptFriendRequest(req, currentUserForAccept)}
-                >
-                  <Text style={styles.acceptText}>Annehmen</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.declineButton}
-                  onPress={() => declineFriendRequest(req)}
-                >
-                  <Text style={styles.declineText}>Ablehnen</Text>
-                </TouchableOpacity>
+              <View style={[styles.avatar, { backgroundColor: avatarColorForUid(req.from) }]}>
+                <Text style={styles.avatarText}>{(req.fromDisplayName || "?").charAt(0).toUpperCase()}</Text>
+              </View>
+              <View style={styles.requestTextBlock}>
+                <Text style={styles.requestName}>{req.fromDisplayName}</Text>
+                <View style={styles.requestActions}>
+                  <TouchableOpacity
+                    style={styles.acceptButton}
+                    onPress={() => acceptFriendRequest(req, currentUserForAccept)}
+                  >
+                    <Text style={styles.acceptText}>Annehmen</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.declineButton}
+                    onPress={() => declineFriendRequest(req)}
+                  >
+                    <Text style={styles.declineText}>Ablehnen</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -114,8 +122,14 @@ export default function FriendsScreen({ navigation }) {
             onPress={() => navigation.navigate("Chat", { chatId: null, otherUser: { id: item.uid, name: item.displayName } })}
             onLongPress={() => handleLongPressFriend(item)}
           >
-            <Text style={styles.friendName}>{item.displayName}</Text>
-            <Text style={styles.friendUsername}>@{item.username}</Text>
+            <View style={[styles.avatar, { backgroundColor: avatarColorForUid(item.uid) }]}>
+              <Text style={styles.avatarText}>{(item.displayName || "?").charAt(0).toUpperCase()}</Text>
+            </View>
+            <View style={styles.friendTextBlock}>
+              <Text style={styles.friendName}>{item.displayName}</Text>
+              <Text style={styles.friendUsername}>@{item.username}</Text>
+            </View>
+            <Icon name="chat" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -179,15 +193,33 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   requestRow: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: 14,
     padding: 12,
     marginBottom: 8,
+  },
+  requestTextBlock: {
+    flex: 1,
+    marginLeft: 12,
   },
   requestName: {
     color: colors.text,
     fontWeight: "600",
     marginBottom: 8,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#000",
+    fontWeight: "800",
+    fontSize: 16,
   },
   requestActions: {
     flexDirection: "row",
@@ -216,10 +248,14 @@ const styles = StyleSheet.create({
   },
   friendRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  friendTextBlock: {
+    flex: 1,
+    marginLeft: 12,
   },
   friendName: {
     color: colors.text,

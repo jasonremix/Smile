@@ -13,33 +13,45 @@ import { shadow } from "../theme/shadow";
 
 const Tab = createBottomTabNavigator();
 
-// Labels unter den Icons statt reiner Icon-Leiste - eindeutiger als
-// Symbole allein zu deuten, gerade bei "Entdecken" vs. "Connections".
+// Labels unter den Icons statt reiner Icon-Leiste - eindeutiger als Symbole
+// allein zu deuten. numberOfLines/adjustsFontSizeToFit verhindert, dass
+// "Connections" auf schmalen Geraeten in zwei Zeilen umbricht (die Tab-Leiste
+// teilt die Breite gleichmaessig auf 5 Tabs auf, ohne feste Textbreite haette
+// ein zu langes Label sonst umgebrochen und die Leiste verzerrt).
 function TabIcon({ name, label, focused }) {
   const color = focused ? colors.primary : colors.textMuted;
   return (
-    <View style={{ alignItems: "center", gap: 2 }}>
-      <Icon name={name} size={22} color={color} />
-      <Text style={{ fontSize: 10, fontWeight: "600", color }}>{label}</Text>
+    <View style={{ alignItems: "center", gap: 3, width: 64 }}>
+      <Icon name={name} size={21} color={color} />
+      <Text
+        style={{ fontSize: 10, fontWeight: "600", color, letterSpacing: -0.1 }}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
 
+// Etwas kleiner/dezenter als vorher - soll der visuelle Mittelpunkt bleiben,
+// aber nicht wie ein ueberdimensionierter Floating Action Button wirken.
 function CreateTabIcon({ focused }) {
   return (
     <View
       style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         backgroundColor: focused ? colors.primaryLight : colors.primary,
         justifyContent: "center",
         alignItems: "center",
-        marginTop: -14,
+        marginTop: -10,
         ...shadow.sm,
       }}
     >
-      <Icon name="plus" size={20} color={colors.text} />
+      <Icon name="plus" size={18} color={colors.text} />
     </View>
   );
 }
@@ -58,7 +70,7 @@ export default function MainTabNavigator() {
           tabBarStyle: {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
-            height: 64,
+            height: 58,
             paddingTop: 8,
           },
           tabBarActiveTintColor: colors.primary,

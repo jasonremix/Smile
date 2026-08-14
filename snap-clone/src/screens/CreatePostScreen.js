@@ -21,6 +21,7 @@ export default function CreatePostScreen({ navigation }) {
       await createPost({
         authorId: user.uid,
         authorName: user.displayName,
+        authorUsername: user.username,
         authorAvatarColor: user.avatarColor,
         authorVerified: user.verified,
         text: trimmed,

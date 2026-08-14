@@ -112,6 +112,20 @@ export default function UserProfileScreen({ route, navigation }) {
             </View>
           ) : null}
 
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{posts.length}</Text>
+              <Text style={styles.statLabel}>Beiträge</Text>
+            </View>
+          </View>
+
+          {isFriend ? (
+            <View style={styles.connectedPill}>
+              <Icon name="check" size={11} color={colors.primaryLight} />
+              <Text style={styles.connectedPillText}>Verbunden</Text>
+            </View>
+          ) : null}
+
           <View style={styles.actionsRow}>
             {isFriend ? (
               <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
@@ -216,6 +230,40 @@ const styles = StyleSheet.create({
   locationText: {
     color: colors.textMuted,
     fontSize: 12,
+  },
+  statsRow: {
+    flexDirection: "row",
+    marginTop: 16,
+  },
+  statItem: {
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  statValue: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  statLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  connectedPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: `${colors.primary}1f`,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginTop: 10,
+  },
+  connectedPillText: {
+    color: colors.primaryLight,
+    fontSize: 11,
+    fontWeight: "700",
   },
   actionsRow: {
     marginTop: 18,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Pressable, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "./Icon";
 import ReportModal from "./ReportModal";
 import VerifiedBadge from "./VerifiedBadge";
@@ -49,6 +49,12 @@ export default function PostCard({ post, navigation }) {
     }
   };
 
+  const handleShare = () => {
+    Share.share({
+      message: `${post.authorName} auf Nata: ${post.text}`,
+    }).catch(() => {});
+  };
+
   const openMenu = () => {
     if (isOwn) {
       Alert.alert(post.authorName, "Was moechtest du tun?", [
@@ -91,7 +97,10 @@ export default function PostCard({ post, navigation }) {
               <Text style={styles.authorName}>{post.authorName}</Text>
               {post.authorVerified ? <VerifiedBadge size={13} /> : null}
             </View>
-            <Text style={styles.time}>{createdAtDate ? timeAgo(createdAtDate) : ""}</Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              {post.authorUsername ? `@${post.authorUsername} · ` : ""}
+              {createdAtDate ? timeAgo(createdAtDate) : ""}
+            </Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={openMenu} style={styles.menuButton}>
@@ -117,6 +126,9 @@ export default function PostCard({ post, navigation }) {
         </Pressable>
         <Pressable style={styles.actionButton} onPress={toggleSave}>
           <Icon name="bookmark" size={16} color={saved ? colors.primary : colors.textMuted} />
+        </Pressable>
+        <Pressable style={[styles.actionButton, styles.shareAction]} onPress={handleShare}>
+          <Icon name="send" size={15} color={colors.textMuted} />
         </Pressable>
       </View>
 
@@ -178,7 +190,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
-  time: {
+  meta: {
     color: colors.textMuted,
     fontSize: 11,
     marginTop: 1,
@@ -206,6 +218,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+  },
+  shareAction: {
+    marginLeft: "auto",
   },
   actionCount: {
     color: colors.textMuted,

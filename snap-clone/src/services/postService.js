@@ -16,10 +16,18 @@ import {
 import { db } from "../config/firebase";
 import { bumpNataScore } from "./userService";
 
-export async function createPost({ authorId, authorName, authorAvatarColor, authorVerified, text }) {
+export async function createPost({
+  authorId,
+  authorName,
+  authorUsername,
+  authorAvatarColor,
+  authorVerified,
+  text,
+}) {
   const postRef = await addDoc(collection(db, "posts"), {
     authorId,
     authorName,
+    authorUsername: authorUsername || null,
     authorAvatarColor: authorAvatarColor || null,
     authorVerified: !!authorVerified,
     text,
