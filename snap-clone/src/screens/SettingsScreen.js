@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import BetaBadge from "../components/BetaBadge";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import SettingsRow from "../components/SettingsRow";
 import SettingsSection from "../components/SettingsSection";
+import SettingsToggleRow from "../components/SettingsToggleRow";
 import { useAuth } from "../context/AuthContext";
 import { FOUNDER_USERNAME } from "../services/ticketService";
+import { getSoundEffectsEnabled, setSoundEffectsEnabled } from "../utils/soundEffects";
+import { generateDataExportPdf } from "../utils/dataExportPdf";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -23,6 +26,27 @@ const APP_VERSION = "1.0.1";
 // eigene, uebersichtliche Gruppenliste im iOS-Stil bekommen.
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    getSoundEffectsEnabled().then(setSoundEnabled);
+  }, []);
+
+  const handleToggleSound = (value) => {
+    setSoundEnabled(value);
+    setSoundEffectsEnabled(value);
+  };
+
+  const handleDataExport = () => {
+    Alert.alert(
+      "Eigene Daten herunterladen",
+      "Erstellt eine PDF-Zusammenfassung deines Profils, deiner Beiträge und deiner Punkte-Historie zum Speichern oder Teilen.",
+      [
+        { text: "Abbrechen", style: "cancel" },
+        { text: "Erstellen", onPress: () => generateDataExportPdf(user) },
+      ]
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert("Abmelden", "Moechtest du dich wirklich abmelden?", [
@@ -59,6 +83,8 @@ export default function SettingsScreen({ navigation }) {
           <SettingsRow icon="star" label="Enge Freunde" onPress={() => navigation.navigate("CloseFriends")} />
           <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
           <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
+          <SettingsRow icon="grid" label="Meine Statistik" onPress={() => navigation.navigate("MyStats")} />
+          <SettingsRow icon="moment" label="Momente-Archiv" onPress={() => navigation.navigate("MomentsArchive")} />
           {!user?.verified ? (
             <SettingsRow
               icon="shield"
@@ -77,6 +103,7 @@ export default function SettingsScreen({ navigation }) {
             label="Datenschutz & Nutzungsbedingungen"
             onPress={() => navigation.navigate("Legal")}
           />
+          <SettingsRow icon="document" label="Eigene Daten herunterladen" onPress={handleDataExport} />
         </SettingsSection>
 
         <Text style={styles.sectionLabel}>Benachrichtigungen</Text>
@@ -85,6 +112,12 @@ export default function SettingsScreen({ navigation }) {
             icon="bell"
             label="Benachrichtigungen ansehen"
             onPress={() => navigation.navigate("Notifications")}
+          />
+          <SettingsToggleRow
+            icon="chat"
+            label="Sound-Effekte im Chat"
+            value={soundEnabled}
+            onValueChange={handleToggleSound}
           />
         </SettingsSection>
 
@@ -106,34 +139,9 @@ export default function SettingsScreen({ navigation }) {
             <Text style={styles.sectionLabel}>Gründer</Text>
             <SettingsSection>
               <SettingsRow
-                icon="shield"
-                label="Ticket-Verwaltung"
-                onPress={() => navigation.navigate("FounderTickets")}
-              />
-              <SettingsRow
-                icon="flag"
-                label="Meldungen & Feedback"
-                onPress={() => navigation.navigate("FounderReports")}
-              />
-              <SettingsRow
-                icon="people"
-                label="Nutzer-Verwaltung"
-                onPress={() => navigation.navigate("FounderUsers")}
-              />
-              <SettingsRow
-                icon="grid"
-                label="Statistiken"
-                onPress={() => navigation.navigate("FounderStats")}
-              />
-              <SettingsRow
-                icon="shield"
-                label="Verifizierungs-Anfragen"
-                onPress={() => navigation.navigate("FounderVerificationRequests")}
-              />
-              <SettingsRow
-                icon="bell"
-                label="Ankündigung senden"
-                onPress={() => navigation.navigate("FounderAnnouncement")}
+                icon="crown"
+                label="Gründer-Dashboard"
+                onPress={() => navigation.navigate("FounderDashboard")}
               />
             </SettingsSection>
           </>

@@ -1,8 +1,47 @@
-import { addDoc, collection, limit, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  increment,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../config/firebase";
 import { generateGeminiReply } from "./geminiService";
 
 const HISTORY_LIMIT = 30;
+// Tageslimit fuer Gemini-Aufrufe pro Person - Kosten-/Missbrauchsschutz, da
+// der Aufruf direkt vom Client kommt (kein eigenes Backend). Serverseitig
+// ueber firestore.rules (aiUsage-Regel) durchgesetzt, nicht nur im Client.
+const AI_DAILY_LIMIT = 40;
+
+function todayId() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Gibt true zurueck, wenn die Nachricht noch gesendet werden darf, und
+// erhoeht dabei den heutigen Zaehler. false, wenn das Tageslimit erreicht ist -
+// dann wird gar nicht erst versucht zu schreiben (die Regel wuerde es ohnehin
+// ablehnen).
+async function bumpAiUsage(uid) {
+  const ref = doc(db, "users", uid, "aiUsage", todayId());
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, { count: 1, date: todayId() });
+    return true;
+  }
+  const count = snap.data().count || 0;
+  if (count >= AI_DAILY_LIMIT) return false;
+  await updateDoc(ref, { count: increment(1) });
+  return true;
+}
 
 const SYSTEM_INSTRUCTION = `Du bist "Nata AI", ein freundlicher KI-Assistent innerhalb der Snap-/Storys-App
 Nata (kleines Beta-Team, Freundeskreis-fokussiert statt oeffentliche Reichweite). Antworte auf Deutsch,
@@ -39,10 +78,15 @@ export async function sendAiMessage(uid, text, currentHistory) {
   const history = [...currentHistory.map((m) => ({ role: m.role, text: m.text })), { role: "user", text: trimmed }];
 
   let replyText;
-  try {
-    replyText = await generateGeminiReply(history, SYSTEM_INSTRUCTION);
-  } catch (e) {
-    replyText = "Entschuldige, gerade klappt die Verbindung zu mir nicht (evtl. Netzwerk oder Auslastung). Versuch's gleich nochmal.";
+  const allowed = await bumpAiUsage(uid).catch(() => true);
+  if (!allowed) {
+    replyText = `Du hast dein tägliches Nachrichtenlimit für Nata AI erreicht (${AI_DAILY_LIMIT} Nachrichten) - das schützt uns als kleines Team vor zu hohen KI-Kosten. Morgen geht's weiter, für dringende Anliegen gerne ein Support-Ticket in den Einstellungen.`;
+  } else {
+    try {
+      replyText = await generateGeminiReply(history, SYSTEM_INSTRUCTION);
+    } catch (e) {
+      replyText = "Entschuldige, gerade klappt die Verbindung zu mir nicht (evtl. Netzwerk oder Auslastung). Versuch's gleich nochmal.";
+    }
   }
 
   await addDoc(collection(db, "users", uid, "aiMessages"), {

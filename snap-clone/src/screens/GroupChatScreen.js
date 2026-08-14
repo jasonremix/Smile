@@ -33,6 +33,7 @@ import {
 } from "../services/moderationService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
+import { playSendSound } from "../utils/soundEffects";
 import { colors } from "../theme/colors";
 
 export default function GroupChatScreen({ route, navigation }) {
@@ -116,6 +117,7 @@ export default function GroupChatScreen({ route, navigation }) {
 
     setText("");
     await sendGroupMessage(groupId, user.uid, user.displayName, trimmed);
+    playSendSound();
   };
 
   const handleSendVoice = async (localUri, durationMs) => {

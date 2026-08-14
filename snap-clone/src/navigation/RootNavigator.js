@@ -1,10 +1,12 @@
 import { DarkTheme, NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { savePushToken } from "../services/userService";
 import { addNotificationResponseListener, registerForPushNotifications } from "../utils/pushNotifications";
+import { hasSeenOnboarding, markOnboardingSeen } from "../utils/onboardingSeen";
+import OnboardingScreen from "../screens/OnboardingScreen";
 import FounderAnnouncementBanner from "../components/FounderAnnouncementBanner";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
@@ -25,6 +27,7 @@ import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import FounderAnnouncementScreen from "../screens/FounderAnnouncementScreen";
+import FounderDashboardScreen from "../screens/FounderDashboardScreen";
 import FounderReportsScreen from "../screens/FounderReportsScreen";
 import FounderStatsScreen from "../screens/FounderStatsScreen";
 import FounderTicketsScreen from "../screens/FounderTicketsScreen";
@@ -32,6 +35,8 @@ import FounderUsersScreen from "../screens/FounderUsersScreen";
 import FounderVerificationRequestsScreen from "../screens/FounderVerificationRequestsScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
+import MomentsArchiveScreen from "../screens/MomentsArchiveScreen";
+import MyStatsScreen from "../screens/MyStatsScreen";
 import NataAIScreen from "../screens/NataAIScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import PrivacyScreen from "../screens/PrivacyScreen";
@@ -72,6 +77,8 @@ const navTheme = {
 
 export default function RootNavigator() {
   const { user, initializing, needsProfileSetup } = useAuth();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -80,12 +87,31 @@ export default function RootNavigator() {
 
   useEffect(() => addNotificationResponseListener(), []);
 
-  if (initializing) {
+  // Einmaliger Erster-Start-Flow, sobald ein Profil existiert (nach
+  // CompleteProfileScreen) - pro Geraet, siehe onboardingSeen.js.
+  useEffect(() => {
+    if (!user?.uid || needsProfileSetup) return;
+    hasSeenOnboarding(user.uid).then((seen) => {
+      setShowOnboarding(!seen);
+      setOnboardingChecked(true);
+    });
+  }, [user?.uid, needsProfileSetup]);
+
+  const finishOnboarding = () => {
+    if (user?.uid) markOnboardingSeen(user.uid);
+    setShowOnboarding(false);
+  };
+
+  if (initializing || (user && !needsProfileSetup && !onboardingChecked)) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center" }}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingScreen onDone={finishOnboarding} />;
   }
 
   return (
@@ -253,7 +279,14 @@ export default function RootNavigator() {
           <Stack.Screen name="SavedPosts" component={SavedPostsScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CloseFriends" component={CloseFriendsScreen} options={{ headerShown: false }} />
           <Stack.Screen name="NataAI" component={NataAIScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="MyStats" component={MyStatsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="MomentsArchive" component={MomentsArchiveScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Tickets" component={TicketsScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="FounderDashboard"
+            component={FounderDashboardScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="FounderTickets"
             component={FounderTicketsScreen}

@@ -1,8 +1,9 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import CreateSheet from "../components/CreateSheet";
+import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import DiscoveryScreen from "../screens/DiscoveryScreen";
 import FriendsScreen from "../screens/FriendsScreen";
@@ -23,7 +24,16 @@ function TabIcon({ name, label, focused }) {
   const color = focused ? colors.primary : colors.textMuted;
   return (
     <View style={{ alignItems: "center", gap: 3, width: 64 }}>
-      <Icon name={name} size={21} color={color} />
+      {focused ? (
+        <GradientView
+          colors={["rgba(192, 132, 252, 0.22)", "rgba(147, 51, 234, 0.1)"]}
+          style={styles.activeIconGlow}
+        >
+          <Icon name={name} size={21} color={color} />
+        </GradientView>
+      ) : (
+        <Icon name={name} size={21} color={color} />
+      )}
       <Text
         style={{ fontSize: 10, fontWeight: "600", color, letterSpacing: -0.1 }}
         numberOfLines={1}
@@ -130,3 +140,13 @@ export default function MainTabNavigator() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  activeIconGlow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

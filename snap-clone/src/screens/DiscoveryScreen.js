@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
@@ -192,7 +193,7 @@ export default function DiscoveryScreen({ navigation }) {
               );
             }}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>Keine Treffer für "{searchTerm.trim()}".</Text>
+              <EmptyState title="Keine Treffer" text={`Nichts gefunden für "${searchTerm.trim()}".`} />
             }
           />
         )
@@ -246,19 +247,12 @@ export default function DiscoveryScreen({ navigation }) {
                 );
               }}
               ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Icon name="people" size={26} color={colors.textMuted} />
-                  <Text style={styles.emptyTitle}>Noch nichts für dich entdeckt.</Text>
-                  <Text style={styles.emptyText}>
-                    Verbinde dich mit Menschen, um personalisierte Empfehlungen zu erhalten.
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.emptyAction}
-                    onPress={() => navigation.navigate("AddFriends")}
-                  >
-                    <Text style={styles.emptyActionText}>Menschen entdecken</Text>
-                  </TouchableOpacity>
-                </View>
+                <EmptyState
+                  title="Noch nichts für dich entdeckt"
+                  text="Verbinde dich mit Menschen, um personalisierte Empfehlungen zu erhalten."
+                  actionLabel="Menschen entdecken"
+                  onAction={() => navigation.navigate("AddFriends")}
+                />
               }
             />
           )}

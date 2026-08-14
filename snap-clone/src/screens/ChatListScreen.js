@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
+import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
 import NataAIListRow from "../components/NataAIListRow";
 import ScreenHeader from "../components/ScreenHeader";
@@ -131,17 +132,12 @@ export default function ChatListScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Icon name="chat" size={30} color={colors.textMuted} />
-            <Text style={styles.emptyTitle}>Noch keine Nachrichten</Text>
-            <Text style={styles.emptyText}>Deine Unterhaltungen erscheinen hier.</Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => navigation.navigate("Tabs", { screen: "Discovery" })}
-            >
-              <Text style={styles.emptyButtonText}>Menschen entdecken</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState
+            title="Noch keine Nachrichten"
+            text="Deine Unterhaltungen erscheinen hier."
+            actionLabel="Menschen entdecken"
+            onAction={() => navigation.navigate("Tabs", { screen: "Discovery" })}
+          />
         }
       />
     </View>

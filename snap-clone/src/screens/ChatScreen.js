@@ -42,6 +42,7 @@ import { getActiveChatId, setActiveChatId } from "../state/activeChat";
 import { getUserProfile } from "../services/userService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
+import { playSendSound } from "../utils/soundEffects";
 import { colors } from "../theme/colors";
 
 const TYPING_TIMEOUT_MS = 3000;
@@ -230,6 +231,7 @@ export default function ChatScreen({ route, navigation }) {
     }
 
     await sendMessage(id, user.uid, trimmed);
+    playSendSound();
   };
 
   const handleSendVoice = async (localUri, durationMs) => {

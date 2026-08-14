@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BetaCountdownBanner from "../components/BetaCountdownBanner";
+import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
@@ -26,6 +27,15 @@ import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
+
+function greetingForHour() {
+  const hour = new Date().getHours();
+  if (hour < 5) return "Noch wach";
+  if (hour < 11) return "Guten Morgen";
+  if (hour < 17) return "Hey";
+  if (hour < 22) return "Guten Abend";
+  return "Noch wach";
+}
 
 function startOfWeek() {
   const now = new Date();
@@ -204,7 +214,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.greetingRow}>
         <View style={styles.greetingTextBlock}>
           <View style={styles.nameRow}>
-            <Text style={styles.greeting}>Hey, {user?.displayName || "du"}</Text>
+            <Text style={styles.greeting}>{greetingForHour()}, {user?.displayName || "du"}</Text>
             {user?.verified ? <VerifiedBadge size={16} /> : null}
           </View>
         </View>
@@ -290,14 +300,14 @@ export default function HomeScreen({ navigation }) {
         postsLoading ? (
           <PostCardSkeletonList />
         ) : (
-          <View style={styles.feedEmpty}>
-            <Icon name="document" size={26} color={colors.textMuted} />
-            <Text style={styles.feedEmptyText}>
-              {feedTab === "forYou"
-                ? "Noch keine Beitraege."
-                : "Deine Connections haben noch nichts gepostet."}
-            </Text>
-          </View>
+          <EmptyState
+            title={feedTab === "forYou" ? "Noch keine Beiträge" : "Noch nichts von deinen Connections"}
+            text={
+              feedTab === "forYou"
+                ? "Sobald jemand postet, erscheint es hier."
+                : "Deine Connections haben noch nichts gepostet."
+            }
+          />
         )
       }
     />
@@ -458,18 +468,7 @@ const styles = StyleSheet.create({
   feedTabTextActive: {
     color: colors.text,
   },
-  feedEmpty: {
-    alignItems: "center",
-    marginTop: 30,
-    paddingHorizontal: 20,
-  },
   loadMoreSpinner: {
     marginVertical: spacing.xl,
-  },
-  feedEmptyText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginTop: 10,
-    textAlign: "center",
   },
 });

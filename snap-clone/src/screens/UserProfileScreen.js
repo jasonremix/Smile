@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import PostCard from "../components/PostCard";
 import { PostCardSkeletonList } from "../components/PostCardSkeleton";
@@ -129,9 +130,11 @@ export default function UserProfileScreen({ route, navigation }) {
       renderItem={({ item }) => <PostCard post={item} navigation={navigation} />}
       ListHeaderComponent={
         <View>
-          <View style={[styles.avatar, { backgroundColor: profile.avatarColor || colors.primary }]}>
-            <Text style={styles.avatarText}>{(profile.displayName || "?").charAt(0).toUpperCase()}</Text>
-          </View>
+          <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
+            <View style={[styles.avatar, { backgroundColor: profile.avatarColor || colors.primary }]}>
+              <Text style={styles.avatarText}>{(profile.displayName || "?").charAt(0).toUpperCase()}</Text>
+            </View>
+          </GradientView>
 
           <View style={styles.nameRow}>
             <Text style={styles.displayName}>{profile.displayName}</Text>
@@ -235,13 +238,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
   },
+  avatarRing: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
   avatar: {
     width: 84,
     height: 84,
     borderRadius: 42,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 14,
   },
   avatarText: {
     color: "#000",

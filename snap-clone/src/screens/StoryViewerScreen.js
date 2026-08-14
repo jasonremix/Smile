@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,7 +11,7 @@ import FilteredMedia from "../components/FilteredMedia";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { reportContent } from "../services/moderationService";
-import { markStoryViewed } from "../services/storyService";
+import { archiveStory, markStoryViewed, unarchiveStory } from "../services/storyService";
 import { colors } from "../theme/colors";
 
 const PHOTO_DURATION_MS = 5000;
@@ -20,10 +21,28 @@ export default function StoryViewerScreen({ route, navigation }) {
   const { user } = useAuth();
   const [index, setIndex] = useState(0);
   const [reporting, setReporting] = useState(false);
+  const [archivedState, setArchivedState] = useState(() =>
+    Object.fromEntries(group.items.map((it) => [it.id, !!it.archived]))
+  );
   const timerRef = useRef(null);
 
   const items = group.items;
   const current = items[index];
+  const isOwn = group.ownerId === user.uid;
+  const isArchived = current ? !!archivedState[current.id] : false;
+
+  const toggleArchive = async () => {
+    try {
+      if (isArchived) {
+        await unarchiveStory(current.ref);
+      } else {
+        await archiveStory(current.ref);
+      }
+      setArchivedState((prev) => ({ ...prev, [current.id]: !isArchived }));
+    } catch (e) {
+      Alert.alert("Fehler", "Konnte den Moment nicht im Archiv speichern. Versuch's gleich nochmal.");
+    }
+  };
 
   useEffect(() => {
     if (!current) {
@@ -77,11 +96,15 @@ export default function StoryViewerScreen({ route, navigation }) {
           <Text style={styles.ownerName}>{group.ownerName}</Text>
         </View>
 
-        {group.ownerId !== user.uid ? (
+        {isOwn ? (
+          <TouchableOpacity style={styles.archiveButton} onPress={toggleArchive}>
+            <Text style={styles.archiveText}>{isArchived ? "Im Archiv ✓" : "Archivieren"}</Text>
+          </TouchableOpacity>
+        ) : (
           <TouchableOpacity style={styles.reportButton} onPress={() => setReporting(true)}>
             <Text style={styles.reportIcon}>⋯</Text>
           </TouchableOpacity>
-        ) : null}
+        )}
       </View>
 
       <FilteredMedia
@@ -196,6 +219,17 @@ const styles = StyleSheet.create({
   reportIcon: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "700",
+  },
+  archiveButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  archiveText: {
+    color: "#fff",
+    fontSize: 12,
     fontWeight: "700",
   },
   tapZones: {

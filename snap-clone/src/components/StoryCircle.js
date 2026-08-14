@@ -1,19 +1,30 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import GradientView from "./GradientView";
 import { colors } from "../theme/colors";
 
 export default function StoryCircle({ label, color, viewed, onPress, isSelf }) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View
-        style={[
-          styles.ring,
-          { borderColor: viewed ? colors.border : colors.primary },
-        ]}
-      >
-        <View style={[styles.avatar, { backgroundColor: color || colors.primary }]}>
-          <Text style={styles.avatarText}>{(label || "?").charAt(0).toUpperCase()}</Text>
-        </View>
+      <View style={styles.ringOuter}>
+        {viewed ? (
+          <View style={[styles.ring, { borderColor: colors.border }]}>
+            <View style={[styles.avatar, { backgroundColor: color || colors.primary }]}>
+              <Text style={styles.avatarText}>{(label || "?").charAt(0).toUpperCase()}</Text>
+            </View>
+          </View>
+        ) : (
+          <GradientView
+            colors={[colors.primaryLight, colors.primary, colors.primaryDark]}
+            style={styles.gradientRing}
+          >
+            <View style={styles.ringInnerBg}>
+              <View style={[styles.avatar, { backgroundColor: color || colors.primary }]}>
+                <Text style={styles.avatarText}>{(label || "?").charAt(0).toUpperCase()}</Text>
+              </View>
+            </View>
+          </GradientView>
+        )}
         {isSelf ? (
           <View style={styles.plusBadge}>
             <Text style={styles.plusText}>+</Text>
@@ -33,11 +44,31 @@ const styles = StyleSheet.create({
     width: 72,
     marginRight: 4,
   },
+  ringOuter: {
+    width: 62,
+    height: 62,
+  },
   ring: {
     width: 62,
     height: 62,
     borderRadius: 31,
     borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  gradientRing: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    padding: 3,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ringInnerBg: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 28,
+    backgroundColor: colors.background,
     justifyContent: "center",
     alignItems: "center",
   },

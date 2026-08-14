@@ -93,3 +93,26 @@ export async function markStoryViewed(storyRef, uid) {
     viewers: arrayUnion(uid),
   });
 }
+
+// Momente-Archiv: Storys "leben" in Firestore ohnehin unbegrenzt weiter (kein
+// TTL/Cleanup-Job, expiresAtMs wird nur clientseitig zum Filtern der
+// 24h-Ansicht genutzt) - Archivieren markiert einen Moment lediglich als
+// dauerhaft auffindbar, es wird keine neue Kopie hochgeladen.
+export async function archiveStory(storyRef) {
+  await updateDoc(storyRef, { archived: true, archivedAt: serverTimestamp() });
+}
+
+export async function unarchiveStory(storyRef) {
+  await updateDoc(storyRef, { archived: false, archivedAt: null });
+}
+
+export function listenMyArchivedStories(uid, callback) {
+  const q = query(
+    collection(db, "users", uid, "stories"),
+    where("archived", "==", true),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() })));
+  });
+}

@@ -335,6 +335,21 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
+      // Taegliches Nutzungslimit fuer Nata AI (Kosten-/Missbrauchsschutz fuer
+      // den Gemini-Aufruf, der direkt vom Client kommt). docId = "YYYY-MM-DD"
+      // (lokales Datum), "count" zaehlt hoch und darf serverseitig nie ueber
+      // AI_DAILY_LIMIT steigen - so kann ein manipulierter Client den Zaehler
+      // nicht einfach ueberspringen.
+      match /aiUsage/{dateId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.count == 1;
+        allow update: if isOwner(userId)
+          && request.resource.data.count == resource.data.count + 1
+          && request.resource.data.count <= 40;
+        allow delete: if false;
+      }
+
       // Wer blockiert wurde, steht hier - nur der blockierende Nutzer selbst
       // darf seine eigene Liste sehen/aendern.
       match /blocked/{blockedUid} {
@@ -387,6 +402,12 @@ service cloud.firestore {
             request.resource.data.viewers == resource.data.viewers
             || request.resource.data.viewers == resource.data.viewers.concat([request.auth.uid])
           );
+        // Momente-Archiv: nur die eigene Person darf ihren Moment dauerhaft
+        // markieren/entmarkieren - unabhaengig vom Ablauf (expiresAtMs bleibt
+        // unveraendert, die Story existiert im Hintergrund ohnehin weiter).
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived', 'archivedAt'])
+          && request.resource.data.archived is bool;
         allow delete: if isOwner(userId);
       }
 
@@ -402,7 +423,7 @@ service cloud.firestore {
         allow create: if isSignedIn()
           && request.auth.uid == request.resource.data.fromUid
           && request.resource.data.fromUid != userId
-          && request.resource.data.type in ['like', 'comment', 'friend_request', 'friend_accept']
+          && request.resource.data.type in ['like', 'comment', 'friend_request', 'friend_accept', 'streak_milestone']
           && request.resource.data.fromDisplayName is string
           && request.resource.data.fromDisplayName.size() <= 40
           && request.resource.data.read == false

@@ -13,8 +13,11 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { createNotification } from "./notificationService";
 import { bumpNataScore } from "./userService";
 import { uploadVoiceMessage } from "./voiceService";
+
+const STREAK_MILESTONES = [7, 30, 100, 365];
 
 // Deterministische Chat-ID aus den beiden Nutzer-IDs, damit fuer ein Paar
 // immer derselbe Chat-Dokumentpfad verwendet wird.
@@ -49,7 +52,7 @@ export async function recordStreakSnap(sender, recipient) {
   const chatRef = doc(db, "chats", chatId);
   const today = todayString();
 
-  await runTransaction(db, async (tx) => {
+  const reachedMilestone = await runTransaction(db, async (tx) => {
     const snap = await tx.get(chatRef);
     const data = snap.exists() ? snap.data() : {};
     const sentToday = { ...(data.streakSentToday || {}) };
@@ -57,11 +60,13 @@ export async function recordStreakSnap(sender, recipient) {
 
     let streakCount = data.streakCount || 0;
     let streakLastDate = data.streakLastDate || null;
+    let milestone = null;
 
     const bothSentToday = sentToday[sender.uid] === today && sentToday[recipient.uid] === today;
     if (bothSentToday && streakLastDate !== today) {
       streakCount = streakLastDate && daysBetween(streakLastDate, today) === 1 ? streakCount + 1 : 1;
       streakLastDate = today;
+      if (STREAK_MILESTONES.includes(streakCount)) milestone = streakCount;
     }
 
     tx.set(
@@ -83,7 +88,23 @@ export async function recordStreakSnap(sender, recipient) {
       },
       { merge: true }
     );
+
+    return milestone;
   });
+
+  // Streak-Jubilaeum: beide Seiten bekommen eine Benachrichtigung - jeweils
+  // mit der ANDEREN Person als "fromUid" (Benachrichtigungsregeln verbieten
+  // fromUid == Empfaenger). Best effort, ausserhalb der Transaktion.
+  if (reachedMilestone) {
+    createNotification(recipient.uid, sender, {
+      type: "streak_milestone",
+      preview: `${reachedMilestone} Tage in Folge`,
+    }).catch(() => {});
+    createNotification(sender.uid, recipient, {
+      type: "streak_milestone",
+      preview: `${reachedMilestone} Tage in Folge`,
+    }).catch(() => {});
+  }
 }
 
 export async function getOrCreateChat(currentUser, otherUser) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useBetaCountdown } from "../hooks/useBetaCountdown";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -9,7 +10,11 @@ import Icon from "./Icon";
 // Bewusst als schmale Pille statt grosser Karte - soll sofort auffallen,
 // ohne den Home-Feed mit einem weiteren vollbreiten Block zuzustellen (der
 // Gruender wollte den Feed insgesamt uebersichtlicher, nicht voller).
+// Antippbar -> fuehrt zur Roadmap, wo ehrlich steht, was nach dem 24.09.
+// mit Konten/Daten geplant ist (statt die Frage offen im Raum stehen zu
+// lassen).
 export default function BetaCountdownBanner() {
+  const navigation = useNavigation();
   const { expired, days, hours, minutes } = useBetaCountdown();
 
   const pulse = useRef(new Animated.Value(1)).current;
@@ -42,24 +47,27 @@ export default function BetaCountdownBanner() {
 
   return (
     <Animated.View
-      style={[
-        styles.pill,
-        {
-          opacity: enter,
-          transform: [{ scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
-        },
-      ]}
-      accessibilityRole="text"
-      accessibilityLabel={
-        expired
-          ? "Die Beta ist beendet"
-          : `Beta endet in ${days} Tagen, ${hours} Stunden und ${minutes} Minuten, am 24. September 2026`
-      }
+      style={{
+        opacity: enter,
+        transform: [{ scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
+        alignSelf: "flex-start",
+      }}
     >
-      <Animated.View style={{ transform: [{ scale: expired ? 1 : pulse }] }}>
-        <Icon name="warning" size={13} color={colors.primaryLight} />
-      </Animated.View>
-      <Text style={styles.text}>{label} · endet 24.09.</Text>
+      <Pressable
+        style={styles.pill}
+        onPress={() => navigation.navigate("Roadmap")}
+        accessibilityRole="button"
+        accessibilityLabel={
+          expired
+            ? "Die Beta ist beendet. Antippen für mehr Informationen."
+            : `Beta endet in ${days} Tagen, ${hours} Stunden und ${minutes} Minuten, am 24. September 2026. Antippen für mehr Informationen.`
+        }
+      >
+        <Animated.View style={{ transform: [{ scale: expired ? 1 : pulse }] }}>
+          <Icon name="warning" size={13} color={colors.primaryLight} />
+        </Animated.View>
+        <Text style={styles.text}>{label} · endet 24.09.</Text>
+      </Pressable>
     </Animated.View>
   );
 }

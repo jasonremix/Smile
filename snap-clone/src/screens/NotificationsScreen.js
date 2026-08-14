@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
@@ -22,6 +23,7 @@ const ICON_BY_TYPE = {
   friend_request: "people",
   friend_accept: "check",
   announcement: "bell",
+  streak_milestone: "flame",
 };
 
 const TEXT_BY_TYPE = {
@@ -29,6 +31,7 @@ const TEXT_BY_TYPE = {
   comment: "hat kommentiert",
   friend_request: "moechte sich mit dir verbinden",
   friend_accept: "hat deine Anfrage angenommen",
+  streak_milestone: "und du habt einen Streak-Meilenstein erreicht 🔥",
 };
 
 function isSameDay(a, b) {
@@ -195,10 +198,7 @@ export default function NotificationsScreen({ navigation }) {
           )
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Icon name="bell" size={26} color={colors.textMuted} />
-            <Text style={styles.emptyText}>Noch keine Benachrichtigungen.</Text>
-          </View>
+          <EmptyState title="Noch keine Benachrichtigungen" text="Likes, Kommentare und Anfragen erscheinen hier." />
         }
       />
     </View>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import GradientView from "./GradientView";
 import Icon from "./Icon";
 import { getLevelIcon, getLevelInfo, getLevelName } from "../utils/nataLevel";
 import { colors } from "../theme/colors";
@@ -39,7 +40,12 @@ export default function NataScoreCard({ score, weeklyPoints = 0, onPress }) {
         </View>
 
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          <View style={[styles.progressFillWrap, { width: `${progress * 100}%` }]}>
+            <GradientView
+              colors={[colors.primaryLight, colors.primary]}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
         </View>
         <Text style={styles.progressLabel}>
           {pointsToNext > 0 ? `Noch ${pointsToNext} Punkte bis Level ${level + 1}` : "Naechstes Level fast geschafft"}
@@ -132,6 +138,11 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: radius.pill,
     backgroundColor: colors.surfaceLight,
+    overflow: "hidden",
+  },
+  progressFillWrap: {
+    height: "100%",
+    borderRadius: radius.pill,
     overflow: "hidden",
   },
   progressFill: {

@@ -12,6 +12,13 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Erster-Start-Einführung für neue Nutzer:innen, Gründer-Dashboard bündelt alle Verwaltungs-Screens",
+  "Momente-Archiv: eigene Momente dauerhaft über 24h hinaus behalten",
+  "Eigene Statistik (längster Streak, bester Beitrag, aktivste Woche), eigene Daten als PDF herunterladen",
+  "Streak-Jubiläen (7/30/100/365 Tage) als Benachrichtigung, tägliches Nutzungslimit für Nata AI",
+  "Dezente, abschaltbare Sound-Effekte beim Senden/Empfangen von Nachrichten",
+  "Verlaufs-Ring und Farbverlauf jetzt auch auf fremden Profilen, im Score-Balken und im aktiven Tab-Icon",
+  "Zeitbasierte Begrüßung, Maskottchen in leeren Ansichten (Feed, Nachrichten, Benachrichtigungen, Suche)",
   "Offizielles Logo in der App (Anmeldung, Registrierung, Über Nata)",
   "Nata AI: eigener KI-Chat (Beta) für allgemeine Fragen, außerdem beantwortet der Support-Bot Tickets jetzt inhaltlich statt mit festen Textbausteinen",
   "Verifizierung beantragen (Beta): Formular mit Begründung und Nachweis-Links, Gründer prüft und entscheidet",
@@ -51,7 +58,11 @@ const PLANNED = [
   },
   {
     title: "Einreichung im App Store & Play Store",
-    detail: "Damit Nata ohne Beta-Kanal installierbar wird.",
+    detail:
+      "Damit Nata ohne Beta-Kanal installierbar wird. Ziel: dein Konto, deine Connections, Beiträge " +
+      "und dein Nata Score bleiben beim Umstieg von der Beta erhalten - das ist unser Plan, aber " +
+      "noch keine feste Zusage, da der genaue Ablauf von der App-Store-Freigabe abhängt. Rechtzeitig " +
+      "vor dem 24.09.2026 informieren wir hier und per Ankündigung genauer.",
   },
 ];
 

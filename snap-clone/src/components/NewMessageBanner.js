@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { navigationRef } from "../navigation/navigationRef";
 import { listenChats } from "../services/chatService";
 import { getActiveChatId } from "../state/activeChat";
+import { playReceiveSound } from "../utils/soundEffects";
 import { colors } from "../theme/colors";
 
 function toMillis(timestamp) {
@@ -37,8 +38,10 @@ export default function NewMessageBanner() {
 
         if (!hasLoadedOnce.current) continue;
         if (!chat.lastSenderId || chat.lastSenderId === user.uid) continue;
-        if (chat.id === getActiveChatId()) continue;
         if (updatedMs <= (previous.get(chat.id) || 0)) continue;
+
+        playReceiveSound();
+        if (chat.id === getActiveChatId()) continue;
 
         const otherId = chat.participants.find((id) => id !== user.uid);
         showBanner({
