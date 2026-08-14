@@ -294,6 +294,19 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
+      // Expo-Push-Tokens fuer Benachrichtigungen (siehe
+      // src/utils/pushNotifications.js) - bewusst eine eigene, nur fuer die
+      // Person selbst lesbare Subcollection statt eines Feldes auf dem
+      // (fuer alle Signed-in-Nutzer lesbaren) Hauptdokument: ein Push-Token
+      // erlaubt jedem, der ihn kennt, ueber Expos oeffentliche Push-API
+      // Benachrichtigungen an dieses Geraet zu schicken - darf also nicht
+      // oeffentlich lesbar sein. tokenId = der Token-String selbst, damit
+      // Mehrfach-Registrierung (z.B. beim erneuten Login) keine Duplikate
+      // erzeugt.
+      match /pushTokens/{tokenId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Wer blockiert wurde, steht hier - nur der blockierende Nutzer selbst
       // darf seine eigene Liste sehen/aendern.
       match /blocked/{blockedUid} {

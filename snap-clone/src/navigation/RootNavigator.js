@@ -1,8 +1,10 @@
 import { DarkTheme, NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { savePushToken } from "../services/userService";
+import { addNotificationResponseListener, registerForPushNotifications } from "../utils/pushNotifications";
 import FounderAnnouncementBanner from "../components/FounderAnnouncementBanner";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
@@ -67,6 +69,13 @@ const navTheme = {
 
 export default function RootNavigator() {
   const { user, initializing, needsProfileSetup } = useAuth();
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    registerForPushNotifications(user.uid, savePushToken);
+  }, [user?.uid]);
+
+  useEffect(() => addNotificationResponseListener(), []);
 
   if (initializing) {
     return (

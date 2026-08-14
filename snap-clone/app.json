@@ -60,6 +60,13 @@
         {
           "locationWhenInUsePermission": "Nata nutzt deinen Standort nur, wenn du in den Profileinstellungen aktiv deine Stadt teilst."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#9333EA"
+        }
       ]
     ],
     "extra": {

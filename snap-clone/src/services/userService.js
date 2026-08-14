@@ -9,9 +9,11 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
+import { Platform } from "react-native";
 import { db } from "../config/firebase";
 
 // "Was ist gerade los" bleibt so lange sichtbar, danach gilt der Status
@@ -134,6 +136,25 @@ export async function bumpNataScore(uid, amount = 1, reason = "Aktivitaet") {
     });
   } catch (e) {
     // Punktevergabe ist best effort - Aktion war trotzdem erfolgreich.
+  }
+}
+
+// Eigene, nur fuer die Person selbst lesbare Subcollection statt eines
+// Feldes auf dem (fuer alle Signed-in-Nutzer lesbaren) Hauptdokument - siehe
+// Begruendung in firestore.rules bei pushTokens. tokenId = der Token-String
+// selbst, damit erneutes Registrieren (z.B. bei jedem Login) idempotent ist
+// statt Duplikate anzuhaeufen. Best effort: schlaegt das fehl, bleibt die
+// Person einfach ohne Push-Benachrichtigungen auf diesem Geraet - kein
+// Blocker fuer den Login.
+export async function savePushToken(uid, token) {
+  try {
+    await setDoc(
+      doc(db, "users", uid, "pushTokens", token),
+      { token, platform: Platform.OS, createdAt: serverTimestamp() },
+      { merge: true }
+    );
+  } catch (e) {
+    // Siehe Kommentar oben - bewusst kein Fehler nach oben.
   }
 }
 
