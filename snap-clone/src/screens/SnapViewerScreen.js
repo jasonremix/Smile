@@ -123,13 +123,15 @@ export default function SnapViewerScreen({ route, navigation }) {
           visible={reporting}
           onClose={() => setReporting(false)}
           title="Snap melden"
-          onSubmit={(reason) =>
+          targetDisplayName={snap.senderName}
+          onSubmit={(report) =>
             reportContent({
               reporterId: user.uid,
               targetType: "snap",
               targetId: snap.id,
               targetUserId: snap.senderId,
-              reason,
+              targetDisplayName: snap.senderName,
+              ...report,
             })
           }
         />

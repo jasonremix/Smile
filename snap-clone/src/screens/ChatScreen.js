@@ -330,13 +330,15 @@ export default function ChatScreen({ route, navigation }) {
         visible={!!reportTarget}
         onClose={() => setReportTarget(null)}
         title={reportTarget?.type === "message" ? "Nachricht melden" : `${otherUser.name} melden`}
-        onSubmit={(reason) =>
+        targetDisplayName={otherUser.name}
+        onSubmit={(report) =>
           reportContent({
             reporterId: user.uid,
             targetType: reportTarget.type,
             targetId: reportTarget.messageId,
             targetUserId: otherUser.id,
-            reason,
+            targetDisplayName: otherUser.name,
+            ...report,
           })
         }
       />

@@ -112,13 +112,15 @@ export default function StoryViewerScreen({ route, navigation }) {
         visible={reporting}
         onClose={() => setReporting(false)}
         title="Moment melden"
-        onSubmit={(reason) =>
+        targetDisplayName={group.ownerName}
+        onSubmit={(report) =>
           reportContent({
             reporterId: user.uid,
             targetType: "story",
             targetId: current.id,
             targetUserId: group.ownerId,
-            reason,
+            targetDisplayName: group.ownerName,
+            ...report,
           })
         }
       />

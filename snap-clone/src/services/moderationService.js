@@ -41,20 +41,42 @@ export function listenBlockedUsers(uid, callback) {
 export const REPORT_REASONS = [
   { id: "spam", label: "Spam oder Werbung" },
   { id: "harassment", label: "Belästigung oder Mobbing" },
+  { id: "threat", label: "Drohung oder Gewaltandrohung" },
   { id: "inappropriate_content", label: "Unangemessene Inhalte" },
   { id: "impersonation", label: "Fake-Account / Identitätsdiebstahl" },
   { id: "other", label: "Sonstiges" },
 ];
 
-// targetType: "user" | "snap" | "story" | "message"
-export async function reportContent({ reporterId, targetType, targetId, targetUserId, reason, details }) {
+export const INCIDENT_TIMINGS = [
+  { id: "just_now", label: "Gerade eben" },
+  { id: "today", label: "Heute" },
+  { id: "this_week", label: "Diese Woche" },
+  { id: "longer_ago", label: "Vor längerem" },
+];
+
+// targetType: "user" | "snap" | "story" | "message" | "post"
+// description: Freitext, was passiert ist. incidentTiming: eine der
+// INCIDENT_TIMINGS-IDs. targetDisplayName: fuer Anzeige/PDF, rein
+// informativ (kein Sicherheitsmerkmal).
+export async function reportContent({
+  reporterId,
+  targetType,
+  targetId,
+  targetUserId,
+  targetDisplayName,
+  reason,
+  description,
+  incidentTiming,
+}) {
   await addDoc(collection(db, "reports"), {
     reporterId,
     targetType,
     targetId: targetId || null,
     targetUserId: targetUserId || null,
+    targetDisplayName: targetDisplayName || null,
     reason,
-    details: details || "",
+    description: description || "",
+    incidentTiming: incidentTiming || null,
     createdAt: serverTimestamp(),
   });
 }

@@ -167,13 +167,15 @@ export default function PostCard({ post, navigation }) {
         visible={reporting}
         onClose={() => setReporting(false)}
         title="Beitrag melden"
-        onSubmit={(reason) =>
+        targetDisplayName={post.authorName}
+        onSubmit={(report) =>
           reportContent({
             reporterId: user.uid,
             targetType: "post",
             targetId: post.id,
             targetUserId: post.authorId,
-            reason,
+            targetDisplayName: post.authorName,
+            ...report,
           })
         }
       />

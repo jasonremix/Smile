@@ -201,12 +201,14 @@ export default function UserProfileScreen({ route, navigation }) {
       visible={reporting}
       onClose={() => setReporting(false)}
       title={`${profile.displayName} melden`}
-      onSubmit={(reason) =>
+      targetDisplayName={profile.displayName}
+      onSubmit={(report) =>
         reportContent({
           reporterId: currentUser.uid,
           targetType: "user",
           targetUserId: uid,
-          reason,
+          targetDisplayName: profile.displayName,
+          ...report,
         })
       }
     />

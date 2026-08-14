@@ -162,12 +162,14 @@ export default function FriendsScreen({ navigation }) {
         visible={!!reportTarget}
         onClose={() => setReportTarget(null)}
         title={reportTarget ? `${reportTarget.displayName} melden` : "Melden"}
-        onSubmit={(reason) =>
+        targetDisplayName={reportTarget?.displayName}
+        onSubmit={(report) =>
           reportContent({
             reporterId: user.uid,
             targetType: "user",
             targetUserId: reportTarget.uid,
-            reason,
+            targetDisplayName: reportTarget.displayName,
+            ...report,
           })
         }
       />

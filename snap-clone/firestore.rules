@@ -29,10 +29,19 @@ service cloud.firestore {
     function containsBlockedTerm(text) {
       return text is string
         && text.lower().matches(
-          '.*(hurensohn|wichser|missgeburt|untermensch|abschaum|spast|mongo|fotze'
-          + '|nigger|faggot|retard|chink|kike'
-          + '|klick hier|jetzt klicken|gratis geld|schnell reich werden|jetzt kaufen'
-          + '|bitcoin investment|kostenlos abstauben|nur heute kostenlos).*'
+          '.*(hurensohn|wichser|arschloch|missgeburt|untermensch|abschaum|fotze'
+          + '|schlampe|hure|bastard|wixer|hackfresse'
+          + '|spast|spasti|mongo|kanake|kameltreiber|judensau|zigeuner'
+          + '|schwuchtel|kampflesbe|tunte'
+          + '|nigger|nigga|faggot|retard|chink|kike|spic|tranny|whore|slut|bitch|cunt'
+          + '|ich bringe dich um|ich toete dich|ich töte dich|ich tote dich'
+          + '|ich schlage dich|ich steche dich|du wirst sterben|ich finde dich und'
+          + '|ich weiss wo du wohnst|ich weiß wo du wohnst|ich vergewaltige dich'
+          + '|bring dich um|ritz dich|du solltest dich umbringen'
+          + '|klick hier|jetzt klicken|gratis geld|schnell reich werden'
+          + '|geld verdienen von zuhause|jetzt kaufen|bitcoin investment|krypto investment'
+          + '|kostenlos abstauben|nur heute kostenlos|folge mir für follower'
+          + '|gewinnspiel teilnehmen jetzt|kostenloses iphone).*'
         );
     }
 
@@ -427,7 +436,20 @@ service cloud.firestore {
     // erreichbar - Einsicht/Bearbeitung nur ueber die Firebase-Konsole bzw.
     // spaeter eine Admin-Cloud-Function, nie ueber die Client-App.
     match /reports/{reportId} {
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.reporterId;
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.reporterId
+        && request.resource.data.reason in
+             ['spam', 'harassment', 'threat', 'inappropriate_content', 'impersonation', 'other']
+        && (
+          !('description' in request.resource.data)
+          || (request.resource.data.description is string
+              && request.resource.data.description.size() <= 1000)
+        )
+        && (
+          !('incidentTiming' in request.resource.data)
+          || request.resource.data.incidentTiming == null
+          || request.resource.data.incidentTiming in ['just_now', 'today', 'this_week', 'longer_ago']
+        );
       allow read, update, delete: if false;
     }
 

@@ -142,7 +142,11 @@ export default function GroupChatScreen({ route, navigation }) {
         onPress: () => deleteGroupMessage(groupId, message.id),
       });
     } else {
-      options.push({ text: "Melden", onPress: () => setReportTarget({ messageId: message.id, senderId: message.senderId }) });
+      options.push({
+        text: "Melden",
+        onPress: () =>
+          setReportTarget({ messageId: message.id, senderId: message.senderId, senderName: message.senderName }),
+      });
     }
     options.push({ text: "Abbrechen", style: "cancel" });
     Alert.alert("Nachricht", "Was möchtest du tun?", options);
@@ -206,13 +210,15 @@ export default function GroupChatScreen({ route, navigation }) {
         visible={!!reportTarget}
         onClose={() => setReportTarget(null)}
         title="Nachricht melden"
-        onSubmit={(reason) =>
+        targetDisplayName={reportTarget?.senderName}
+        onSubmit={(report) =>
           reportContent({
             reporterId: user.uid,
             targetType: "message",
             targetId: reportTarget.messageId,
             targetUserId: reportTarget.senderId,
-            reason,
+            targetDisplayName: reportTarget.senderName,
+            ...report,
           })
         }
       />
