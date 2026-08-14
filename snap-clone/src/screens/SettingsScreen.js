@@ -6,6 +6,7 @@ import ScreenHeader from "../components/ScreenHeader";
 import SettingsRow from "../components/SettingsRow";
 import SettingsSection from "../components/SettingsSection";
 import { useAuth } from "../context/AuthContext";
+import { FOUNDER_USERNAME } from "../services/ticketService";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -89,6 +90,19 @@ export default function SettingsScreen({ navigation }) {
             tint={colors.danger}
           />
         </SettingsSection>
+
+        {user?.username === FOUNDER_USERNAME ? (
+          <>
+            <Text style={styles.sectionLabel}>Gründer</Text>
+            <SettingsSection>
+              <SettingsRow
+                icon="shield"
+                label="Ticket-Verwaltung"
+                onPress={() => navigation.navigate("FounderTickets")}
+              />
+            </SettingsSection>
+          </>
+        ) : null}
 
         <Text style={styles.sectionLabel}>App</Text>
         <SettingsSection>

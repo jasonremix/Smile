@@ -20,6 +20,7 @@ import CreatePostScreen from "../screens/CreatePostScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
+import FounderTicketsScreen from "../screens/FounderTicketsScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
 import LegalScreen from "../screens/LegalScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
@@ -230,6 +231,11 @@ export default function RootNavigator() {
           <Stack.Screen name="Roadmap" component={RoadmapScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Tickets" component={TicketsScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="FounderTickets"
+            component={FounderTicketsScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Referral"
             component={ReferralScreen}

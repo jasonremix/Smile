@@ -10,6 +10,17 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Gruender-Sonderzugriff fuer die Ticket-Bearbeitung (Annehmen/Ablehnen/
+    // Antworten, Sperren manuell aufheben) - bewusst als feste UID statt
+    // eines Lookups auf "username == jasonbuerger": ein Lookup waere ein
+    // zusaetzlicher, in Regeln fehleranfaelliger Read, und der Benutzername
+    // koennte sich theoretisch aendern. Diese UID gehoert zum echten
+    // "jasonbuerger"-Konto (Gruender-Account), keine Rolle/Custom-Claim
+    // noetig, da es nur eine einzige Person mit diesem Zugriff gibt.
+    function isFounder() {
+      return isSignedIn() && request.auth.uid == 'O4xRu9e0qFRfnzsmgKWLNjE6r9U2';
+    }
+
     // true, wenn der anfragende Nutzer mit ownerId befreundet ist (Freunde
     // werden beim Annehmen einer Anfrage auf beiden Seiten gespeichert,
     // ein Blick auf die Seite des Owners reicht daher aus).
@@ -91,7 +102,17 @@ service cloud.firestore {
       // Aktion: Beitrag +6, Snap-Fanout gedeckelt auf +20). Wirklich
       // serverseitig garantiert faelschungssicher wird der Score erst mit
       // einer Cloud Function statt Client-Schreibzugriff (siehe Roadmap).
-      allow update: if isOwner(userId)
+      // Gruender-Ausnahme als eigener, schmaler Zweig statt in die
+      // Owner-gebundenen Klauseln unten verwoben: der Gruender ist bei
+      // fremden Konten nie isOwner(userId), darf aber gezielt NUR
+      // restrictedUntil anfassen (Sperre nach Ticket-Pruefung manuell
+      // aufheben) - sonst nichts an einem fremden Profil.
+      allow update: if (
+          isFounder()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['restrictedUntil'])
+          && (request.resource.data.restrictedUntil == null || request.resource.data.restrictedUntil is timestamp)
+        ) || (
+        isOwner(userId)
         // "verified" ist auch beim Update fest gesperrt - nur Admin-Zugriff
         // (Service Account, ausserhalb der Client-Regeln) darf es setzen.
         && !('verified' in request.resource.data.diff(resource.data).affectedKeys())
@@ -193,11 +214,16 @@ service cloud.firestore {
               && request.resource.data.strikeWeight >= resource.data.get('strikeWeight', 0)
               && request.resource.data.strikeWeight <= resource.data.get('strikeWeight', 0) + 10)
         )
+        // restrictedUntil darf die betroffene Person selbst (auch mit
+        // manipulierter App) nur nach vorne verschieben, nie verkuerzen
+        // oder loeschen - die einzige Ausnahme ist der separate
+        // Gruender-Zweig oben.
         && (
           !('restrictedUntil' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.restrictedUntil is timestamp
               && request.resource.data.restrictedUntil >= resource.data.get('restrictedUntil', request.time))
-        );
+        )
+      );
 
       allow delete: if isOwner(userId);
 
@@ -526,7 +552,9 @@ service cloud.firestore {
     // dem Erstellen unveraenderlich, damit niemand nachtraeglich die
     // eigene Anfrage oder die geloggte Bot-Antwort umschreiben kann.
     match /tickets/{ticketId} {
-      allow read: if isOwner(resource.data.uid);
+      // Gruender sieht ALLE Tickets (fuer die Ticket-Verwaltung), normale
+      // Nutzer nur ihre eigenen.
+      allow read: if isOwner(resource.data.uid) || isFounder();
       allow create: if isOwner(request.resource.data.uid)
         && request.resource.data.category in
              ['restriction_appeal', 'content_decision', 'account_issue', 'other']
@@ -539,13 +567,31 @@ service cloud.firestore {
         && request.resource.data.botResponse.size() > 0
         && request.resource.data.status == 'bot_resolved'
         && request.resource.data.escalatedToFounder == false;
-      allow update: if isOwner(resource.data.uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'escalatedToFounder'])
-        && request.resource.data.status in ['escalated', 'closed']
-        && request.resource.data.escalatedToFounder is bool
-        && (
-          request.resource.data.escalatedToFounder == resource.data.escalatedToFounder
-          || request.resource.data.escalatedToFounder == true
+      allow update: if (
+          isOwner(resource.data.uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'escalatedToFounder'])
+          && request.resource.data.status in ['escalated', 'closed']
+          && request.resource.data.escalatedToFounder is bool
+          && (
+            request.resource.data.escalatedToFounder == resource.data.escalatedToFounder
+            || request.resource.data.escalatedToFounder == true
+          )
+        ) || (
+          // Gruender-Bearbeitung: Annehmen/Ablehnen/Antworten. Aendert nie
+          // die vom Nutzer eingereichten Felder (uid/category/subject/
+          // message/botResponse/escalatedToFounder/createdAt) - nur die
+          // eigene Antwort und den Bearbeitungsstatus.
+          isFounder()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'resolution', 'founderResponse', 'founderResponseAt'])
+          && request.resource.data.status in ['answered', 'closed']
+          && request.resource.data.resolution in [null, 'accepted', 'rejected']
+          && (
+            !('founderResponse' in request.resource.data)
+            || (request.resource.data.founderResponse is string
+                && request.resource.data.founderResponse.size() <= 2000)
+          )
+          && request.resource.data.founderResponseAt is timestamp
         );
       allow delete: if false;
     }

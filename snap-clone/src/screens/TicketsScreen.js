@@ -17,7 +17,13 @@ const MESSAGE_MAX = 1000;
 const STATUS_META = {
   bot_resolved: { label: "Bot-Antwort erhalten", color: colors.primaryLight },
   escalated: { label: "An Gründer weitergeleitet", color: colors.online },
+  answered: { label: "Antwort vom Gründer", color: colors.primary },
   closed: { label: "Geschlossen", color: colors.textMuted },
+};
+
+const RESOLUTION_META = {
+  accepted: { label: "Angenommen", color: colors.online },
+  rejected: { label: "Abgelehnt", color: colors.danger },
 };
 
 export default function TicketsScreen({ navigation }) {
@@ -183,6 +189,26 @@ export default function TicketsScreen({ navigation }) {
                       <Text style={styles.botLabel}>Bot-Antwort</Text>
                       <Text style={styles.botText}>{t.botResponse}</Text>
                     </View>
+                    {t.founderResponse ? (
+                      <View style={styles.founderBlock}>
+                        <View style={styles.founderLabelRow}>
+                          <Text style={styles.founderLabel}>Antwort von Jason Bürger (@jasonbuerger)</Text>
+                          {RESOLUTION_META[t.resolution] ? (
+                            <View
+                              style={[
+                                styles.resolutionBadge,
+                                { backgroundColor: `${RESOLUTION_META[t.resolution].color}22` },
+                              ]}
+                            >
+                              <Text style={[styles.resolutionText, { color: RESOLUTION_META[t.resolution].color }]}>
+                                {RESOLUTION_META[t.resolution].label}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text style={styles.founderText}>{t.founderResponse}</Text>
+                      </View>
+                    ) : null}
                     {t.status !== "closed" ? (
                       <View style={styles.ticketActions}>
                         {!t.escalatedToFounder ? (
@@ -358,6 +384,38 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   botText: {
+    color: colors.text,
+    ...typography.footnote,
+    lineHeight: 18,
+  },
+  founderBlock: {
+    backgroundColor: `${colors.primary}18`,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  founderLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    marginBottom: 4,
+  },
+  founderLabel: {
+    flex: 1,
+    color: colors.primaryLight,
+    ...typography.caption,
+  },
+  resolutionBadge: {
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  resolutionText: {
+    ...typography.caption,
+    fontWeight: "700",
+  },
+  founderText: {
     color: colors.text,
     ...typography.footnote,
     lineHeight: 18,
