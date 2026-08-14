@@ -10,23 +10,12 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../config/firebase";
+import { db } from "../config/firebase";
 import { recordStreakSnap } from "./chatService";
+import { uploadMedia } from "./mediaUpload";
 import { bumpNataScore, getUserProfile } from "./userService";
 
 const SNAP_LIFETIME_MS = 24 * 60 * 60 * 1000; // Snap verschwindet spaetestens nach 24h ungeoeffnet
-
-async function uploadMedia(localUri, folder, uid, mediaType) {
-  const response = await fetch(localUri);
-  const blob = await response.blob();
-  const extension = mediaType === "video" ? "mp4" : "jpg";
-  const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
-  const filename = `${folder}/${uid}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${extension}`;
-  const storageRef = ref(storage, filename);
-  await uploadBytes(storageRef, blob, { contentType });
-  return getDownloadURL(storageRef);
-}
 
 // Verschickt einen Snap an mehrere Freunde. Fuer jeden Empfaenger wird ein
 // eigenes Dokument angelegt, damit "gesehen"-Status pro Person getrennt ist.

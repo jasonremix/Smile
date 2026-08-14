@@ -94,6 +94,13 @@ export async function updatePrivacyPrefs(uid, { discoverable, connectionsVisibil
   await updateDoc(doc(db, "users", uid), data);
 }
 
+// "Enge Freunde": dauerhafte Liste (uids) fuer Momente, siehe
+// CloseFriendsScreen.js. Wird ueberschrieben statt einzeln toggle-basiert
+// geschrieben - einfacher und die Liste ist ohnehin klein.
+export async function setCloseFriends(uid, closeFriendUids) {
+  await updateDoc(doc(db, "users", uid), { closeFriends: closeFriendUids });
+}
+
 // "verified" selbst ist per Firestore-Regel nie client-schreibbar (siehe
 // firestore.rules) - dieser Flag ist rein dafuer da, die Glueckwunsch-
 // Anzeige nach einer frischen Verifizierung genau einmal zu zeigen.

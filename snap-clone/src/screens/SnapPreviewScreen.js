@@ -26,7 +26,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
   const [friends, setFriends] = useState([]);
   const [selected, setSelected] = useState([]);
   const [duration, setDuration] = useState(5);
-  const [storyVisibility, setStoryVisibility] = useState("friends"); // "friends" | "custom"
+  const [storyVisibility, setStoryVisibility] = useState("friends"); // "friends" | "custom" | "close"
   const [sending, setSending] = useState(false);
   const [filter, setFilter] = useState(initialFilter || "none");
 
@@ -41,10 +41,19 @@ export default function SnapPreviewScreen({ route, navigation }) {
     );
   };
 
-  const showFriendPicker = !isStory || storyVisibility === "custom";
+  // "Enge Freunde" ist technisch dieselbe "custom"-Sichtbarkeit wie "Nur
+  // ausgewaehlte" - nur wird die Auswahl aus der in CloseFriendsScreen.js
+  // gepflegten Liste vorausgefuellt. Die Person kann sie danach noch anpassen.
+  const selectCloseFriends = () => {
+    setStoryVisibility("close");
+    setSelected(user?.closeFriends || []);
+  };
+
+  const isCustomVisibility = storyVisibility === "custom" || storyVisibility === "close";
+  const showFriendPicker = !isStory || isCustomVisibility;
 
   const handleSend = async () => {
-    if (isStory && storyVisibility === "custom" && selected.length === 0) return;
+    if (isStory && isCustomVisibility && selected.length === 0) return;
     if (!isStory && selected.length === 0) return;
 
     setSending(true);
@@ -56,8 +65,8 @@ export default function SnapPreviewScreen({ route, navigation }) {
           avatarColor: user.avatarColor,
           localUri: uri,
           mediaType,
-          visibility: storyVisibility,
-          visibleTo: storyVisibility === "custom" ? selected : [],
+          visibility: isCustomVisibility ? "custom" : storyVisibility,
+          visibleTo: isCustomVisibility ? selected : [],
           filter,
         });
       } else {
@@ -82,7 +91,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
   };
 
   const sendDisabled =
-    sending || (isStory ? storyVisibility === "custom" && selected.length === 0 : selected.length === 0);
+    sending || (isStory ? isCustomVisibility && selected.length === 0 : selected.length === 0);
 
   return (
     <View style={styles.container}>
@@ -151,6 +160,22 @@ export default function SnapPreviewScreen({ route, navigation }) {
                 ]}
               >
                 Nur ausgewählte
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.visibilityChip,
+                storyVisibility === "close" && styles.visibilityChipActive,
+              ]}
+              onPress={selectCloseFriends}
+            >
+              <Text
+                style={[
+                  styles.visibilityText,
+                  storyVisibility === "close" && styles.visibilityTextActive,
+                ]}
+              >
+                Enge Freunde
               </Text>
             </TouchableOpacity>
           </View>

@@ -39,6 +39,22 @@ service cloud.firestore {
       return restrictedUntil != null && restrictedUntil > request.time;
     }
 
+    // Mehrfach-Reaktionen auf Beitraege (siehe utils/postReactions.js fuer
+    // die Kategorien): nur bekannte Reaktionstypen als nicht-negative
+    // Ganzzahl. Bewusst kein Versuch, den exakten Delta pro Schreibvorgang
+    // zu erzwingen (schwer generisch in Firestore-Regeln abzubilden) -
+    // gleiches, bereits akzeptiertes Vertrauensmodell wie bei
+    // likeCount/nataScore (kein Cloud-Function-Backend, siehe dortige
+    // Kommentare).
+    function isValidReactionsMap(m) {
+      return m is map
+        && (!('heart' in m) || (m.heart is int && m.heart >= 0))
+        && (!('laugh' in m) || (m.laugh is int && m.laugh >= 0))
+        && (!('wow' in m) || (m.wow is int && m.wow >= 0))
+        && (!('sad' in m) || (m.sad is int && m.sad >= 0))
+        && (!('fire' in m) || (m.fire is int && m.fire >= 0));
+    }
+
     // Serverseitige Haelfte der automatischen Inhaltspruefung (siehe
     // src/utils/contentFilter.js fuer die clientseitige Vorab-Pruefung mit
     // Leetspeak-Normalisierung und URL-/Kontakt-Heuristiken - das laesst
@@ -208,6 +224,17 @@ service cloud.firestore {
         && (
           !('connectionsVisibility' in request.resource.data.diff(resource.data).affectedKeys())
           || request.resource.data.connectionsVisibility in ['everyone', 'onlyMe']
+        )
+        // "Enge Freunde"-Liste fuer Momente (siehe CloseFriendsScreen.js) -
+        // rein privat, nur die eigene Person liest/aendert sie. Keine
+        // Pruefung, ob jede ID auch tatsaechlich eine Connection ist (nicht
+        // sinnvoll generisch in Regeln pruefbar) - unproblematisch, da diese
+        // Liste selbst keine Sichtbarkeit gewaehrt, sondern nur die
+        // Empfaenger-Auswahl beim Teilen eines Moments vorausfuellt.
+        && (
+          !('closeFriends' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.closeFriends is list
+              && request.resource.data.closeFriends.size() <= 200)
         )
         // Automatische Sperr-/Timeout-Eskalation (siehe recordStrike() in
         // moderationService.js): strikeWeight darf nur steigen, nie sinken,
@@ -651,6 +678,16 @@ service cloud.firestore {
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 500
         && !containsBlockedTerm(request.resource.data.text)
+        && (
+          !('mediaUrl' in request.resource.data)
+          || request.resource.data.mediaUrl == null
+          || request.resource.data.mediaUrl is string
+        )
+        && (
+          !('filter' in request.resource.data)
+          || request.resource.data.filter == null
+          || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+        )
         && request.resource.data.likeCount == 0
         && request.resource.data.commentCount == 0;
       allow update: if isSignedIn()
@@ -660,14 +697,30 @@ service cloud.firestore {
                 || request.resource.data.likeCount == resource.data.likeCount - 1))
           || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
             && request.resource.data.commentCount == resource.data.commentCount + 1)
+          // Neue Reaktion hinzufuegen oder vollstaendig entfernen: likeCount
+          // (Gesamtzahl aller Reaktionen) UND die reactions-Map aendern
+          // sich zusammen um jeweils +-1.
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'reactions'])
+            && (request.resource.data.likeCount == resource.data.likeCount + 1
+                || request.resource.data.likeCount == resource.data.likeCount - 1)
+            && isValidReactionsMap(request.resource.data.reactions))
+          // Reaktionstyp wechseln: nur die reactions-Map aendert sich
+          // (ein Typ -1, ein anderer +1), likeCount bleibt gleich.
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+            && isValidReactionsMap(request.resource.data.reactions))
         );
       allow delete: if isOwner(resource.data.authorId);
 
-      // Existenz des Dokuments (id = Nutzer-uid) bedeutet "geliked" - kein
-      // Inhalt noetig, deshalb reicht create/delete durch die liked Person.
+      // Existenz des Dokuments (id = Nutzer-uid) bedeutet "reagiert" - das
+      // type-Feld legt fest, mit welcher Reaktion (siehe
+      // utils/postReactions.js). Wechsel/Entfernen laeuft ueber
+      // delete+create statt update (siehe setReaction() in postService.js),
+      // deshalb reicht create/delete durch die reagierende Person.
       match /likes/{uid} {
         allow read: if isSignedIn();
-        allow create, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.type in ['heart', 'laugh', 'wow', 'sad', 'fire'];
+        allow delete: if isOwner(uid);
         allow update: if false;
       }
 

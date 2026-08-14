@@ -10,22 +10,11 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../config/firebase";
+import { db } from "../config/firebase";
+import { uploadMedia } from "./mediaUpload";
 import { bumpNataScore } from "./userService";
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
-
-async function uploadMedia(localUri, uid, mediaType) {
-  const response = await fetch(localUri);
-  const blob = await response.blob();
-  const extension = mediaType === "video" ? "mp4" : "jpg";
-  const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
-  const filename = `stories/${uid}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${extension}`;
-  const storageRef = ref(storage, filename);
-  await uploadBytes(storageRef, blob, { contentType });
-  return getDownloadURL(storageRef);
-}
 
 // visibility: "friends" (Standard, alle Freunde) oder "custom" (nur visibleTo)
 export async function postStory({
@@ -38,7 +27,7 @@ export async function postStory({
   visibleTo = [],
   filter,
 }) {
-  const mediaUrl = await uploadMedia(localUri, uid, mediaType);
+  const mediaUrl = await uploadMedia(localUri, "stories", uid, mediaType);
   await addDoc(collection(db, "users", uid, "stories"), {
     ownerId: uid,
     ownerName: displayName,

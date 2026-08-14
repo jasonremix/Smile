@@ -18,6 +18,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { uploadMedia } from "./mediaUpload";
 import { createNotification } from "./notificationService";
 import { bumpNataScore } from "./userService";
 
@@ -28,6 +29,11 @@ import { bumpNataScore } from "./userService";
 // Beitraege muessen nicht live aktualisiert werden.
 export const POSTS_PAGE_SIZE = 20;
 
+// localMediaUri: optionaler lokaler Foto-Pfad aus der Kamera (siehe
+// CreatePostScreen.js) - wird vor dem eigentlichen Post-Dokument
+// hochgeladen, genau wie bei Snaps/Momenten. Beitraege bleiben weiterhin
+// nur mit Text moeglich; ein Foto ist eine optionale Ergaenzung, kein
+// Ersatz.
 export async function createPost({
   authorId,
   authorName,
@@ -35,7 +41,16 @@ export async function createPost({
   authorAvatarColor,
   authorVerified,
   text,
+  localMediaUri,
+  filter,
 }) {
+  // "stories" statt eines eigenen "posts"-Pfads: das Service-Konto dieser
+  // Session hat keine Berechtigung, eine NEUE Storage-Regeln-Freigabe
+  // anzulegen (nur bereits bestehende Freigaben aktualisieren) - der
+  // stories/-Pfad ist bereits fuer Bilder freigegeben und rein nach uid
+  // organisiert, ohne inhaltliche Kopplung an "Momente". Kein Sicherheits-
+  // Kompromiss, nur Wiederverwendung eines schon funktionierenden Pfads.
+  const mediaUrl = localMediaUri ? await uploadMedia(localMediaUri, "stories", authorId, "photo") : null;
   const postRef = await addDoc(collection(db, "posts"), {
     authorId,
     authorName,
@@ -43,6 +58,8 @@ export async function createPost({
     authorAvatarColor: authorAvatarColor || null,
     authorVerified: !!authorVerified,
     text,
+    mediaUrl,
+    filter: mediaUrl ? filter || "none" : null,
     likeCount: 0,
     commentCount: 0,
     createdAt: serverTimestamp(),
@@ -167,24 +184,42 @@ export async function deletePost(postId) {
   await deleteDoc(doc(db, "posts", postId));
 }
 
-export function listenIsLiked(postId, uid, callback) {
-  return onSnapshot(doc(db, "posts", postId, "likes", uid), (snap) => callback(snap.exists()));
+// "type" ist eine der REACTION_IDS aus utils/postReactions.js. Alte
+// Likes ohne type-Feld (vor Einfuehrung mehrerer Reaktionen) gelten als
+// "heart" - volle Abwaertskompatibilitaet ohne Migration.
+export function listenMyReaction(postId, uid, callback) {
+  return onSnapshot(doc(db, "posts", postId, "likes", uid), (snap) =>
+    callback(snap.exists() ? snap.data().type || "heart" : null)
+  );
 }
 
-// postAuthorId + actor sind optional, damit bestehende Aufrufer ohne
-// Notification-Kontext (falls es welche gibt) nicht brechen - createNotification
-// selbst ignoriert leere toUid/actor bereits sicher.
-export async function likePost(postId, uid, postAuthorId, actor) {
-  await setDoc(doc(db, "posts", postId, "likes", uid), { createdAt: serverTimestamp() });
-  await updateDoc(doc(db, "posts", postId), { likeCount: increment(1) });
-  if (postAuthorId && actor) {
+// previousType kommt vom Aufrufer (aus listenMyReaction), damit hier kein
+// zusaetzlicher Read noetig ist. Erneutes Antippen derselben Reaktion nimmt
+// sie zurueck (Toggle), ein anderer Typ ersetzt die alte Reaktion 1:1 -
+// likeCount (Gesamtzahl aller Reaktionen) aendert sich dabei nicht, nur
+// beim allerersten bzw. beim vollstaendigen Entfernen einer Reaktion.
+export async function setReaction(postId, uid, type, previousType, postAuthorId, actor) {
+  const ref = doc(db, "posts", postId, "likes", uid);
+  if (previousType === type) {
+    await deleteDoc(ref);
+    await updateDoc(doc(db, "posts", postId), {
+      likeCount: increment(-1),
+      [`reactions.${type}`]: increment(-1),
+    });
+    return;
+  }
+
+  await setDoc(ref, { type, createdAt: serverTimestamp() });
+  const updates = { [`reactions.${type}`]: increment(1) };
+  if (previousType) {
+    updates[`reactions.${previousType}`] = increment(-1);
+  } else {
+    updates.likeCount = increment(1);
+  }
+  await updateDoc(doc(db, "posts", postId), updates);
+  if (postAuthorId && actor && !previousType) {
     await createNotification(postAuthorId, actor, { type: "like", postId });
   }
-}
-
-export async function unlikePost(postId, uid) {
-  await deleteDoc(doc(db, "posts", postId, "likes", uid));
-  await updateDoc(doc(db, "posts", postId), { likeCount: increment(-1) });
 }
 
 export function listenComments(postId, callback) {
@@ -217,6 +252,25 @@ export async function savePost(uid, postId) {
 
 export async function unsavePost(uid, postId) {
   await deleteDoc(doc(db, "users", uid, "savedPosts", postId));
+}
+
+// Die savedPosts-Subcollection speichert nur {createdAt} je Beitrags-ID
+// (siehe Regel: rein privat, keine weiteren Felder noetig) - hier werden
+// die eigentlichen Beitragsdaten pro gemerktem Beitrag nachgeladen.
+// Geloeschte Beitraege (Original nicht mehr vorhanden) werden stillschweigend
+// uebersprungen statt einen kaputten Eintrag anzuzeigen.
+export function listenSavedPosts(uid, callback) {
+  const q = query(collection(db, "users", uid, "savedPosts"), orderBy("createdAt", "desc"));
+  return onSnapshot(q, async (snap) => {
+    const postIds = snap.docs.map((d) => d.id);
+    const posts = await Promise.all(
+      postIds.map(async (id) => {
+        const postSnap = await getDoc(doc(db, "posts", id));
+        return postSnap.exists() ? { id: postSnap.id, ...postSnap.data() } : null;
+      })
+    );
+    callback(posts.filter(Boolean));
+  });
 }
 
 // Firestore kann keine Volltextsuche - ohne einen externen Suchdienst

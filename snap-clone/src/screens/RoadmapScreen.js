@@ -12,6 +12,9 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Enge Freunde: dauerhafte Liste, die beim Teilen eines Moments automatisch als Empfänger:innen vorausgewählt wird",
+  "Mehr Reaktionen auf Beiträge (5 Emojis statt nur Herz) sowie Fotos in Beiträgen mit denselben Filtern wie bei Snaps/Moments",
+  "Gespeicherte Beiträge: eigene Übersicht in den Einstellungen",
   "Foto-/Video-Filter beim Aufnehmen (Warm, Kühl, Sonnenuntergang, Nacht, Retro) - live im Sucher wählbar, für alle Empfänger:innen gleich sichtbar",
   "Ankündigungen des Gründers erscheinen jetzt dauerhaft in den Benachrichtigungen (nicht mehr nur als flüchtiger Banner)",
   "Automatische Sperr-/Timeout-Eskalation bei wiederholten Verstößen - Dauer richtet sich nach Schwere, serverseitig in den Datenbank-Zugriffsregeln durchgesetzt (nicht nur im Client umgehbar)",

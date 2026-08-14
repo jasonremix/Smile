@@ -14,6 +14,7 @@ import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import CameraScreen from "../screens/CameraScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
+import CloseFriendsScreen from "../screens/CloseFriendsScreen";
 import CommentsScreen from "../screens/CommentsScreen";
 import CompleteProfileScreen from "../screens/CompleteProfileScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
@@ -34,6 +35,7 @@ import QRCodeScreen from "../screens/QRCodeScreen";
 import ReferralScreen from "../screens/ReferralScreen";
 import RoadmapScreen from "../screens/RoadmapScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
+import SavedPostsScreen from "../screens/SavedPostsScreen";
 import ScoreHistoryScreen from "../screens/ScoreHistoryScreen";
 import SecurityScreen from "../screens/SecurityScreen";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -236,6 +238,8 @@ export default function RootNavigator() {
           <Stack.Screen name="About" component={AboutScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Roadmap" component={RoadmapScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Security" component={SecurityScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="SavedPosts" component={SavedPostsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CloseFriends" component={CloseFriendsScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Tickets" component={TicketsScreen} options={{ headerShown: false }} />
           <Stack.Screen
             name="FounderTickets"

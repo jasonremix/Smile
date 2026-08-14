@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Alert, Pressable, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import FilteredMedia from "./FilteredMedia";
 import Icon from "./Icon";
 import ReportModal from "./ReportModal";
 import VerifiedBadge from "./VerifiedBadge";
@@ -7,45 +8,65 @@ import { useAuth } from "../context/AuthContext";
 import { blockUser, reportContent } from "../services/moderationService";
 import {
   deletePost,
-  likePost,
-  listenIsLiked,
   listenIsSaved,
+  listenMyReaction,
   savePost,
-  unlikePost,
+  setReaction,
   unsavePost,
 } from "../services/postService";
 import { hapticLight } from "../utils/haptics";
+import { REACTION_TYPES, getReactionEmoji } from "../utils/postReactions";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
+import { shadow } from "../theme/shadow";
 
 export default function PostCard({ post, navigation }) {
   const { user } = useAuth();
-  const [liked, setLiked] = useState(false);
+  const [myReaction, setMyReaction] = useState(null);
   const [saved, setSaved] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const isOwn = post.authorId === user.uid;
 
   useEffect(() => {
-    const unsubLiked = listenIsLiked(post.id, user.uid, setLiked);
+    const unsubReaction = listenMyReaction(post.id, user.uid, setMyReaction);
     const unsubSaved = listenIsSaved(user.uid, post.id, setSaved);
     return () => {
-      unsubLiked();
+      unsubReaction();
       unsubSaved();
     };
   }, [post.id, user.uid]);
 
-  const toggleLike = () => {
+  const actor = {
+    uid: user.uid,
+    displayName: user.displayName,
+    username: user.username,
+    avatarColor: user.avatarColor,
+  };
+
+  const applyReaction = (type) => {
     hapticLight();
-    if (liked) {
-      unlikePost(post.id, user.uid);
-    } else {
-      likePost(post.id, user.uid, post.authorId, {
-        uid: user.uid,
-        displayName: user.displayName,
-        username: user.username,
-        avatarColor: user.avatarColor,
-      });
+    setPickerOpen(false);
+    setReaction(post.id, user.uid, type, myReaction, post.authorId, actor);
+  };
+
+  // Kurzer Tap: vorhandene Reaktion (egal welcher Typ) entfernen, sonst
+  // Standard-Herz setzen - wie bisheriges "liken". Waehrend die
+  // Emoji-Auswahl offen ist, schliesst ein Tap sie nur wieder, statt eine
+  // Reaktion auszuloesen (Escape-Hatch ohne Auswahl).
+  const handleTapReact = () => {
+    if (pickerOpen) {
+      setPickerOpen(false);
+      return;
     }
+    applyReaction(myReaction || "heart");
+  };
+
+  const handleLongPressReact = () => {
+    hapticLight();
+    setPickerOpen((open) => !open);
   };
 
   const toggleSave = () => {
@@ -121,20 +142,50 @@ export default function PostCard({ post, navigation }) {
       </View>
 
       <Text style={styles.text}>{post.text}</Text>
+      {post.mediaUrl ? (
+        <FilteredMedia
+          uri={post.mediaUrl}
+          mediaType="photo"
+          filterId={post.filter}
+          style={styles.media}
+        />
+      ) : null}
 
       <View style={styles.actionsRow}>
-        <Pressable
-          style={styles.actionButton}
-          onPress={toggleLike}
-          accessibilityRole="button"
-          accessibilityLabel={liked ? "Gefällt mir entfernen" : "Gefällt mir"}
-          accessibilityState={{ selected: liked }}
-        >
-          <Icon name="heart" size={16} color={liked ? colors.primary : colors.textMuted} />
-          <Text style={[styles.actionCount, liked && styles.actionCountActive]}>
-            {post.likeCount || 0}
-          </Text>
-        </Pressable>
+        <View style={styles.reactionWrapper}>
+          {pickerOpen ? (
+            <View style={styles.reactionPicker}>
+              {REACTION_TYPES.map((r) => (
+                <TouchableOpacity
+                  key={r.id}
+                  style={styles.reactionOption}
+                  onPress={() => applyReaction(r.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Mit ${r.label} reagieren`}
+                >
+                  <Text style={styles.reactionEmoji}>{r.emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+          <Pressable
+            style={styles.actionButton}
+            onPress={handleTapReact}
+            onLongPress={handleLongPressReact}
+            accessibilityRole="button"
+            accessibilityLabel={myReaction ? "Reaktion entfernen" : "Reagieren"}
+            accessibilityState={{ selected: !!myReaction }}
+          >
+            {myReaction ? (
+              <Text style={styles.reactionActiveEmoji}>{getReactionEmoji(myReaction)}</Text>
+            ) : (
+              <Icon name="heart" size={16} color={colors.textMuted} />
+            )}
+            <Text style={[styles.actionCount, myReaction && styles.actionCountActive]}>
+              {post.likeCount || 0}
+            </Text>
+          </Pressable>
+        </View>
         <Pressable
           style={styles.actionButton}
           onPress={() => navigation.navigate("Comments", { postId: post.id, postAuthorId: post.authorId })}
@@ -241,6 +292,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  media: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 14,
+    marginTop: 10,
+    backgroundColor: colors.surfaceLight,
+  },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -262,5 +320,32 @@ const styles = StyleSheet.create({
   },
   actionCountActive: {
     color: colors.primary,
+  },
+  reactionWrapper: {
+    position: "relative",
+  },
+  reactionActiveEmoji: {
+    fontSize: 15,
+  },
+  reactionPicker: {
+    position: "absolute",
+    bottom: "100%",
+    left: -spacing.sm,
+    marginBottom: spacing.sm,
+    flexDirection: "row",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: spacing.xs,
+    ...shadow.sm,
+    zIndex: 10,
+  },
+  reactionOption: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  reactionEmoji: {
+    fontSize: 22,
   },
 });

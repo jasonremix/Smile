@@ -48,7 +48,14 @@ export default function CameraScreen({ navigation, route }) {
   const takePhoto = async () => {
     if (!cameraRef.current) return;
     const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
-    navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent, filter });
+    if (intent === "post") {
+      // Beitraege haben eine eigene, einfachere Vorschau (kein
+      // Empfaenger-/Timer-Auswahl wie bei Snaps/Momenten) - direkt zurueck
+      // zum Beitrag-erstellen-Screen mit dem aufgenommenen Foto.
+      navigation.navigate("CreatePost", { photoUri: photo.uri, filter });
+    } else {
+      navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent, filter });
+    }
   };
 
   const startRecording = async () => {
@@ -73,6 +80,7 @@ export default function CameraScreen({ navigation, route }) {
   };
 
   const handlePressIn = () => {
+    if (intent === "post") return; // Beitraege unterstuetzen kein Video.
     pressTimer.current = setTimeout(startRecording, HOLD_THRESHOLD_MS);
   };
 
@@ -140,7 +148,9 @@ export default function CameraScreen({ navigation, route }) {
         <FilterPickerRow value={filter} onChange={setFilter} style={styles.filterRow} />
 
         <View style={styles.hintContainer}>
-          <Text style={styles.hint}>Tippen fuer Foto - Halten fuer Video</Text>
+          <Text style={styles.hint}>
+            {intent === "post" ? "Tippen fuer Foto" : "Tippen fuer Foto - Halten fuer Video"}
+          </Text>
         </View>
       </CameraView>
     </View>
