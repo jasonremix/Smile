@@ -46,6 +46,9 @@ service cloud.firestore {
       // serverseitig garantiert faelschungssicher wird der Score erst mit
       // einer Cloud Function statt Client-Schreibzugriff (siehe Roadmap).
       allow update: if isOwner(userId)
+        // "verified" ist auch beim Update fest gesperrt - nur Admin-Zugriff
+        // (Service Account, ausserhalb der Client-Regeln) darf es setzen.
+        && !('verified' in request.resource.data.diff(resource.data).affectedKeys())
         && (
           !('nataScore' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.nataScore >= resource.data.nataScore
