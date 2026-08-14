@@ -48,7 +48,7 @@ function PrivacyPolicy() {
       <Heading>1. Verantwortlicher</Heading>
       <Paragraph>
         Verantwortlich für die Datenverarbeitung im Sinne der DSGVO ist Nata Inc, gegründet von
-        Jason Bürger, Deutschland. Kontakt für Datenschutzanfragen: [privacy@nata.app einfügen].
+        Jason Bürger, Deutschland. Kontakt für Datenschutzanfragen: jasonbuerger@icloud.com.
       </Paragraph>
 
       <Heading>2. Welche Daten wir verarbeiten</Heading>
@@ -172,8 +172,7 @@ function TermsOfService() {
 
       <Heading>9. Kontakt</Heading>
       <Paragraph>
-        Bei Fragen zu diesen Nutzungsbedingungen erreichst du uns unter [support@nata.app
-        einfügen].
+        Bei Fragen zu diesen Nutzungsbedingungen erreichst du uns unter jasonbuerger@icloud.com.
       </Paragraph>
     </>
   );
