@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import BetaCountdownBanner from "../components/BetaCountdownBanner";
 import Icon from "../components/Icon";
 import MomentsTray from "../components/MomentsTray";
 import NataScoreCard from "../components/NataScoreCard";
@@ -177,6 +178,8 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+
+      <BetaCountdownBanner />
 
       <View style={styles.greetingRow}>
         <View style={styles.greetingTextBlock}>
