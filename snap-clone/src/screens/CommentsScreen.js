@@ -19,6 +19,7 @@ import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { hapticLight } from "../utils/haptics";
 import { timeAgo } from "../utils/timeAgo";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 import { shadow } from "../theme/shadow";
 
 export default function CommentsScreen({ route, navigation }) {
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     paddingHorizontal: 18,
     paddingVertical: 11,
     maxHeight: 100,
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",

@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "./Icon";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 
 export default function ChatListItem({ name, avatarColor, lastMessage, isMine, streakCount, unread, onPress }) {
   return (
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 46,
     height: 46,
-    borderRadius: 23,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
   unreadDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
     marginLeft: 8,
   },

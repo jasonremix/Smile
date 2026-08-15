@@ -13,6 +13,8 @@ import { useAuth } from "../context/AuthContext";
 import { searchUsersByUsername, sendFriendRequest } from "../services/friendService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { shadow } from "../theme/shadow";
 
 export default function AddFriendsScreen() {
   const { user } = useAuth();
@@ -106,15 +108,11 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...shadow.sm,
   },
   row: {
     flexDirection: "row",
@@ -139,7 +137,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: colors.primary,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-nativ
 import FilterPickerRow from "../components/FilterPickerRow";
 import Icon from "../components/Icon";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 import { getFilterById } from "../utils/photoFilters";
 
 const HOLD_THRESHOLD_MS = 250;
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: radius.pill,
   },
   permissionButtonText: {
     color: colors.text,
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   shutter: {
     width: 84,
     height: 84,
-    borderRadius: 42,
+    borderRadius: radius.pill,
     borderWidth: 5,
     borderColor: "#fff",
     justifyContent: "center",
@@ -256,11 +257,11 @@ const styles = StyleSheet.create({
   shutterInner: {
     width: 68,
     height: 68,
-    borderRadius: 34,
+    borderRadius: radius.pill,
     backgroundColor: "#fff",
   },
   shutterInnerRecording: {
-    borderRadius: 10,
+    borderRadius: radius.sm,
     backgroundColor: colors.danger,
     width: 40,
     height: 40,

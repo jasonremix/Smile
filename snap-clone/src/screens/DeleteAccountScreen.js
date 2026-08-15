@@ -12,6 +12,7 @@ import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { deleteAccount } from "../services/accountService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 
 export default function DeleteAccountScreen() {
   const { user } = useAuth();
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: colors.danger,
-    borderRadius: 24,
+    borderRadius: radius.pill,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 24,

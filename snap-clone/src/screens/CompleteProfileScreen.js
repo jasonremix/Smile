@@ -12,6 +12,8 @@ import {
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { shadow } from "../theme/shadow";
 
 // Wird gezeigt, wenn jemand eingeloggt ist, aber kein Firestore-Profil hat
 // (z.B. weil die Registrierung an einer Race Condition gescheitert ist) -
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
   ghost: {
     width: 72,
     height: 72,
-    borderRadius: 36,
+    borderRadius: radius.pill,
     marginBottom: 12,
   },
   title: {
@@ -123,16 +125,12 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 14,
     fontSize: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...shadow.sm,
   },
   button: {
     width: "100%",

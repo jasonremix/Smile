@@ -3,6 +3,7 @@ import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react
 import { useAuth } from "../context/AuthContext";
 import { listenBlockedUsers, unblockUser } from "../services/moderationService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 
 export default function BlockedUsersScreen() {
   const { user } = useAuth();
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
   },
   unblockButton: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },

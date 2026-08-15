@@ -13,6 +13,7 @@ import {
 import { blockUser, listenBlockedUsers, reportContent } from "../services/moderationService";
 import { hapticSuccess } from "../utils/haptics";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 import { avatarColorForUid } from "../theme/avatarPalette";
 
 export default function FriendsScreen({ navigation }) {
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 12,
     marginBottom: 8,
   },
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   acceptButton: {
     backgroundColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 6,
     marginRight: 8,
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   },
   declineButton: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
   },
   emptyButtonText: {

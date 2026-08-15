@@ -11,6 +11,7 @@ import { listenGroups } from "../services/groupService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { listenIncomingSnaps } from "../services/snapService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 import { isChatUnread, useUnreadChats } from "../hooks/useUnreadChats";
 
 function toMillis(timestamp) {
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 6,
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
   },
   emptyButtonText: {

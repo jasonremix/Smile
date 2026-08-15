@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { updatePrivacyPrefs } from "../services/userService";
 import { hapticSelection } from "../utils/haptics";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 
 // Affiliate-Link (kein offizielles Datenschutz-Partnerschaftsprogramm) -
 // deshalb bewusst klar als Anzeige/Partner-Empfehlung gekennzeichnet statt
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
   },
   settingCard: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 16,
     marginBottom: 12,
   },
@@ -200,14 +201,14 @@ const styles = StyleSheet.create({
   segmentRow: {
     flexDirection: "row",
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    borderRadius: radius.sm,
     padding: 3,
     marginTop: 12,
   },
   segment: {
     flex: 1,
     paddingVertical: 9,
-    borderRadius: 9,
+    borderRadius: radius.sm,
     alignItems: "center",
   },
   segmentActive: {
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 16,
     marginBottom: 12,
   },
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   },
   adCard: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 16,
     marginTop: 24,
     borderWidth: StyleSheet.hairlineWidth,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   },
   adButton: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingVertical: 12,
     alignItems: "center",
   },

@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GradientView from "./GradientView";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 
 export default function StoryCircle({ label, color, viewed, onPress, isSelf }) {
   return (
@@ -51,7 +52,7 @@ const styles = StyleSheet.create({
   ring: {
     width: 62,
     height: 62,
-    borderRadius: 31,
+    borderRadius: radius.pill,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   gradientRing: {
     width: 62,
     height: 62,
-    borderRadius: 31,
+    borderRadius: radius.pill,
     padding: 3,
     justifyContent: "center",
     alignItems: "center",
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
   ringInnerBg: {
     width: "100%",
     height: "100%",
-    borderRadius: 28,
+    borderRadius: radius.pill,
     backgroundColor: colors.background,
     justifyContent: "center",
     alignItems: "center",
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
     right: -2,
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
     borderWidth: 2,
     borderColor: colors.background,

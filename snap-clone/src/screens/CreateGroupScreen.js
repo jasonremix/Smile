@@ -15,6 +15,7 @@ import { createGroup } from "../services/groupService";
 import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../services/moderationService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 
 export default function CreateGroupScreen({ navigation }) {
   const { user } = useAuth();
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: radius.pill,
     borderWidth: 2,
     borderColor: colors.textMuted,
     justifyContent: "center",
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     backgroundColor: colors.primary,
-    borderRadius: 24,
+    borderRadius: radius.pill,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 12,

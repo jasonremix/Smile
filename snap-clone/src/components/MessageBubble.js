@@ -4,6 +4,8 @@ import GradientView from "./GradientView";
 import MessageReactionBadge from "./MessageReactionBadge";
 import VoiceMessageBubble from "./VoiceMessageBubble";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { shadow } from "../theme/shadow";
 
 // Wiederverwendbare Nachrichtenblase fuer 1:1- und Gruppen-Chats -
 // listenReactions/toggleReaction werden injiziert, damit dieselbe
@@ -94,14 +96,10 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: "75%",
-    borderRadius: 20,
+    borderRadius: radius.xl,
     paddingHorizontal: 16,
     paddingVertical: 11,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    ...shadow.sm,
   },
   bubbleMineWrap: {
     borderBottomRightRadius: 6,

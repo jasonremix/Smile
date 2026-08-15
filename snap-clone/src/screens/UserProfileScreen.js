@@ -15,6 +15,7 @@ import { blockUser, reportContent } from "../services/moderationService";
 import { fetchMoreUserPosts, getUserPostCount, listenUserPosts, POSTS_PAGE_SIZE } from "../services/postService";
 import { getUserProfile } from "../services/userService";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
 import { shadow } from "../theme/shadow";
 
 export default function UserProfileScreen({ route, navigation }) {
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   avatarRing: {
     width: 94,
     height: 94,
-    borderRadius: 47,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 14,
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 84,
     height: 84,
-    borderRadius: 42,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: `${colors.primary}1f`,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginTop: 10,
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
   },
   connectButton: {
     backgroundColor: colors.primary,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     paddingHorizontal: 28,
     paddingVertical: 12,
     ...shadow.sm,
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
   },
   messageButton: {
     backgroundColor: colors.surface,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     paddingHorizontal: 28,
     paddingVertical: 12,
   },
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
   callIconButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
     justifyContent: "center",
     alignItems: "center",
