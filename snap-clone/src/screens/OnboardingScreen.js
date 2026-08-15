@@ -38,7 +38,7 @@ const SLIDES = [
 // Einmaliger Erster-Start-Flow (siehe onboardingSeen.js) - kein Feature-
 // Tutorial mit erfundenen Funktionen, sondern eine ehrliche, kurze
 // Einführung in das, was es wirklich gibt.
-export default function OnboardingScreen({ onDone }) {
+export default function OnboardingScreen({ onSkip, onNext }) {
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(0);
   const scrollRef = useRef(null);
@@ -51,7 +51,7 @@ export default function OnboardingScreen({ onDone }) {
 
   const handleNext = () => {
     if (isLast) {
-      onDone();
+      onNext();
     } else {
       goToIndex(index + 1);
     }
@@ -64,7 +64,7 @@ export default function OnboardingScreen({ onDone }) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <TouchableOpacity style={styles.skip} onPress={onDone} hitSlop={10}>
+      <TouchableOpacity style={styles.skip} onPress={onSkip} hitSlop={10}>
         <Text style={styles.skipText}>{isLast ? "" : "Überspringen"}</Text>
       </TouchableOpacity>
 
@@ -98,7 +98,7 @@ export default function OnboardingScreen({ onDone }) {
           ))}
         </View>
         <PrimaryButton
-          title={isLast ? "Los geht's" : "Weiter"}
+          title="Weiter"
           onPress={handleNext}
           style={{ marginBottom: insets.bottom + spacing.lg }}
         />

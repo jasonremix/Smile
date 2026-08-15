@@ -270,6 +270,14 @@ service cloud.firestore {
           || (request.resource.data.interests is list
               && request.resource.data.interests.size() <= 5)
         )
+        // Personalisierungs-Ziele (siehe PersonalizeGoalsScreen.js) - reine
+        // Selbstauskunft, keine Ranking-Garantie, deshalb nur Typ-/Groeszen-
+        // pruefung wie bei interests.
+        && (
+          !('goals' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.goals is list
+              && request.resource.data.goals.size() <= 10)
+        )
       );
 
       allow delete: if isOwner(userId);

@@ -7,6 +7,8 @@ import { savePushToken } from "../services/userService";
 import { addNotificationResponseListener, registerForPushNotifications } from "../utils/pushNotifications";
 import { hasSeenOnboarding, markOnboardingSeen } from "../utils/onboardingSeen";
 import OnboardingScreen from "../screens/OnboardingScreen";
+import PersonalizeGoalsScreen from "../screens/PersonalizeGoalsScreen";
+import PersonalizeInterestsScreen from "../screens/PersonalizeInterestsScreen";
 import FounderAnnouncementBanner from "../components/FounderAnnouncementBanner";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
@@ -76,10 +78,16 @@ const navTheme = {
   },
 };
 
+// Reihenfolge der einmaligen Erster-Start-Kette (siehe onboardingSeen.js):
+// Einfuehrung -> Interessen -> Ziele -> Tabs. "Ueberspringen" oben rechts in
+// der Einfuehrung springt direkt zu Tabs (alles auf einmal uebersprungen),
+// die beiden Personalisierungs-Screens danach haben bewusst kein Skip mehr.
+const INTRO_STEPS = ["onboarding", "interests", "goals"];
+
 export default function RootNavigator() {
   const { user, initializing, needsProfileSetup } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [introStep, setIntroStep] = useState(null);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -93,14 +101,21 @@ export default function RootNavigator() {
   useEffect(() => {
     if (!user?.uid || needsProfileSetup) return;
     hasSeenOnboarding(user.uid).then((seen) => {
-      setShowOnboarding(!seen);
+      setIntroStep(seen ? null : INTRO_STEPS[0]);
       setOnboardingChecked(true);
     });
   }, [user?.uid, needsProfileSetup]);
 
-  const finishOnboarding = () => {
+  const finishIntro = () => {
     if (user?.uid) markOnboardingSeen(user.uid);
-    setShowOnboarding(false);
+    setIntroStep(null);
+  };
+
+  const advanceIntro = () => {
+    const currentIndex = INTRO_STEPS.indexOf(introStep);
+    const next = INTRO_STEPS[currentIndex + 1];
+    if (next) setIntroStep(next);
+    else finishIntro();
   };
 
   if (initializing || (user && !needsProfileSetup && !onboardingChecked)) {
@@ -111,8 +126,14 @@ export default function RootNavigator() {
     );
   }
 
-  if (showOnboarding) {
-    return <OnboardingScreen onDone={finishOnboarding} />;
+  if (introStep === "onboarding") {
+    return <OnboardingScreen onSkip={finishIntro} onNext={advanceIntro} />;
+  }
+  if (introStep === "interests") {
+    return <PersonalizeInterestsScreen onDone={advanceIntro} />;
+  }
+  if (introStep === "goals") {
+    return <PersonalizeGoalsScreen onDone={advanceIntro} />;
   }
 
   return (

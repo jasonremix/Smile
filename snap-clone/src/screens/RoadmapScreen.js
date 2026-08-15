@@ -12,6 +12,8 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Nata Match: Entdecken zeigt jetzt Personen mit gemeinsamen Interessen (echter Prozentsatz, keine \"perfekte Übereinstimmung\"-Behauptung)",
+  "Persönlicher Einstieg nach dem Onboarding: Interessen wählen, dann Ziele auf Nata - direkt vor dem ersten Home-Start",
   "Nata AI erkennt jetzt auch Fotos (Vision) - Bild aufnehmen und direkt dazu fragen",
   "Live-Standort mit engen Freunden teilen (Beta, striktes Opt-in, nur Vordergrund, jederzeit abschaltbar)",
   "Zeitkapsel-Nachrichten im Chat: Nachricht jetzt schreiben, erst zu einem gewählten Zeitpunkt sichtbar",

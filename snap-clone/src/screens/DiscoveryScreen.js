@@ -9,13 +9,15 @@ import {
   View,
 } from "react-native";
 import EmptyState from "../components/EmptyState";
+import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
-import { getFriendSuggestions } from "../services/discoveryService";
+import { getFriendSuggestions, getNataMatches } from "../services/discoveryService";
 import { listenFriends, searchUsersByUsername, sendFriendRequest } from "../services/friendService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { searchRecentPosts } from "../services/postService";
+import { getInterestById } from "../utils/interests";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -33,6 +35,7 @@ export default function DiscoveryScreen({ navigation }) {
   const [searching, setSearching] = useState(false);
   const [peopleResults, setPeopleResults] = useState([]);
   const [postResults, setPostResults] = useState([]);
+  const [nataMatches, setNataMatches] = useState([]);
 
   useEffect(() => {
     const unsubFriends = listenFriends(user.uid, setFriends);
@@ -62,6 +65,22 @@ export default function DiscoveryScreen({ navigation }) {
     () => suggestions.filter((s) => !blocked.includes(s.uid)),
     [suggestions, blocked]
   );
+
+  useEffect(() => {
+    if (!user?.interests || user.interests.length === 0) {
+      setNataMatches([]);
+      return;
+    }
+    let cancelled = false;
+    getNataMatches(user.uid, user.interests, friends.map((f) => f.uid))
+      .then((results) => {
+        if (!cancelled) setNataMatches(results.filter((m) => !blocked.includes(m.uid)));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user.uid, user?.interests, friends, blocked]);
 
   const isSearchActive = searchTerm.trim().length >= 2;
 
@@ -208,6 +227,49 @@ export default function DiscoveryScreen({ navigation }) {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
+          {nataMatches.length > 0 ? (
+            <>
+              <Text style={styles.sectionTitle}>Nata Match</Text>
+              <FlatList
+                data={nataMatches}
+                keyExtractor={(item) => item.uid}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.matchListContent}
+                renderItem={({ item }) => (
+                  <View style={styles.matchCard}>
+                    <View style={[styles.matchAvatar, { backgroundColor: avatarColorForUid(item.uid) }]}>
+                      <Text style={styles.matchAvatarText}>
+                        {(item.displayName || "?").charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={styles.matchName} numberOfLines={1}>
+                      {item.displayName}
+                    </Text>
+                    <Text style={styles.matchPercent}>💜 {item.matchPercent}% gemeinsame Interessen</Text>
+                    <View style={styles.matchChipsRow}>
+                      {item.sharedInterests.slice(0, 3).map((id) => {
+                        const interest = getInterestById(id);
+                        return interest ? (
+                          <Text key={id} style={styles.matchChipEmoji}>
+                            {interest.emoji}
+                          </Text>
+                        ) : null;
+                      })}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.matchButton}
+                      onPress={() => navigation.navigate("UserProfile", { uid: item.uid })}
+                    >
+                      <GradientView colors={[colors.primaryLight, colors.primary]} style={StyleSheet.absoluteFill} />
+                      <Text style={styles.matchButtonText}>Verbindung entdecken</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            </>
+          ) : null}
+
           <Text style={styles.sectionTitle}>Vielleicht kennst du diese Person</Text>
 
           {loading ? (
@@ -336,6 +398,62 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textTransform: "uppercase",
     marginBottom: 8,
+  },
+  matchListContent: {
+    paddingBottom: spacing.lg,
+    gap: spacing.md,
+  },
+  matchCard: {
+    width: 160,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.3)",
+  },
+  matchAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  matchAvatarText: {
+    color: "#000",
+    fontWeight: "800",
+    fontSize: 17,
+  },
+  matchName: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  matchPercent: {
+    color: colors.primaryLight,
+    ...typography.caption,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  matchChipsRow: {
+    flexDirection: "row",
+    gap: 4,
+    marginTop: 6,
+    marginBottom: spacing.sm,
+  },
+  matchChipEmoji: {
+    fontSize: 16,
+  },
+  matchButton: {
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  matchButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 11,
   },
   row: {
     flexDirection: "row",
