@@ -227,48 +227,70 @@ export default function DiscoveryScreen({ navigation }) {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          {nataMatches.length > 0 ? (
-            <>
-              <Text style={styles.sectionTitle}>Nata Match</Text>
-              <FlatList
-                data={nataMatches}
-                keyExtractor={(item) => item.uid}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.matchListContent}
-                renderItem={({ item }) => (
-                  <View style={styles.matchCard}>
-                    <View style={[styles.matchAvatar, { backgroundColor: avatarColorForUid(item.uid) }]}>
-                      <Text style={styles.matchAvatarText}>
-                        {(item.displayName || "?").charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <Text style={styles.matchName} numberOfLines={1}>
-                      {item.displayName}
+          <Text style={styles.sectionTitle}>Nata Match</Text>
+          {!user?.interests || user.interests.length === 0 ? (
+            <TouchableOpacity
+              style={styles.matchEmptyCard}
+              onPress={() => navigation.navigate("EditProfile")}
+            >
+              <Text style={styles.matchEmptyEmoji}>💜</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.matchEmptyTitle}>Leg deine Interessen fest</Text>
+                <Text style={styles.matchEmptyText}>
+                  Damit findet Nata Match Menschen, mit denen du wirklich etwas gemeinsam hast.
+                </Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          ) : nataMatches.length === 0 ? (
+            <View style={styles.matchEmptyCard}>
+              <Text style={styles.matchEmptyEmoji}>💜</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.matchEmptyTitle}>Noch keine Übereinstimmungen</Text>
+                <Text style={styles.matchEmptyText}>
+                  Sobald mehr Personen ihre Interessen festlegen, tauchen sie hier auf.
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <FlatList
+              data={nataMatches}
+              keyExtractor={(item) => item.uid}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.matchListContent}
+              renderItem={({ item }) => (
+                <View style={styles.matchCard}>
+                  <View style={[styles.matchAvatar, { backgroundColor: avatarColorForUid(item.uid) }]}>
+                    <Text style={styles.matchAvatarText}>
+                      {(item.displayName || "?").charAt(0).toUpperCase()}
                     </Text>
-                    <Text style={styles.matchPercent}>💜 {item.matchPercent}% gemeinsame Interessen</Text>
-                    <View style={styles.matchChipsRow}>
-                      {item.sharedInterests.slice(0, 3).map((id) => {
-                        const interest = getInterestById(id);
-                        return interest ? (
-                          <Text key={id} style={styles.matchChipEmoji}>
-                            {interest.emoji}
-                          </Text>
-                        ) : null;
-                      })}
-                    </View>
-                    <TouchableOpacity
-                      style={styles.matchButton}
-                      onPress={() => navigation.navigate("UserProfile", { uid: item.uid })}
-                    >
-                      <GradientView colors={[colors.primaryLight, colors.primary]} style={StyleSheet.absoluteFill} />
-                      <Text style={styles.matchButtonText}>Verbindung entdecken</Text>
-                    </TouchableOpacity>
                   </View>
-                )}
-              />
-            </>
-          ) : null}
+                  <Text style={styles.matchName} numberOfLines={1}>
+                    {item.displayName}
+                  </Text>
+                  <Text style={styles.matchPercent}>💜 {item.matchPercent}% gemeinsame Interessen</Text>
+                  <View style={styles.matchChipsRow}>
+                    {item.sharedInterests.slice(0, 3).map((id) => {
+                      const interest = getInterestById(id);
+                      return interest ? (
+                        <Text key={id} style={styles.matchChipEmoji}>
+                          {interest.emoji}
+                        </Text>
+                      ) : null;
+                    })}
+                  </View>
+                  <TouchableOpacity
+                    style={styles.matchButton}
+                    onPress={() => navigation.navigate("UserProfile", { uid: item.uid })}
+                  >
+                    <GradientView colors={[colors.primaryLight, colors.primary]} style={StyleSheet.absoluteFill} />
+                    <Text style={styles.matchButtonText}>Verbindung entdecken</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          )}
 
           <Text style={styles.sectionTitle}>Vielleicht kennst du diese Person</Text>
 
@@ -402,6 +424,31 @@ const styles = StyleSheet.create({
   matchListContent: {
     paddingBottom: spacing.lg,
     gap: spacing.md,
+  },
+  matchEmptyCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.25)",
+  },
+  matchEmptyEmoji: {
+    fontSize: 22,
+  },
+  matchEmptyTitle: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  matchEmptyText: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginTop: 2,
+    lineHeight: 16,
   },
   matchCard: {
     width: 160,
