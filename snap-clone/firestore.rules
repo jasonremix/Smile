@@ -298,6 +298,22 @@ service cloud.firestore {
         allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
       }
 
+      // Eigene, benannte Kreise (Familie/Arbeit/Gaming/...) fuer gezieltes
+      // Teilen von Momenten - rein privat, komplett anders als "friends"
+      // oben: kein isFriendOf-Ausnahmefall, nur der Owner selbst darf lesen
+      // oder schreiben. memberUids wird beim Teilen eines Moments lediglich
+      // als Ausgangsauswahl fuer die bereits bestehende "custom"-Sichtbarkeit
+      // (visibleTo) verwendet - dort greift weiterhin die normale Story-Regel.
+      match /circles/{circleId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 30
+          && request.resource.data.memberUids is list
+          && request.resource.data.memberUids.size() <= 200;
+      }
+
       // Nachvollziehbare Score-Historie fuer die Home-/Score-Ansicht - reine
       // Anzeige-Hilfe, kein Sicherheitsmechanismus (der eigentliche Schutz
       // vor Score-Manipulation liegt auf dem nataScore-Feld selbst weiter

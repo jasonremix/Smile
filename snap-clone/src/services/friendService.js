@@ -123,3 +123,36 @@ export function listenFriends(uid, callback) {
     callback(snap.docs.map((d) => d.data()));
   });
 }
+
+// Einmaliger (nicht live) Read der eigenen Freundesliste - fuer die
+// Nata-Code-Scan-Vorschau, wo kein Listener noetig ist.
+export async function getFriendsOnce(uid) {
+  const snap = await getDocs(collection(db, "users", uid, "friends"));
+  return snap.docs.map((d) => d.data());
+}
+
+// Gemeinsame Connections fuer die Scan-Vorschau, OHNE direkten Lesezugriff
+// auf die (bei Fremden per Regel gesperrte) Freundesliste der gescannten
+// Person zu brauchen: stattdessen wird bei den EIGENEN Freunden nachgesehen,
+// wer von ihnen targetUid ebenfalls als Freund fuehrt (isFriendOf greift
+// hier, weil man mit diesen Personen ja bereits befreundet ist). Genau das
+// gleiche Muster wie getFriendSuggestions - private Freundeslisten einzelner
+// gemeinsamer Freunde werden dabei einfach uebersprungen statt abzustuerzen.
+export async function getMutualConnections(myFriends, targetUid) {
+  if (!myFriends || myFriends.length === 0) return [];
+  const sample = myFriends.slice(0, 20);
+  const mutual = [];
+  await Promise.all(
+    sample.map(async (friend) => {
+      try {
+        const snap = await getDocs(collection(db, "users", friend.uid, "friends"));
+        if (snap.docs.some((d) => d.data().uid === targetUid)) {
+          mutual.push(friend);
+        }
+      } catch (e) {
+        // Freundesliste dieser Person ist privat - einfach ueberspringen.
+      }
+    })
+  );
+  return mutual;
+}

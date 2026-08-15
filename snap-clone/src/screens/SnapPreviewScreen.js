@@ -12,6 +12,7 @@ import FilterPickerRow from "../components/FilterPickerRow";
 import Icon from "../components/Icon";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
+import { listenCircles } from "../services/circleService";
 import { listenFriends } from "../services/friendService";
 import { sendSnap } from "../services/snapService";
 import { postStory } from "../services/storyService";
@@ -24,6 +25,8 @@ export default function SnapPreviewScreen({ route, navigation }) {
   const isStory = intent === "story";
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
+  const [circles, setCircles] = useState([]);
+  const [activeCircleId, setActiveCircleId] = useState(null);
   const [selected, setSelected] = useState([]);
   const [duration, setDuration] = useState(5);
   const [storyVisibility, setStoryVisibility] = useState("friends"); // "friends" | "custom" | "close"
@@ -35,7 +38,13 @@ export default function SnapPreviewScreen({ route, navigation }) {
     return unsubscribe;
   }, [user.uid]);
 
+  useEffect(() => {
+    const unsubscribe = listenCircles(user.uid, setCircles);
+    return unsubscribe;
+  }, [user.uid]);
+
   const toggleFriend = (uid) => {
+    setActiveCircleId(null);
     setSelected((prev) =>
       prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
     );
@@ -46,7 +55,18 @@ export default function SnapPreviewScreen({ route, navigation }) {
   // gepflegten Liste vorausgefuellt. Die Person kann sie danach noch anpassen.
   const selectCloseFriends = () => {
     setStoryVisibility("close");
+    setActiveCircleId(null);
     setSelected(user?.closeFriends || []);
+  };
+
+  // Eigene Kreise (CirclesScreen.js) sind genau dasselbe Prinzip wie "Enge
+  // Freunde" oben, nur mit beliebig vielen, selbst benannten Listen statt
+  // einer einzigen festen - technisch weiterhin "custom"-Sichtbarkeit mit
+  // visibleTo, nur die Vorauswahl kommt aus dem gewaehlten Kreis.
+  const selectCircle = (circle) => {
+    setStoryVisibility("custom");
+    setActiveCircleId(circle.id);
+    setSelected(circle.memberUids || []);
   };
 
   const isCustomVisibility = storyVisibility === "custom" || storyVisibility === "close";
@@ -181,6 +201,26 @@ export default function SnapPreviewScreen({ route, navigation }) {
           </View>
         ) : null}
 
+        {isStory && circles.length > 0 ? (
+          <FlatList
+            data={circles}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.circleRow}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.circleChip, activeCircleId === item.id && styles.circleChipActive]}
+                onPress={() => selectCircle(item)}
+              >
+                <Text style={styles.circleChipText}>
+                  {item.emoji || "💜"} {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        ) : null}
+
         {showFriendPicker ? (
           <>
             <Text style={styles.panelTitle}>
@@ -307,6 +347,24 @@ const styles = StyleSheet.create({
   },
   visibilityTextActive: {
     color: colors.text,
+  },
+  circleRow: {
+    marginBottom: 12,
+  },
+  circleChip: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginRight: 8,
+  },
+  circleChipActive: {
+    backgroundColor: colors.primary,
+  },
+  circleChipText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "600",
   },
   panelTitle: {
     color: colors.text,

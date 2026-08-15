@@ -20,6 +20,8 @@ import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import CameraScreen from "../screens/CameraScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
+import CircleEditScreen from "../screens/CircleEditScreen";
+import CirclesScreen from "../screens/CirclesScreen";
 import CloseFriendsLocationScreen from "../screens/CloseFriendsLocationScreen";
 import CloseFriendsScreen from "../screens/CloseFriendsScreen";
 import CommentsScreen from "../screens/CommentsScreen";
@@ -305,6 +307,8 @@ export default function RootNavigator() {
             component={CloseFriendsLocationScreen}
             options={{ headerShown: false }}
           />
+          <Stack.Screen name="Circles" component={CirclesScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="CircleEdit" component={CircleEditScreen} options={{ headerShown: false }} />
           <Stack.Screen name="NataAI" component={NataAIScreen} options={{ headerShown: false }} />
           <Stack.Screen name="MyStats" component={MyStatsScreen} options={{ headerShown: false }} />
           <Stack.Screen name="MomentsArchive" component={MomentsArchiveScreen} options={{ headerShown: false }} />

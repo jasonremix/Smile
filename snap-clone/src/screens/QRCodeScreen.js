@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Modal, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import QRCodeView from "../components/QRCodeView";
 import VerifiedBadge from "../components/VerifiedBadge";
@@ -10,11 +10,42 @@ import { shadow } from "../theme/shadow";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
+// Drei Kontexte statt einer einzigen Nachricht - der native Share-Sheet
+// deckt WhatsApp/Instagram/Messages/etc. ohnehin ab, hier geht es nur um den
+// passenden Ton je nach Situation (spontan vor Ort vs. online vs. als
+// "Visitenkarte" mit etwas mehr Kontext ueber die Person).
+const SHARE_OPTIONS = [
+  {
+    id: "quick",
+    icon: "send",
+    title: "Schnell teilen",
+    subtitle: "Kurzer Link zum Verbinden",
+    buildMessage: (user) => `Verbinde dich mit mir auf Nata: @${user?.username} 💜`,
+  },
+  {
+    id: "meetup",
+    icon: "pin",
+    title: "Für unterwegs",
+    subtitle: "Wenn ihr euch gerade trefft",
+    buildMessage: (user) =>
+      `Schön, dich kennenzulernen! Verbinde dich mit mir auf Nata, dann bleiben wir in Kontakt: @${user?.username}`,
+  },
+  {
+    id: "card",
+    icon: "person",
+    title: "Digitale Visitenkarte",
+    subtitle: "Mit etwas mehr Kontext",
+    buildMessage: (user) =>
+      `${user?.displayName} (@${user?.username}) auf Nata${user?.bio ? ` - "${user.bio}"` : ""}. Verbinde dich, um in Kontakt zu bleiben.`,
+  },
+];
+
 export default function QRCodeScreen({ navigation }) {
   const { user } = useAuth();
   const qrValue = `nata:user:${user.uid}`;
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -23,15 +54,15 @@ export default function QRCodeScreen({ navigation }) {
     ]).start();
   }, []);
 
-  const handleShare = () => {
-    Share.share({
-      message: `Verbinde dich mit mir auf Nata: @${user?.username}`,
-    }).catch(() => {});
+  const handleShareOption = (option) => {
+    setShareMenuOpen(false);
+    Share.share({ message: option.buildMessage(user) }).catch(() => {});
   };
 
   return (
     <View style={styles.container}>
       <Animated.View style={{ opacity, transform: [{ translateY }], alignItems: "center", width: "100%" }}>
+        <Text style={styles.eyebrow}>DEIN NATA CODE</Text>
         <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
           <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
         </View>
@@ -58,7 +89,7 @@ export default function QRCodeScreen({ navigation }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={handleShare}
+            onPress={() => setShareMenuOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Nata-Code teilen"
           >
@@ -67,6 +98,28 @@ export default function QRCodeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </Animated.View>
+
+      <Modal visible={shareMenuOpen} transparent animationType="fade" onRequestClose={() => setShareMenuOpen(false)}>
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setShareMenuOpen(false)}>
+          <View style={styles.shareSheet}>
+            <Text style={styles.shareSheetTitle}>Nata Code teilen</Text>
+            {SHARE_OPTIONS.map((option) => (
+              <TouchableOpacity key={option.id} style={styles.shareOptionRow} onPress={() => handleShareOption(option)}>
+                <View style={styles.shareOptionIcon}>
+                  <Icon name={option.icon} size={17} color={colors.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.shareOptionTitle}>{option.title}</Text>
+                  <Text style={styles.shareOptionSubtitle}>{option.subtitle}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.shareCancelButton} onPress={() => setShareMenuOpen(false)}>
+              <Text style={styles.shareCancelText}>Abbrechen</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -135,5 +188,67 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: colors.text,
     ...typography.subhead,
+  },
+  eyebrow: {
+    color: colors.primaryLight,
+    ...typography.sectionLabel,
+    letterSpacing: 1.2,
+    marginBottom: spacing.lg,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  shareSheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  shareSheetTitle: {
+    color: colors.text,
+    ...typography.title,
+    marginBottom: spacing.md,
+  },
+  shareOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  shareOptionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceLight,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+  },
+  shareOptionTitle: {
+    color: colors.text,
+    ...typography.subhead,
+    fontWeight: "700",
+  },
+  shareOptionSubtitle: {
+    color: colors.textMuted,
+    ...typography.caption,
+    marginTop: 2,
+  },
+  shareCancelButton: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.pill,
+  },
+  shareCancelText: {
+    color: colors.text,
+    ...typography.subhead,
+    fontWeight: "700",
   },
 });
