@@ -1,3 +1,4 @@
+import { Audio } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
@@ -42,6 +43,13 @@ export default function CallScreen({ navigation, route }) {
   const statusRef = useRef(incomingCallId ? "accepted" : "ringing");
   const endedRef = useRef(false);
   const timerRef = useRef(null);
+  // Der ICE-Kandidaten-Listener startet sofort beim Mounten, die
+  // Peer-Connection existiert aber erst, nachdem Mikrofon-Berechtigung +
+  // getUserMedia() durchgelaufen sind - trifft in der Zwischenzeit ein
+  // Kandidat ein, geht er sonst stillschweigend verloren (pcRef.current
+  // waere noch null). Deshalb zwischenspeichern und nach der pc-Erstellung
+  // nachtraeglich anwenden.
+  const pendingCandidatesRef = useRef([]);
 
   const cleanup = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -71,6 +79,18 @@ export default function CallScreen({ navigation, route }) {
 
     const setup = async () => {
       try {
+        // getUserMedia() von react-native-webrtc fragt auf Android KEINE
+        // Laufzeit-Berechtigung selbststaendig ab (anders als expo-camera/
+        // expo-av) - ohne diesen expliziten Request schlaegt der Anruf auf
+        // einem Geraet, das Nata noch nie um Mikrofonzugriff gebeten hat,
+        // sonst still fehl. expo-av ist bereits fuer Sprachnachrichten im
+        // Einsatz und deckt iOS+Android einheitlich ab.
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== "granted") {
+          if (!cancelled) setSetupError("Kein Mikrofon-Zugriff - in den Geräteeinstellungen erlauben.");
+          return;
+        }
+
         const stream = await mediaDevices.getUserMedia({ audio: true, video: false });
         if (cancelled) return;
         localStreamRef.current = stream;
@@ -78,6 +98,11 @@ export default function CallScreen({ navigation, route }) {
         const pc = new RTCPeerConnection(ICE_SERVERS);
         pcRef.current = pc;
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+        if (pendingCandidatesRef.current.length > 0) {
+          pendingCandidatesRef.current.forEach((c) => pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
+          pendingCandidatesRef.current = [];
+        }
 
         const participants =
           role === "caller" ? { callerId: user.uid, calleeId: otherUser.uid } : { callerId: otherUser.uid, calleeId: user.uid };
@@ -146,8 +171,12 @@ export default function CallScreen({ navigation, route }) {
   useEffect(() => {
     if (!callId) return undefined;
     const unsubscribe = listenRemoteIceCandidates(callId, role, user.uid, async (candidateJson) => {
+      if (!pcRef.current) {
+        pendingCandidatesRef.current.push(candidateJson);
+        return;
+      }
       try {
-        await pcRef.current?.addIceCandidate(new RTCIceCandidate(candidateJson));
+        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidateJson));
       } catch (e) {
         // Einzelner Kandidat fehlgeschlagen ist normal (Timing) - kein Abbruch.
       }
