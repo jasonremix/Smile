@@ -12,6 +12,7 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Sprachanrufe direkt in der App (Beta): Anrufen-Button im Chat und auf Profilen von Connections, eigener Anrufverlauf - braucht die neueste Version aus dem Beta-Kanal (neues natives Modul, kein reines Update)",
   "Eigene Kreise: beliebig viele selbst benannte Gruppen (z.B. Familie, Arbeit, Gaming) zum gezielten Teilen von Momenten - zusätzlich zur festen \"Enge Freunde\"-Liste",
   "Nata Code überarbeitet: kein Blind-Connect mehr beim Scannen - echte Profilvorschau mit gemeinsamen Interessen und gemeinsamen Connections vor dem Verbinden, drei Kontexte beim Teilen (schnell/unterwegs/Visitenkarte)",
   "Nata Match: Entdecken zeigt jetzt Personen mit gemeinsamen Interessen (echter Prozentsatz, keine \"perfekte Übereinstimmung\"-Behauptung)",
