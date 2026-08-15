@@ -419,6 +419,13 @@ const GLYPHS = {
       <Dot top={10} left={20.5} size={4} color={c} />
     </>
   ),
+  call: (c) => (
+    <>
+      <Bar top={10} left={4} width={16} height={4} radius={2} color={c} rotate={-45} />
+      <Dot top={14.5} left={3} size={7} color={c} />
+      <Dot top={2.5} left={14.5} size={7} color={c} />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 22, color = colors.text, style }) {

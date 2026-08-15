@@ -71,6 +71,7 @@ export default function ChatScreen({ route, navigation }) {
   const [streakCount, setStreakCount] = useState(0);
   const [otherIsTyping, setOtherIsTyping] = useState(false);
   const [otherVerified, setOtherVerified] = useState(false);
+  const [otherAvatarColor, setOtherAvatarColor] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [scheduledFor, setScheduledFor] = useState(null);
   const listRef = useRef(null);
@@ -128,16 +129,34 @@ export default function ChatScreen({ route, navigation }) {
         </View>
       ),
       headerRight: () => (
-        <TouchableOpacity onPress={openChatMenu} style={{ paddingHorizontal: 8 }}>
-          <Text style={{ color: colors.text, fontSize: 20 }}>⋯</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("Call", {
+                role: "caller",
+                otherUser: { uid: otherUser.id, displayName: otherUser.name, avatarColor: otherAvatarColor },
+              })
+            }
+            style={{ paddingHorizontal: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={`${otherUser.name} anrufen`}
+          >
+            <Icon name="call" size={19} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openChatMenu} style={{ paddingHorizontal: 8 }}>
+            <Text style={{ color: colors.text, fontSize: 20 }}>⋯</Text>
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation, otherUser, streakCount, otherVerified]);
+  }, [navigation, otherUser, streakCount, otherVerified, otherAvatarColor]);
 
   useEffect(() => {
     getUserProfile(otherUser.id)
-      .then((profile) => setOtherVerified(!!profile?.verified))
+      .then((profile) => {
+        setOtherVerified(!!profile?.verified);
+        setOtherAvatarColor(profile?.avatarColor || null);
+      })
       .catch(() => {});
   }, [otherUser.id]);
 

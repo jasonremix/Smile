@@ -576,6 +576,78 @@ service cloud.firestore {
         (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId);
     }
 
+    // Sprachanrufe: WebRTC-Signaling komplett ueber Firestore statt ueber
+    // einen eigenen Signaling-Server oder Cloud Functions (die auf dem noch
+    // gesperrten Blaze-Plan warten). Nur die beiden Teilnehmer lesen/
+    // schreiben; ICE-Kandidaten liegen in eigenen Subcollections statt im
+    // Hauptdokument, damit die vielen schnellen Schreibvorgaenge waehrend
+    // des Verbindungsaufbaus nicht mit dem Status-Feld kollidieren. Anrufe
+    // sind auf bestehende Connections beschraenkt (isFriendOf) - kein Ruf-
+    // Spam von Fremden.
+    match /calls/{callId} {
+      // isFounder()-Ausnahme nur fuers aggregierte Anruf-Statistik-Widget
+      // im Founder-Dashboard (Anzahl/Erfolgsquote) - keine Einzelgespraechs-
+      // inhalte, WebRTC-Angebote/Antworten sind reine Verbindungsdaten.
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId || isFounder());
+
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.callerId
+        && request.resource.data.calleeId != request.auth.uid
+        && request.resource.data.status == 'ringing'
+        && request.resource.data.offer is map
+        && !('answer' in request.resource.data)
+        && isFriendOf(request.resource.data.calleeId);
+
+      allow update: if isSignedIn() && (
+        // Callee nimmt an (mit Antwort-SDP) oder lehnt ab.
+        (request.auth.uid == resource.data.calleeId
+          && resource.data.status == 'ringing'
+          && (
+            (request.resource.data.status == 'accepted'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'answer', 'answeredAt'])
+              && request.resource.data.answer is map)
+            || (request.resource.data.status == 'declined'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+          ))
+        // Beide Seiten koennen jederzeit auflegen/abbrechen.
+        || ((request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId)
+          && resource.data.status in ['ringing', 'accepted']
+          && request.resource.data.status in ['ended', 'missed']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'endedAt', 'endedBy']))
+      );
+
+      allow delete: if isSignedIn() &&
+        (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId);
+
+      // callerId/calleeId stehen direkt auf jedem Kandidaten-Dokument (nicht
+      // nur per get() vom Call-Hauptdokument abgeleitet) - eine Leseregel,
+      // die bei einer Listenabfrage (list) auf ein ANDERES Dokument per
+      // get() verweist, wird von Firestore nicht zuverlaessig ausgewertet
+      // (nur bei Einzel-Reads/get). Beim Erstellen wird trotzdem gegen das
+      // echte Call-Dokument geprueft, damit die Felder nicht gefaelscht
+      // werden koennen.
+      match /callerCandidates/{candidateId} {
+        allow read: if isSignedIn() &&
+          (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId);
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.callerId
+          && request.resource.data.callerId == get(/databases/$(database)/documents/calls/$(callId)).data.callerId
+          && request.resource.data.calleeId == get(/databases/$(database)/documents/calls/$(callId)).data.calleeId;
+        allow update, delete: if false;
+      }
+
+      match /calleeCandidates/{candidateId} {
+        allow read: if isSignedIn() &&
+          (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId);
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.calleeId
+          && request.resource.data.callerId == get(/databases/$(database)/documents/calls/$(callId)).data.callerId
+          && request.resource.data.calleeId == get(/databases/$(database)/documents/calls/$(callId)).data.calleeId;
+        allow update, delete: if false;
+      }
+    }
+
     match /chats/{chatId} {
       allow read, delete: if isSignedIn() && request.auth.uid in resource.data.participants;
       allow create: if isSignedIn()

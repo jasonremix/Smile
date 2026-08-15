@@ -91,6 +91,12 @@ export default function SettingsScreen({ navigation }) {
           <SettingsRow icon="people" label="Connections verwalten" onPress={() => navigation.navigate("Friends")} />
           <SettingsRow icon="star" label="Enge Freunde" onPress={() => navigation.navigate("CloseFriends")} />
           <SettingsRow icon="people" label="Meine Kreise" onPress={() => navigation.navigate("Circles")} />
+          <SettingsRow
+            icon="call"
+            label="Anrufe"
+            onPress={() => navigation.navigate("CallHistory")}
+            badge={<BetaBadge style={styles.feedbackBadge} />}
+          />
           <SettingsRow icon="search" label="Entdecken" onPress={() => navigation.navigate("Discovery")} />
           <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
           <SettingsRow icon="grid" label="Meine Statistik" onPress={() => navigation.navigate("MyStats")} />

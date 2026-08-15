@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import ScreenHeader from "../components/ScreenHeader";
 import { getAppStats } from "../services/adminService";
+import { getRecentCallStats } from "../services/callService";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -20,8 +21,11 @@ const STAT_META = [
 // Herunterladen aller Dokumente, daher schnell und unabhaengig von der
 // tatsaechlichen Datenmenge. Kein Live-Listener, da Aggregations-Queries
 // das nicht unterstuetzen - stattdessen Pull-to-Refresh.
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 export default function FounderStatsScreen({ navigation }) {
   const [stats, setStats] = useState(null);
+  const [callStats, setCallStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -31,6 +35,12 @@ export default function FounderStatsScreen({ navigation }) {
       setStats(s);
     } catch (e) {
       // Bleibt bei den zuletzt bekannten Werten (oder null), kein Absturz.
+    }
+    try {
+      const c = await getRecentCallStats(new Date(Date.now() - SEVEN_DAYS_MS));
+      setCallStats(c);
+    } catch (e) {
+      // Sprachanrufe (Beta) - Statistik ist ein Zusatz, kein Blocker.
     }
   };
 
@@ -63,6 +73,27 @@ export default function FounderStatsScreen({ navigation }) {
             ))}
           </View>
         )}
+
+        {callStats ? (
+          <>
+            <Text style={styles.sectionLabel}>Anrufe (Beta) · letzte 7 Tage</Text>
+            <View style={styles.grid}>
+              <View style={styles.card}>
+                <Text style={styles.value}>{callStats.total}</Text>
+                <Text style={styles.label}>Anrufe gesamt</Text>
+              </View>
+              <View style={styles.card}>
+                <Text style={styles.value}>{callStats.completed}</Text>
+                <Text style={styles.label}>Angenommen</Text>
+              </View>
+              <View style={styles.card}>
+                <Text style={styles.value}>{callStats.missed}</Text>
+                <Text style={styles.label}>Verpasst/abgelehnt</Text>
+              </View>
+            </View>
+          </>
+        ) : null}
+
         <Text style={styles.footnote}>Zum Aktualisieren nach unten ziehen.</Text>
       </ScrollView>
     </View>
@@ -80,6 +111,12 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: spacing.xxxl,
+  },
+  sectionLabel: {
+    color: colors.textMuted,
+    ...typography.sectionLabel,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
   },
   grid: {
     flexDirection: "row",

@@ -10,6 +10,7 @@ import OnboardingScreen from "../screens/OnboardingScreen";
 import PersonalizeGoalsScreen from "../screens/PersonalizeGoalsScreen";
 import PersonalizeInterestsScreen from "../screens/PersonalizeInterestsScreen";
 import FounderAnnouncementBanner from "../components/FounderAnnouncementBanner";
+import IncomingCallOverlay from "../components/IncomingCallOverlay";
 import LevelUpCelebration from "../components/LevelUpCelebration";
 import NewMessageBanner from "../components/NewMessageBanner";
 import UpdateAnnouncementBanner from "../components/UpdateAnnouncementBanner";
@@ -17,6 +18,8 @@ import VerifiedCelebration from "../components/VerifiedCelebration";
 import AboutScreen from "../screens/AboutScreen";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import BlockedUsersScreen from "../screens/BlockedUsersScreen";
+import CallHistoryScreen from "../screens/CallHistoryScreen";
+import CallScreen from "../screens/CallScreen";
 import CameraScreen from "../screens/CameraScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
@@ -145,6 +148,7 @@ export default function RootNavigator() {
           <NewMessageBanner />
           <UpdateAnnouncementBanner />
           <FounderAnnouncementBanner />
+          <IncomingCallOverlay />
           <LevelUpCelebration />
           <VerifiedCelebration />
         </>
@@ -194,6 +198,12 @@ export default function RootNavigator() {
             component={StoryViewerScreen}
             options={{ headerShown: false, presentation: "fullScreenModal" }}
           />
+          <Stack.Screen
+            name="Call"
+            component={CallScreen}
+            options={{ headerShown: false, presentation: "fullScreenModal", gestureEnabled: false }}
+          />
+          <Stack.Screen name="CallHistory" component={CallHistoryScreen} options={{ headerShown: false }} />
           <Stack.Screen
             name="Chat"
             component={ChatScreen}

@@ -94,6 +94,13 @@ export default function UserProfileScreen({ route, navigation }) {
     });
   };
 
+  const handleCall = () => {
+    navigation.navigate("Call", {
+      role: "caller",
+      otherUser: { uid, displayName: profile?.displayName, avatarColor: profile?.avatarColor },
+    });
+  };
+
   const openMenu = () => {
     Alert.alert(profile?.displayName || "", "Was moechtest du tun?", [
       { text: "Melden", onPress: () => setReporting(true) },
@@ -170,9 +177,19 @@ export default function UserProfileScreen({ route, navigation }) {
 
           <View style={styles.actionsRow}>
             {isFriend ? (
-              <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
-                <Text style={styles.messageButtonText}>Nachricht</Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
+                  <Text style={styles.messageButtonText}>Nachricht</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.callIconButton}
+                  onPress={handleCall}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${profile?.displayName} anrufen`}
+                >
+                  <Icon name="call" size={17} color={colors.text} />
+                </TouchableOpacity>
+              </>
             ) : (
               <TouchableOpacity
                 style={[styles.connectButton, requestSent && styles.connectButtonDisabled]}
@@ -363,6 +380,15 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: "700",
     fontSize: 14,
+  },
+  callIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
   },
   postsHeading: {
     color: colors.textMuted,
