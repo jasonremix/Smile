@@ -1,8 +1,13 @@
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
+import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
 
 // Faengt Render-Fehler ab, die sonst zu einem stummen leeren/weissen Bildschirm
-// fuehren wuerden, und zeigt die Fehlermeldung + den Stacktrace direkt an.
+// fuehren wuerden, und zeigt die Fehlermeldung + den Stacktrace direkt an -
+// im normalen App-Theme statt einer eigenen, dazu passenden Farbwelt.
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -22,9 +27,12 @@ export default class ErrorBoundary extends React.Component {
       return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={styles.title}>Etwas ist schiefgelaufen</Text>
+          <Text style={styles.subtitle}>Nicht deine Schuld - das ist ein Fehler in der App.</Text>
           <Text style={styles.message}>{String(this.state.error?.message || this.state.error)}</Text>
           {this.state.error?.stack ? (
-            <Text style={styles.stack}>{this.state.error.stack}</Text>
+            <ScrollView horizontal style={styles.stackWrap}>
+              <Text style={styles.stack}>{this.state.error.stack}</Text>
+            </ScrollView>
           ) : null}
         </ScrollView>
       );
@@ -36,25 +44,34 @@ export default class ErrorBoundary extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a0000",
+    backgroundColor: colors.background,
   },
   content: {
-    padding: 24,
+    padding: spacing.xl,
     paddingTop: 64,
   },
   title: {
-    color: "#ff6b6b",
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 12,
+    color: colors.text,
+    ...typography.title,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    ...typography.footnote,
+    marginBottom: spacing.lg,
   },
   message: {
-    color: "#ffffff",
-    fontSize: 15,
-    marginBottom: 16,
+    color: colors.danger,
+    ...typography.body,
+    marginBottom: spacing.lg,
+  },
+  stackWrap: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
   },
   stack: {
-    color: "#ff9999",
+    color: colors.textMuted,
     fontSize: 11,
     fontFamily: "monospace",
   },

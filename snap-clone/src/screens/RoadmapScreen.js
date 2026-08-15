@@ -12,6 +12,8 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Eigene Kreise: beliebig viele selbst benannte Gruppen (z.B. Familie, Arbeit, Gaming) zum gezielten Teilen von Momenten - zusätzlich zur festen \"Enge Freunde\"-Liste",
+  "Nata Code überarbeitet: kein Blind-Connect mehr beim Scannen - echte Profilvorschau mit gemeinsamen Interessen und gemeinsamen Connections vor dem Verbinden, drei Kontexte beim Teilen (schnell/unterwegs/Visitenkarte)",
   "Nata Match: Entdecken zeigt jetzt Personen mit gemeinsamen Interessen (echter Prozentsatz, keine \"perfekte Übereinstimmung\"-Behauptung)",
   "Persönlicher Einstieg nach dem Onboarding: Interessen wählen, dann Ziele auf Nata - direkt vor dem ersten Home-Start",
   "Nata AI erkennt jetzt auch Fotos (Vision) - Bild aufnehmen und direkt dazu fragen",
@@ -58,6 +60,23 @@ const PLANNED = [
   {
     title: "Sprachnachrichten-Versand & Profilbilder",
     detail: "Code ist fertig, wartet auf die Aktivierung von Firebase Storage.",
+  },
+  {
+    title: "Design-Konsistenz-Durchgang",
+    detail:
+      "Erster Code-Durchgang: der Absturz-Bildschirm (ErrorBoundary) nutzte bisher eine eigene, " +
+      "nicht zum Rest der App passende Farbwelt - jetzt auf die normalen Theme-Farben umgestellt. " +
+      "Rund 30 ältere Screens verwenden noch feste Rundungs-Werte statt der gemeinsamen radius.js " +
+      "Skala - eine vollständige Umstellung braucht eine echte visuelle Prüfung Screen für Screen, " +
+      "die in dieser Umgebung ohne Simulator nicht seriös möglich ist.",
+  },
+  {
+    title: "Eigene Kreise beim Posten (nicht nur bei Momenten)",
+    detail:
+      "Kreise lassen sich bereits beim Teilen eines Moments auswählen. Dieselbe gezielte Sichtbarkeit " +
+      "auch für normale Beiträge im Feed einzuführen, braucht eine sorgfältige Anpassung der " +
+      "Feed-Abfrage selbst (sonst riskiert man, den bestehenden, funktionierenden Feed zu brechen) - " +
+      "kommt als eigener, separater Schritt.",
   },
   {
     title: "Feinere Inhaltsprüfung per Cloud Functions",
