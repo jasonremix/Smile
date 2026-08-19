@@ -113,14 +113,18 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => navigation.navigate("Leaderboard")}
             badge={<BetaBadge style={styles.feedbackBadge} />}
           />
-          {new Date() >= new Date(new Date().getFullYear(), 8, 25) ? (
-            <SettingsRow
-              icon="sparkle"
-              label={`Nata Wrapped ${new Date().getFullYear()}`}
-              onPress={() => navigation.navigate("Wrapped")}
-              badge={<BetaBadge style={styles.feedbackBadge} />}
-            />
-          ) : null}
+          {(() => {
+            const now = new Date();
+            const wrappedLive = now >= new Date(now.getFullYear(), now.getMonth(), 20, 2, 0, 0);
+            return wrappedLive ? (
+              <SettingsRow
+                icon="sparkle"
+                label="Nata Wrapped"
+                onPress={() => navigation.navigate("Wrapped")}
+                badge={<BetaBadge style={styles.feedbackBadge} />}
+              />
+            ) : null;
+          })()}
           {!user?.verified ? (
             <SettingsRow
               icon="shield"

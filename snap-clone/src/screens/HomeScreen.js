@@ -92,13 +92,18 @@ export default function HomeScreen({ navigation }) {
     ensureWeeklySnapshot(user.uid, user.nataScore).catch(() => {});
   }, [user.uid]);
 
-  // Nata Wrapped: einmal jaehrlich ab dem 25. September, nur wenn die eigene
-  // Person es fuer dieses Jahr noch nicht gesehen hat (wrappedSeenYear).
+  // Nata Wrapped: jeden Monat ab dem 20. um 2:00 Uhr (Geraete-Ortszeit, kein
+  // Server-Cron vorhanden), nur wenn die eigene Person diese Ausgabe noch
+  // nicht gesehen hat. wrappedSeenYear speichert dafuer eine Perioden-ID
+  // (Jahr*100+Monat, z.B. 202608 fuer August 2026) statt nur des Jahres -
+  // bleibt bewusst ein int-Feld, damit keine neue Firestore-Regel noetig ist.
   useEffect(() => {
     const now = new Date();
     const year = now.getFullYear();
-    const wrappedLive = now >= new Date(year, 8, 25);
-    if (wrappedLive && user.wrappedSeenYear !== year) {
+    const month = now.getMonth(); // 0-indexiert
+    const wrappedLive = now >= new Date(year, month, 20, 2, 0, 0);
+    const currentPeriod = year * 100 + (month + 1);
+    if (wrappedLive && user.wrappedSeenYear !== currentPeriod) {
       navigation.navigate("Wrapped");
     }
   }, [user.uid, user.wrappedSeenYear]);

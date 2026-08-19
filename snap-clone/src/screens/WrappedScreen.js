@@ -11,21 +11,39 @@ import { spacing } from "../theme/spacing";
 import { radius } from "../theme/radius";
 
 const SAMPLE_SIZE = 300;
+const MONTH_NAMES = [
+  "Januar", "Februar", "März", "April", "Mai", "Juni",
+  "Juli", "August", "September", "Oktober", "November", "Dezember",
+];
 
-// Nata Wrapped: einmal jaehrlich ab dem 25. September (siehe HomeScreen.js
-// fuer den Ausloese-Check), aus echten, bereits vorhandenen Daten (Beitraege,
+// Der Erfassungszeitraum ist immer "seit dem 20. des Vormonats um 2 Uhr" -
+// deckt sich mit dem monatlichen Ausloese-Rhythmus in HomeScreen.js, egal ob
+// die Person genau am 20. schaut oder erst spaeter im Monat.
+function getPeriodStart(now) {
+  const day = now.getDate();
+  if (day >= 20) {
+    return new Date(now.getFullYear(), now.getMonth(), 20, 2, 0, 0);
+  }
+  return new Date(now.getFullYear(), now.getMonth() - 1, 20, 2, 0, 0);
+}
+
+// Nata Wrapped: jeden Monat ab dem 20. um 2 Uhr (siehe HomeScreen.js fuer
+// den Ausloese-Check), aus echten, bereits vorhandenen Daten (Beitraege,
 // Punkte-Historie) - keine erfundenen/geschaetzten Werte, dieselbe Ehrlichkeits-
-// Regel wie bei MyStatsScreen. Jedes Jahr ein anderer, fest kuratierter Stil
-// (siehe theme/wrappedThemes.js), damit es sich wirklich wie ein neues,
-// einmaliges Ereignis anfuehlt statt einer Wiederholung.
+// Regel wie bei MyStatsScreen. Der Stil rotiert pro Monat (siehe
+// theme/wrappedThemes.js), damit es sich jedes Mal wie eine neue Ausgabe
+// anfuehlt statt einer Wiederholung.
 export default function WrappedScreen({ navigation }) {
   const { user } = useAuth();
-  const year = new Date().getFullYear();
-  const theme = getWrappedTheme(year);
+  const now = useMemo(() => new Date(), []);
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexiert
+  const currentPeriod = year * 100 + (month + 1);
+  const theme = getWrappedTheme(currentPeriod);
   const [posts, setPosts] = useState([]);
   const [scoreEvents, setScoreEvents] = useState([]);
 
-  const startOfYear = useMemo(() => new Date(year, 0, 1), [year]);
+  const periodStart = useMemo(() => getPeriodStart(now), [now]);
 
   useEffect(() => {
     const unsubscribe = listenUserPosts(user.uid, setPosts, SAMPLE_SIZE);
@@ -33,26 +51,26 @@ export default function WrappedScreen({ navigation }) {
   }, [user.uid]);
 
   useEffect(() => {
-    const unsubscribe = listenScoreEventsSince(user.uid, startOfYear, setScoreEvents);
+    const unsubscribe = listenScoreEventsSince(user.uid, periodStart, setScoreEvents);
     return unsubscribe;
-  }, [user.uid, startOfYear]);
+  }, [user.uid, periodStart]);
 
-  const postsThisYear = useMemo(
-    () => posts.filter((p) => (p.createdAt?.toDate?.() || new Date(0)) >= startOfYear),
-    [posts, startOfYear]
+  const postsThisPeriod = useMemo(
+    () => posts.filter((p) => (p.createdAt?.toDate?.() || new Date(0)) >= periodStart),
+    [posts, periodStart]
   );
   const totalReactions = useMemo(
-    () => postsThisYear.reduce((sum, p) => sum + (p.likeCount || 0), 0),
-    [postsThisYear]
+    () => postsThisPeriod.reduce((sum, p) => sum + (p.likeCount || 0), 0),
+    [postsThisPeriod]
   );
   const totalComments = useMemo(
-    () => postsThisYear.reduce((sum, p) => sum + (p.commentCount || 0), 0),
-    [postsThisYear]
+    () => postsThisPeriod.reduce((sum, p) => sum + (p.commentCount || 0), 0),
+    [postsThisPeriod]
   );
   const topPost = useMemo(
     () =>
-      postsThisYear.reduce((best, p) => ((p.likeCount || 0) > (best?.likeCount || 0) ? p : best), null),
-    [postsThisYear]
+      postsThisPeriod.reduce((best, p) => ((p.likeCount || 0) > (best?.likeCount || 0) ? p : best), null),
+    [postsThisPeriod]
   );
   const totalPoints = useMemo(
     () => scoreEvents.reduce((sum, e) => sum + (e.amount || 0), 0),
@@ -60,13 +78,13 @@ export default function WrappedScreen({ navigation }) {
   );
 
   const handleFinish = () => {
-    updateDoc(doc(db, "users", user.uid), { wrappedSeenYear: year }).catch(() => {});
+    updateDoc(doc(db, "users", user.uid), { wrappedSeenYear: currentPeriod }).catch(() => {});
     navigation.goBack();
   };
 
   const handleShare = () => {
     Share.share({
-      message: `Mein Nata Wrapped ${year}: ${postsThisYear.length} Beiträge, ${totalReactions} Reaktionen, ${totalPoints} Punkte gesammelt. 🎉`,
+      message: `Mein Nata Wrapped (${MONTH_NAMES[month]}): ${postsThisPeriod.length} Beiträge, ${totalReactions} Reaktionen, ${totalPoints} Punkte gesammelt. 🎉`,
     }).catch(() => {});
   };
 
@@ -78,13 +96,13 @@ export default function WrappedScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={[styles.eyebrow, { color: theme.accent }]}>NATA WRAPPED</Text>
-        <Text style={[styles.title, { color: theme.heading }]}>Dein Jahr {year}</Text>
+        <Text style={[styles.title, { color: theme.heading }]}>Dein {MONTH_NAMES[month]}</Text>
         <Text style={[styles.subtitle, { color: theme.heading }]}>
           {user.displayName} · Stil „{theme.name}"
         </Text>
 
         <View style={[styles.statCard, { backgroundColor: theme.accentSoft, borderColor: theme.accent }]}>
-          <Text style={[styles.statValue, { color: theme.heading }]}>{postsThisYear.length}</Text>
+          <Text style={[styles.statValue, { color: theme.heading }]}>{postsThisPeriod.length}</Text>
           <Text style={[styles.statLabel, { color: theme.accent }]}>Beiträge geteilt</Text>
         </View>
 
@@ -126,8 +144,8 @@ export default function WrappedScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={[styles.footnote, { color: theme.accent }]}>
-          Berechnet aus deinen letzten {SAMPLE_SIZE} Beiträgen und deiner Punkte-Historie seit dem 1.
-          Januar {year} - keine geschätzten Werte.
+          Berechnet aus deinen letzten {SAMPLE_SIZE} Beiträgen und deiner Punkte-Historie seit{" "}
+          {periodStart.toLocaleDateString("de-DE")} - keine geschätzten Werte.
         </Text>
       </ScrollView>
     </View>

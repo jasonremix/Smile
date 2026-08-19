@@ -13,7 +13,7 @@ import { typography } from "../theme/typography";
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
   "Neues, großes Beta-Paket: Challenges (zeitlich begrenzte Themen mit eigenem Feed und Teilnahme-Abzeichen), Umfrage-Sticker in Momenten, wöchentliches Leaderboard unter Connections, gemeinsame Streak-Ziele im Chat, Text-/Musik-Sticker beim Aufnehmen, Collab-Beiträge zu zweit, Zitat-Beiträge - alle aus echten Daten, ohne neue native Installation",
-  "Nata Wrapped: ab dem 25. September jedes Jahr ein persönlicher Jahresrückblick aus echten Daten, mit jedes Jahr neuem Farb-Stil und Teilen-Funktion",
+  "Nata Wrapped: jeden Monat ab dem 20. um 2 Uhr ein persönlicher Rückblick aus echten Daten, mit jedes Mal neuem Farb-Stil und Teilen-Funktion",
   "Gründer: Kohorten-Rückkehrquote (Tag 1/7/30) und zentrale Feature-Schalter für neue Beta-Funktionen",
   "Creator-Modus (Beta): eigenes goldenes Abzeichen, Antrag über die Einstellungen, Gründer prüft und entscheidet - wer angenommen wird, bekommt ein eigenes Creator-Studio mit echten Statistiken zu den eigenen Beiträgen (Reaktionen, Kommentare, meistbeachteter Beitrag)",
   "Sprachanrufe direkt in der App (Beta): Anrufen-Button im Chat und auf Profilen von Connections, eigener Anrufverlauf - braucht die neueste Version aus dem Beta-Kanal (neues natives Modul, kein reines Update)",
