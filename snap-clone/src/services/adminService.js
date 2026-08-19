@@ -4,9 +4,11 @@ import {
   deleteDoc,
   doc,
   getCountFromServer,
+  getDocs,
   onSnapshot,
   query,
   serverTimestamp,
+  setDoc,
   Timestamp,
   updateDoc,
   where,
@@ -135,4 +137,85 @@ export function listenAnnouncements(callback) {
 
 export async function deleteAnnouncement(id) {
   await deleteDoc(doc(db, "announcements", id));
+}
+
+// ---- Kohorten-Retention (siehe FounderStatsScreen.js) ----
+
+// lastActiveAt wird erst seit diesem Feature geschrieben (siehe
+// HomeScreen.js) - fuer Konten, die sich seitdem nie erneut angemeldet
+// haben, bleibt das Feld leer. Das ist absichtlich ehrlich statt eine
+// rueckwirkende Aktivitaet vorzutaeuschen: die Quote zeigt nur echte,
+// seit Einfuehrung dieser Funktion gemessene Rueckkehr.
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function mondayOf(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export async function computeRetentionCohorts() {
+  const snap = await getDocs(collection(db, "users"));
+  const cohorts = {};
+
+  snap.docs.forEach((d) => {
+    const data = d.data();
+    const createdAt = data.createdAt?.toMillis?.();
+    if (!createdAt) return;
+    const lastActiveAt = data.lastActiveAt?.toMillis?.() || null;
+    const weekKey = mondayOf(createdAt).toISOString();
+    if (!cohorts[weekKey]) {
+      cohorts[weekKey] = { total: 0, returnedDay1: 0, returnedDay7: 0, returnedDay30: 0 };
+    }
+    const c = cohorts[weekKey];
+    c.total += 1;
+    if (lastActiveAt) {
+      if (lastActiveAt - createdAt >= DAY_MS) c.returnedDay1 += 1;
+      if (lastActiveAt - createdAt >= 7 * DAY_MS) c.returnedDay7 += 1;
+      if (lastActiveAt - createdAt >= 30 * DAY_MS) c.returnedDay30 += 1;
+    }
+  });
+
+  return Object.entries(cohorts)
+    .map(([weekKey, c]) => ({
+      week: new Date(weekKey),
+      total: c.total,
+      day1Pct: c.total ? Math.round((c.returnedDay1 / c.total) * 100) : 0,
+      day7Pct: c.total ? Math.round((c.returnedDay7 / c.total) * 100) : 0,
+      day30Pct: c.total ? Math.round((c.returnedDay30 / c.total) * 100) : 0,
+    }))
+    .sort((a, b) => b.week - a.week)
+    .slice(0, 8);
+}
+
+// ---- Feature-Flags (siehe FounderFeatureFlagsScreen.js) ----
+// Rein clientseitig ausgewertet (kein Cloud-Function-Backend) - reicht aber,
+// um ein neues Feature bei Bedarf schnell fuer alle auszublenden, ohne
+// einen neuen OTA-Publish abzuwarten.
+
+export const FEATURE_FLAG_KEYS = [
+  { id: "challenges", label: "Challenges" },
+  { id: "storyPolls", label: "Umfrage-Sticker in Momenten" },
+  { id: "leaderboard", label: "Leaderboard" },
+  { id: "sharedGoals", label: "Gemeinsame Streak-Ziele" },
+  { id: "collabPosts", label: "Collab-Beiträge" },
+  { id: "quotePosts", label: "Zitat-Beiträge" },
+];
+
+export function listenFeatureFlags(callback) {
+  const q = query(collection(db, "featureFlags"));
+  return onSnapshot(q, (snap) => {
+    const flags = {};
+    snap.docs.forEach((d) => {
+      flags[d.id] = d.data().enabled !== false;
+    });
+    callback(flags);
+  });
+}
+
+export async function setFeatureFlag(flagId, enabled) {
+  await setDoc(doc(db, "featureFlags", flagId), { enabled, updatedAt: serverTimestamp() });
 }

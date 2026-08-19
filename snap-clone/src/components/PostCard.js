@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { blockUser, reportContent } from "../services/moderationService";
 import {
   deletePost,
+  getPost,
   listenIsSaved,
   listenMyReaction,
   savePost,
@@ -28,6 +29,12 @@ export default function PostCard({ post, navigation }) {
   const [saved, setSaved] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [quotedPost, setQuotedPost] = useState(undefined);
+
+  useEffect(() => {
+    if (!post.quotedPostId) return;
+    getPost(post.quotedPostId).then(setQuotedPost).catch(() => {});
+  }, [post.quotedPostId]);
   const isOwn = post.authorId === user.uid;
 
   // Sanftes Einblenden statt hartem Pop-in beim Scrollen - laeuft nur einmal
@@ -157,13 +164,45 @@ export default function PostCard({ post, navigation }) {
       </View>
 
       <Text style={styles.text}>{post.text}</Text>
+      {post.quotedPostId && quotedPost ? (
+        <TouchableOpacity
+          style={styles.quoteCard}
+          onPress={() => navigation.navigate("UserProfile", { uid: quotedPost.authorId })}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.quoteAuthor}>{quotedPost.authorName}</Text>
+          <Text style={styles.quoteText} numberOfLines={3}>{quotedPost.text}</Text>
+        </TouchableOpacity>
+      ) : null}
+      {post.quotedPostId && quotedPost === null ? (
+        <View style={styles.quoteCard}>
+          <Text style={styles.quoteDeletedText}>Ursprünglicher Beitrag wurde gelöscht.</Text>
+        </View>
+      ) : null}
       {post.mediaUrl ? (
-        <FilteredMedia
-          uri={post.mediaUrl}
-          mediaType="photo"
-          filterId={post.filter}
-          style={styles.media}
-        />
+        <View>
+          <FilteredMedia
+            uri={post.mediaUrl}
+            mediaType="photo"
+            filterId={post.filter}
+            style={styles.media}
+          />
+          {post.musicSticker ? (
+            <View style={styles.musicStickerOverlay}>
+              <Icon name="sparkle" size={11} color="#fff" />
+              <Text style={styles.musicStickerText} numberOfLines={1}>{post.musicSticker}</Text>
+            </View>
+          ) : null}
+          {post.textStickers?.length > 0 ? (
+            <View style={styles.textStickersOverlay}>
+              {post.textStickers.map((s, i) => (
+                <View key={i} style={styles.textStickerChip}>
+                  <Text style={styles.textStickerChipText}>{s}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
       ) : null}
 
       <View style={styles.actionsRow}>
@@ -226,6 +265,19 @@ export default function PostCard({ post, navigation }) {
           accessibilityLabel="Beitrag teilen"
         >
           <Icon name="send" size={15} color={colors.textMuted} />
+        </Pressable>
+        <Pressable
+          style={styles.actionButton}
+          onPress={() =>
+            navigation.navigate("CreatePost", {
+              quotedPostId: post.id,
+              quotedPostPreview: { text: post.text, authorName: post.authorName },
+            })
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Beitrag zitieren"
+        >
+          <Icon name="repeat" size={15} color={colors.textMuted} />
         </Pressable>
       </View>
 
@@ -308,6 +360,66 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     lineHeight: 20,
+  },
+  musicStickerOverlay: {
+    position: "absolute",
+    top: 20,
+    left: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    maxWidth: "70%",
+  },
+  musicStickerText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  textStickersOverlay: {
+    position: "absolute",
+    bottom: 12,
+    left: 10,
+    gap: 6,
+  },
+  textStickerChip: {
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignSelf: "flex-start",
+  },
+  textStickerChipText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  quoteCard: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 12,
+    marginTop: 10,
+  },
+  quoteAuthor: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 12.5,
+    marginBottom: 3,
+  },
+  quoteText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  quoteDeletedText: {
+    color: colors.textMuted,
+    fontSize: 12.5,
+    fontStyle: "italic",
   },
   media: {
     width: "100%",

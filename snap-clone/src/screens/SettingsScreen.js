@@ -101,6 +101,26 @@ export default function SettingsScreen({ navigation }) {
           <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
           <SettingsRow icon="grid" label="Meine Statistik" onPress={() => navigation.navigate("MyStats")} />
           <SettingsRow icon="moment" label="Momente-Archiv" onPress={() => navigation.navigate("MomentsArchive")} />
+          <SettingsRow
+            icon="flame"
+            label="Challenges"
+            onPress={() => navigation.navigate("Challenges")}
+            badge={<BetaBadge style={styles.feedbackBadge} />}
+          />
+          <SettingsRow
+            icon="star"
+            label="Leaderboard"
+            onPress={() => navigation.navigate("Leaderboard")}
+            badge={<BetaBadge style={styles.feedbackBadge} />}
+          />
+          {new Date() >= new Date(new Date().getFullYear(), 8, 25) ? (
+            <SettingsRow
+              icon="sparkle"
+              label={`Nata Wrapped ${new Date().getFullYear()}`}
+              onPress={() => navigation.navigate("Wrapped")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : null}
           {!user?.verified ? (
             <SettingsRow
               icon="shield"

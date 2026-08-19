@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
+import ChallengeBadgeChips from "../components/ChallengeBadgeChips";
 import InterestChips from "../components/InterestChips";
 import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
@@ -190,6 +191,7 @@ export default function ProfileScreen({ navigation }) {
               {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
 
               <InterestChips interests={user?.interests} style={styles.interestChips} />
+              <ChallengeBadgeChips badges={user?.seasonalBadges} style={styles.interestChips} />
 
               {user?.location?.city ? (
                 <View style={styles.locationRow}>

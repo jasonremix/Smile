@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import ScreenHeader from "../components/ScreenHeader";
-import { getAppStats } from "../services/adminService";
+import { computeRetentionCohorts, getAppStats } from "../services/adminService";
 import { getRecentCallStats } from "../services/callService";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -27,6 +27,7 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 export default function FounderStatsScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [callStats, setCallStats] = useState(null);
+  const [cohorts, setCohorts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,6 +43,12 @@ export default function FounderStatsScreen({ navigation }) {
       setCallStats(c);
     } catch (e) {
       // Sprachanrufe (Beta) - Statistik ist ein Zusatz, kein Blocker.
+    }
+    try {
+      const r = await computeRetentionCohorts();
+      setCohorts(r);
+    } catch (e) {
+      // Kohorten-Analyse ist ein Zusatz, kein Blocker.
     }
   };
 
@@ -95,6 +102,28 @@ export default function FounderStatsScreen({ navigation }) {
           </>
         ) : null}
 
+        {cohorts && cohorts.length > 0 ? (
+          <>
+            <Text style={styles.sectionLabel}>Kohorten-Rückkehrquote (nach Registrierungswoche)</Text>
+            <Text style={styles.cohortNote}>
+              Basiert nur auf Aktivität seit Einführung dieser Funktion - keine rückwirkenden Daten
+              für Konten, die sich seitdem nicht erneut angemeldet haben.
+            </Text>
+            {cohorts.map((c) => (
+              <View key={c.week.toISOString()} style={styles.cohortRow}>
+                <Text style={styles.cohortWeek}>
+                  {c.week.toLocaleDateString("de-DE")} · {c.total} neu
+                </Text>
+                <View style={styles.cohortPctRow}>
+                  <Text style={styles.cohortPct}>Tag 1: {c.day1Pct}%</Text>
+                  <Text style={styles.cohortPct}>Tag 7: {c.day7Pct}%</Text>
+                  <Text style={styles.cohortPct}>Tag 30: {c.day30Pct}%</Text>
+                </View>
+              </View>
+            ))}
+          </>
+        ) : null}
+
         <Text style={styles.footnote}>Zum Aktualisieren nach unten ziehen.</Text>
       </ScrollView>
     </View>
@@ -140,6 +169,32 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     ...typography.caption,
     marginTop: 4,
+  },
+  cohortNote: {
+    color: colors.textMuted,
+    ...typography.caption,
+    lineHeight: 16,
+    marginBottom: spacing.sm,
+  },
+  cohortRow: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  cohortWeek: {
+    color: colors.text,
+    ...typography.subhead,
+    marginBottom: 6,
+  },
+  cohortPctRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  cohortPct: {
+    color: colors.creator,
+    fontSize: 12.5,
+    fontWeight: "700",
   },
   footnote: {
     color: colors.textMuted,

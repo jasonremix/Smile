@@ -206,6 +206,31 @@ export async function markChatRead(chatId, uid) {
   await setDoc(doc(db, "chats", chatId), { lastReadAt: { [uid]: serverTimestamp() } }, { merge: true });
 }
 
+// Gemeinsames Streak-Ziel (siehe firestore.rules: sharedGoalDays/-Status/
+// -ProposedBy) - eine Person schlaegt vor, die andere nimmt an/lehnt ab.
+// "reached" wird clientseitig gesetzt, sobald streakCount >= sharedGoalDays
+// erreicht (siehe ChatScreen.js), kein Cloud-Function-Trigger noetig.
+export async function proposeSharedGoal(chatId, uid, days) {
+  await updateDoc(doc(db, "chats", chatId), {
+    sharedGoalDays: days,
+    sharedGoalStatus: "proposed",
+    sharedGoalProposedBy: uid,
+  });
+}
+
+export async function respondToSharedGoal(chatId, accept) {
+  await updateDoc(doc(db, "chats", chatId), {
+    sharedGoalStatus: accept ? "active" : "declined",
+  });
+}
+
+export async function markSharedGoalReached(chatId) {
+  await updateDoc(doc(db, "chats", chatId), {
+    sharedGoalStatus: "reached",
+    sharedGoalReachedAt: serverTimestamp(),
+  });
+}
+
 export function listenChat(chatId, callback) {
   return onSnapshot(doc(db, "chats", chatId), (snap) => {
     callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);

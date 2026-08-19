@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
+import ChallengeBadgeChips from "../components/ChallengeBadgeChips";
 import InterestChips from "../components/InterestChips";
 import PostCard from "../components/PostCard";
 import { PostCardSkeletonList } from "../components/PostCardSkeleton";
@@ -156,6 +157,7 @@ export default function UserProfileScreen({ route, navigation }) {
           {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
           <InterestChips interests={profile.interests} style={styles.interestChips} />
+          <ChallengeBadgeChips badges={profile.seasonalBadges} style={styles.interestChips} />
 
           {profile.location?.city ? (
             <View style={styles.locationRow}>

@@ -4,6 +4,7 @@ import {
   collection,
   collectionGroup,
   doc,
+  increment,
   onSnapshot,
   orderBy,
   query,
@@ -28,6 +29,7 @@ export async function postStory({
   visibility = "friends",
   visibleTo = [],
   filter,
+  poll,
 }) {
   const mediaUrl = await uploadMedia(localUri, "stories", uid, mediaType);
   await addDoc(collection(db, "users", uid, "stories"), {
@@ -42,10 +44,31 @@ export async function postStory({
     visibleTo: visibility === "custom" ? visibleTo : [],
     createdAt: serverTimestamp(),
     expiresAtMs: Date.now() + STORY_LIFETIME_MS,
+    ...(poll ? { pollQuestion: poll.question, pollOptions: poll.options } : {}),
   });
 
   // Nata Score: +4 fuers Teilen eines Moments.
   await bumpNataScore(uid, 4, "Moment geteilt");
+}
+
+// Umfrage-Sticker (siehe pollVotes-Subcollection in firestore.rules) - eine
+// Stimme pro Person, Dokument-ID = eigene uid verhindert Doppel-Vote.
+// pollVotes auf dem Story-Dokument selbst ist der aggregierte Zaehler
+// (increment(), analog zu reactions auf posts).
+export async function voteInStoryPoll(ownerId, storyId, uid, optionIndex) {
+  await setDoc(doc(db, "users", ownerId, "stories", storyId, "pollVotes", uid), {
+    optionIndex,
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db, "users", ownerId, "stories", storyId), {
+    [`pollVotes.${optionIndex}`]: increment(1),
+  });
+}
+
+export function listenMyPollVote(ownerId, storyId, uid, callback) {
+  return onSnapshot(doc(db, "users", ownerId, "stories", storyId, "pollVotes", uid), (snap) => {
+    callback(snap.exists() ? snap.data().optionIndex : null);
+  });
 }
 
 // Beobachtet alle Storys von Freunden (inkl. eigener) ueber eine collectionGroup-Abfrage.

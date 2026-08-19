@@ -65,6 +65,26 @@ service cloud.firestore {
         && (!('fire' in m) || (m.fire is int && m.fire >= 0));
     }
 
+    // Stimmen-Zaehler fuer Umfrage-Sticker in Momenten (siehe stories/{storyId}
+    // unten) - maximal 4 Optionen, analog zur festen Reaktionsliste oben statt
+    // eines generischen, schwerer pruefbaren Feldes.
+    function isValidPollVotesMap(m) {
+      return m is map
+        && (!('0' in m) || (m['0'] is int && m['0'] >= 0))
+        && (!('1' in m) || (m['1'] is int && m['1'] >= 0))
+        && (!('2' in m) || (m['2'] is int && m['2'] >= 0))
+        && (!('3' in m) || (m['3'] is int && m['3'] >= 0));
+    }
+
+    // Ein Beitrag darf sich nur einer Challenge zuordnen, die es wirklich
+    // gibt UND die gerade laeuft - verhindert, dass jemand einen laengst
+    // abgelaufenen oder frei erfundenen Tag eintraegt (siehe challenges/
+    // weiter unten, Dokument-ID = Tag-Slug).
+    function isValidChallengeTag(tag) {
+      let challenge = get(/databases/$(database)/documents/challenges/$(tag)).data;
+      return challenge.startAt <= request.time && challenge.endAt >= request.time;
+    }
+
     // Serverseitige Haelfte der automatischen Inhaltspruefung (siehe
     // src/utils/contentFilter.js fuer die clientseitige Vorab-Pruefung mit
     // Leetspeak-Normalisierung und URL-/Kontakt-Heuristiken - das laesst
@@ -285,6 +305,48 @@ service cloud.firestore {
           || (request.resource.data.goals is list
               && request.resource.data.goals.size() <= 10)
         )
+        // Echtes Aktivitaets-Signal fuer die Gruender-Kohorten-Analyse (siehe
+        // FounderStatsScreen) - bewusst kein Firebase-Auth-Zeitstempel (der
+        // ist clientseitig nur fuer die eigene Person abrufbar, nicht fuer
+        // eine Liste aller Nutzer:innen), sondern ein eigenes, echtes Feld,
+        // das beim App-Start selbst geschrieben wird. Nur die eigene Person
+        // darf es setzen, kein Vorteil durch Faelschen, daher nur Typ-Check.
+        && (
+          !('lastActiveAt' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.lastActiveAt is timestamp
+        )
+        // Merkt sich, fuer welches Jahr die eigene Person das Nata-Wrapped
+        // schon gesehen hat (siehe WrappedScreen.js) - rein privat, verhindert
+        // nur eine wiederholte Anzeige bei der eigenen Person selbst.
+        && (
+          !('wrappedSeenYear' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.wrappedSeenYear is int
+        )
+        // Woechentlicher Punktestand-Schnappschuss fuer das Leaderboard
+        // (siehe leaderboardService.js) - bewusst KEINE Listen-Abfrage ueber
+        // fremde scoreEvents-Subcollections (Firestore kann exists()/get()-
+        // Aufrufe in Regeln nicht fuer Listen-Anfragen auswerten, nur fuer
+        // Einzeldokument-Zugriffe - empirisch waehrend der Regel-Tests
+        // bestaetigt). Stattdessen ein simpler, selbst geschriebener
+        // Schnappschuss auf dem ohnehin oeffentlich lesbaren users-Dokument.
+        && (
+          !('scoreSnapshotAt' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.scoreSnapshotAt is timestamp
+        )
+        && (
+          !('scoreAtSnapshot' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.scoreAtSnapshot is int
+        )
+        // Teilnahme-Abzeichen fuer Challenges (siehe challengeService.js
+        // awardChallengeBadge) - Badge-ID = Challenge-Tag. Selbst geschrieben
+        // statt aus fremden Daten berechnet, damit es auch auf fremden
+        // Profilen sichtbar ist (users/{userId} ist ohnehin oeffentlich
+        // lesbar) - dieselbe Abwaegung wie bei den Feldern oben.
+        && (
+          !('seasonalBadges' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.seasonalBadges is list
+              && request.resource.data.seasonalBadges.size() <= 30)
+        )
       );
 
       allow delete: if isOwner(userId);
@@ -327,7 +389,13 @@ service cloud.firestore {
       // oben). Nur create/read durch die eigene Person, unveraenderlich
       // danach, damit die Historie nicht nachtraeglich "geschoent" wird.
       match /scoreEvents/{eventId} {
-        allow read: if isOwner(userId);
+        // Freunde duerfen mitlesen (nicht nur die eigene Person) - fuer das
+        // woechentliche Leaderboard unter Connections (siehe
+        // leaderboardService.js). nataScore selbst ist ueber users/{userId}
+        // ohnehin schon fuer alle Signed-in-Nutzer:innen sichtbar (siehe
+        // oben) - die Historie hier ist eine kleinere, aehnliche Freigabe,
+        // kein neuer Sichtbarkeits-Sprung.
+        allow read: if isOwner(userId) || isFriendOf(userId);
         allow create: if isOwner(userId)
           && request.resource.data.amount is int
           && request.resource.data.amount > 0
@@ -447,6 +515,19 @@ service cloud.firestore {
           && (
             !('filter' in request.resource.data)
             || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+          )
+          // Umfrage-Sticker (siehe pollVotes-Subcollection unten) - bei der
+          // Aufnahme fest angelegt, danach unveraenderlich (Momente sind
+          // ohnehin ephemer). pollVotes selbst wird erst durch die erste
+          // Stimme angelegt, deshalb hier nicht Teil der Pflichtfelder.
+          && (
+            !('pollQuestion' in request.resource.data)
+            || (request.resource.data.pollQuestion is string
+                && request.resource.data.pollQuestion.size() > 0
+                && request.resource.data.pollQuestion.size() <= 100
+                && request.resource.data.pollOptions is list
+                && request.resource.data.pollOptions.size() >= 2
+                && request.resource.data.pollOptions.size() <= 4)
           );
         // Erlaubt anderen Nutzern, sich als "viewer" einzutragen - dabei darf
         // sich ausschliesslich das viewers-Feld aendern. Zuvor fehlten hier
@@ -474,6 +555,14 @@ service cloud.firestore {
         allow update: if isOwner(userId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived', 'archivedAt'])
           && request.resource.data.archived is bool;
+        // Umfrage-Ergebnis erhoehen: nur wer die Story sehen darf, und nur
+        // das pollVotes-Feld darf sich aendern - die eigentliche
+        // Stimmabgabe (Existenz-Check gegen Doppel-Vote) laeuft ueber die
+        // pollVotes-Subcollection direkt darunter.
+        allow update: if isSignedIn()
+          && canViewStory(userId, storyId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pollVotes'])
+          && isValidPollVotesMap(request.resource.data.pollVotes);
         allow delete: if isOwner(userId);
 
         // Doppel-Tipp-Reaktion (siehe StoryViewerScreen.js) - docId = uid der
@@ -486,6 +575,21 @@ service cloud.firestore {
             && request.resource.data.type in ['heart'];
           allow delete: if isOwner(reactorUid);
           allow update: if false;
+        }
+
+        // Umfrage-Stimme: Dokument-ID = uid, damit pro Person nur eine
+        // Stimme moeglich ist (Existenz-Check verhindert Doppel-Vote) und
+        // final - kein Aendern/Loeschen der eigenen Stimme, dieselbe
+        // Endgueltigkeit wie bei anderen Abstimmungs-Mustern hier im Projekt.
+        match /pollVotes/{voterUid} {
+          allow read: if canViewStory(userId, storyId);
+          allow create: if isOwner(voterUid)
+            && canViewStory(userId, storyId)
+            && request.resource.data.optionIndex is int
+            && request.resource.data.optionIndex >= 0
+            && request.resource.data.optionIndex
+                 < get(/databases/$(database)/documents/users/$(userId)/stories/$(storyId)).data.pollOptions.size();
+          allow update, delete: if false;
         }
       }
 
@@ -668,12 +772,31 @@ service cloud.firestore {
       allow update: if isSignedIn() && request.auth.uid in resource.data.participants
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'participantNames',
-                       'streakCount', 'streakLastDate', 'streakSentToday', 'typing', 'lastReadAt'])
+                       'streakCount', 'streakLastDate', 'streakSentToday', 'typing', 'lastReadAt',
+                       'sharedGoalDays', 'sharedGoalStatus', 'sharedGoalProposedBy', 'sharedGoalReachedAt'])
         && (
           !('streakCount' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.streakCount is int
               && request.resource.data.streakCount >= 0
               && request.resource.data.streakCount <= resource.data.get('streakCount', 0) + 1)
+        )
+        // Gemeinsames Streak-Ziel (siehe ChatScreen.js) - beide Beteiligten
+        // duerfen vorschlagen/annehmen/ablehnen, kein Cloud-Function-Backend
+        // noetig, deshalb nur Typ-/Wertebereich-Pruefung statt exaktem
+        // Zustandsautomaten.
+        && (
+          !('sharedGoalDays' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.sharedGoalDays is int
+              && request.resource.data.sharedGoalDays >= 1
+              && request.resource.data.sharedGoalDays <= 365)
+        )
+        && (
+          !('sharedGoalStatus' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.sharedGoalStatus in ['proposed', 'active', 'declined', 'reached']
+        )
+        && (
+          !('sharedGoalProposedBy' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.sharedGoalProposedBy in resource.data.participants
         );
 
       match /messages/{messageId} {
@@ -1028,7 +1151,48 @@ service cloud.firestore {
           || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
         )
         && request.resource.data.likeCount == 0
-        && request.resource.data.commentCount == 0;
+        && request.resource.data.commentCount == 0
+        // Challenge-Teilnahme (siehe challenges/ weiter unten, Dokument-ID
+        // = Tag-Slug) - nur ein Tag, der wirklich existiert und gerade laeuft.
+        && (
+          !('tag' in request.resource.data)
+          || request.resource.data.tag == null
+          || (request.resource.data.tag is string && isValidChallengeTag(request.resource.data.tag))
+        )
+        // Zitat-/Antwort-Beitrag (siehe QuotePostScreen.js) - reine
+        // Typpruefung, ein geloeschtes Original wird clientseitig sanft
+        // abgefangen (siehe savedPosts-Muster oben).
+        && (
+          !('quotedPostId' in request.resource.data)
+          || request.resource.data.quotedPostId == null
+          || request.resource.data.quotedPostId is string
+        )
+        // Collab-Beitrag: zweite Autoren-Person wird eingeladen, muss den
+        // Beitrag separat per Update annehmen/ablehnen (siehe Update-Regel
+        // unten) - beim Erstellen selbst immer 'pending' und nie die eigene
+        // Person als Mit-Autor.
+        && (
+          !('coAuthorId' in request.resource.data)
+          || request.resource.data.coAuthorId == null
+          || (request.resource.data.coAuthorId is string
+              && request.resource.data.coAuthorId != request.auth.uid
+              && request.resource.data.coAuthorStatus == 'pending')
+        )
+        // Text-/Musik-Sticker beim Aufnehmen (siehe CreatePostScreen.js) -
+        // reine Anzeige-Overlays auf dem Foto (keine Bildbearbeitung noetig,
+        // keine neue native Bibliothek), deshalb nur Text-/Laengen-Pruefung.
+        && (
+          !('textStickers' in request.resource.data)
+          || request.resource.data.textStickers == null
+          || (request.resource.data.textStickers is list
+              && request.resource.data.textStickers.size() <= 5)
+        )
+        && (
+          !('musicSticker' in request.resource.data)
+          || request.resource.data.musicSticker == null
+          || (request.resource.data.musicSticker is string
+              && request.resource.data.musicSticker.size() <= 60)
+        );
       allow update: if isSignedIn()
         && (
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
@@ -1047,6 +1211,12 @@ service cloud.firestore {
           // (ein Typ -1, ein anderer +1), likeCount bleibt gleich.
           || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
             && isValidReactionsMap(request.resource.data.reactions))
+          // Collab-Einladung annehmen/ablehnen: nur die eingeladene Person,
+          // nur der Status, nie die eingereichten Inhalte des Beitrags.
+          || (request.auth.uid == resource.data.coAuthorId
+            && resource.data.coAuthorStatus == 'pending'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coAuthorStatus'])
+            && request.resource.data.coAuthorStatus in ['accepted', 'declined'])
         );
       allow delete: if isOwner(resource.data.authorId);
 
@@ -1075,6 +1245,36 @@ service cloud.firestore {
         allow delete: if isOwner(resource.data.authorId);
         allow update: if false;
       }
+    }
+
+    // Zeitlich begrenzte Themen-Challenges (siehe challengeService.js) -
+    // Dokument-ID = Tag-Slug, damit posts/{postId}.tag direkt per exists()/
+    // get() dagegen geprueft werden kann (siehe isValidChallengeTag oben),
+    // ohne eine zusaetzliche Query. Nur der Gruender legt Challenges an -
+    // eine offene Beta-Funktion, kein Nutzer-generierter Inhalt.
+    match /challenges/{tag} {
+      allow read: if isSignedIn();
+      allow create, update: if isFounder()
+        && request.resource.data.tag == tag
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 60
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 300
+        && request.resource.data.startAt is timestamp
+        && request.resource.data.endAt is timestamp
+        && request.resource.data.endAt > request.resource.data.startAt;
+      allow delete: if isFounder();
+    }
+
+    // Einfache Rollout-Schalter fuer neue Features (siehe adminService.js/
+    // FounderFeatureFlagsScreen.js) - rein clientseitig ausgewertet (kein
+    // Cloud-Function-Backend), reicht aber, um ein Feature bei Bedarf schnell
+    // fuer alle auszublenden, ohne einen neuen OTA-Publish abzuwarten.
+    match /featureFlags/{flagId} {
+      allow read: if isSignedIn();
+      allow write: if isFounder()
+        && request.resource.data.enabled is bool;
     }
   }
 }

@@ -43,6 +43,11 @@ export async function createPost({
   text,
   localMediaUri,
   filter,
+  tag,
+  quotedPostId,
+  coAuthorId,
+  textStickers,
+  musicSticker,
 }) {
   // "stories" statt eines eigenen "posts"-Pfads: das Service-Konto dieser
   // Session hat keine Berechtigung, eine NEUE Storage-Regeln-Freigabe
@@ -62,10 +67,53 @@ export async function createPost({
     filter: mediaUrl ? filter || "none" : null,
     likeCount: 0,
     commentCount: 0,
+    tag: tag || null,
+    quotedPostId: quotedPostId || null,
+    ...(coAuthorId ? { coAuthorId, coAuthorStatus: "pending" } : {}),
+    textStickers: textStickers && textStickers.length > 0 ? textStickers : null,
+    musicSticker: musicSticker || null,
     createdAt: serverTimestamp(),
   });
   await bumpNataScore(authorId, 6, "Beitrag gepostet");
   return postRef.id;
+}
+
+// Fuer Zitat-Beitraege (siehe QuotePostScreen.js) - ein geloeschtes Original
+// wird sanft abgefangen (null statt Fehler), damit der zitierende Beitrag
+// trotzdem normal angezeigt wird.
+export async function getPost(postId) {
+  const snap = await getDoc(doc(db, "posts", postId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+// Beitraege, bei denen die eigene Person als Mit-Autor eingeladen wurde
+// (siehe firestore.rules: coAuthorId/coAuthorStatus) - eigene Query statt
+// im normalen Feed versteckt, da eine "pending"-Einladung erst nach
+// Annahme auf dem eigenen Profil auftauchen soll.
+export function listenMyCollabInvites(uid, callback) {
+  const q = query(
+    collection(db, "posts"),
+    where("coAuthorId", "==", uid),
+    where("coAuthorStatus", "==", "pending")
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+export function listenMyAcceptedCollabPosts(uid, callback) {
+  const q = query(
+    collection(db, "posts"),
+    where("coAuthorId", "==", uid),
+    where("coAuthorStatus", "==", "accepted")
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+export async function respondToCollabInvite(postId, accept) {
+  await updateDoc(doc(db, "posts", postId), { coAuthorStatus: accept ? "accepted" : "declined" });
 }
 
 // "Fuer dich": neueste Beitraege zuerst, seitenweise.

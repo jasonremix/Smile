@@ -13,7 +13,14 @@ import Icon from "../components/Icon";
 import ReportModal from "../components/ReportModal";
 import { useAuth } from "../context/AuthContext";
 import { reportContent } from "../services/moderationService";
-import { archiveStory, markStoryViewed, reactToStory, unarchiveStory } from "../services/storyService";
+import {
+  archiveStory,
+  listenMyPollVote,
+  markStoryViewed,
+  reactToStory,
+  unarchiveStory,
+  voteInStoryPoll,
+} from "../services/storyService";
 import { hapticLight } from "../utils/haptics";
 import { colors } from "../theme/colors";
 
@@ -33,6 +40,7 @@ export default function StoryViewerScreen({ route, navigation }) {
   const tapTimerRef = useRef(null);
   const heartScale = useRef(new Animated.Value(0)).current;
   const [heartVisible, setHeartVisible] = useState(false);
+  const [myPollVote, setMyPollVote] = useState(null);
 
   const items = group.items;
   const current = items[index];
@@ -112,6 +120,21 @@ export default function StoryViewerScreen({ route, navigation }) {
     return () => clearTimeout(timerRef.current);
   }, [index]);
 
+  useEffect(() => {
+    if (!current?.pollOptions) {
+      setMyPollVote(null);
+      return;
+    }
+    const unsubscribe = listenMyPollVote(group.ownerId, current.id, user.uid, setMyPollVote);
+    return unsubscribe;
+  }, [current?.id]);
+
+  const handleVote = (optionIndex) => {
+    if (myPollVote != null || !current) return;
+    setMyPollVote(optionIndex);
+    voteInStoryPoll(group.ownerId, current.id, user.uid, optionIndex).catch(() => setMyPollVote(null));
+  };
+
   const goNext = () => {
     if (index < items.length - 1) {
       setIndex((i) => i + 1);
@@ -181,6 +204,34 @@ export default function StoryViewerScreen({ route, navigation }) {
           <View style={styles.tapZoneRight} />
         </TouchableWithoutFeedback>
       </View>
+
+      {current.pollOptions ? (
+        <View style={styles.pollCard} pointerEvents="box-none">
+          <Text style={styles.pollQuestion}>{current.pollQuestion}</Text>
+          {current.pollOptions.map((opt, i) => {
+            const votes = current.pollVotes || {};
+            const total = Object.values(votes).reduce((s, v) => s + (v || 0), 0);
+            const count = votes[String(i)] || 0;
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            const voted = myPollVote != null;
+            const isMine = myPollVote === i;
+            return (
+              <TouchableOpacity
+                key={i}
+                style={[styles.pollOption, isMine && styles.pollOptionMine]}
+                onPress={() => handleVote(i)}
+                disabled={voted}
+              >
+                {voted ? (
+                  <View style={[styles.pollOptionFill, { width: `${pct}%` }]} />
+                ) : null}
+                <Text style={styles.pollOptionText}>{opt}</Text>
+                {voted ? <Text style={styles.pollOptionPct}>{pct}%</Text> : null}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : null}
 
       {heartVisible ? (
         <Animated.View
@@ -309,6 +360,51 @@ const styles = StyleSheet.create({
   },
   tapZoneRight: {
     flex: 2,
+  },
+  pollCard: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 100,
+    zIndex: 4,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: 18,
+    padding: 16,
+  },
+  pollQuestion: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  pollOption: {
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.6)",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  pollOptionMine: {
+    borderColor: "#fff",
+  },
+  pollOptionFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(147, 51, 234, 0.55)",
+  },
+  pollOptionText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  pollOptionPct: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 13,
   },
   heartBurst: {
     position: "absolute",

@@ -90,6 +90,13 @@ export default function FounderDashboardScreen({ navigation }) {
       subtitle: "Nachricht an alle Nutzer:innen",
       onPress: () => navigation.navigate("FounderAnnouncement"),
     },
+    {
+      key: "featureFlags",
+      icon: "sparkle",
+      title: "Feature-Schalter",
+      subtitle: "Neue Beta-Features im Überblick",
+      onPress: () => navigation.navigate("FounderFeatureFlags"),
+    },
   ];
 
   return (

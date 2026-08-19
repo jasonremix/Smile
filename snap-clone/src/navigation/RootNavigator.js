@@ -21,6 +21,8 @@ import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import CallHistoryScreen from "../screens/CallHistoryScreen";
 import CallScreen from "../screens/CallScreen";
 import CameraScreen from "../screens/CameraScreen";
+import ChallengeFeedScreen from "../screens/ChallengeFeedScreen";
+import ChallengesScreen from "../screens/ChallengesScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
 import CircleEditScreen from "../screens/CircleEditScreen";
@@ -39,12 +41,14 @@ import CreatorRequestScreen from "../screens/CreatorRequestScreen";
 import CreatorStudioScreen from "../screens/CreatorStudioScreen";
 import FounderCreatorRequestsScreen from "../screens/FounderCreatorRequestsScreen";
 import FounderDashboardScreen from "../screens/FounderDashboardScreen";
+import FounderFeatureFlagsScreen from "../screens/FounderFeatureFlagsScreen";
 import FounderReportsScreen from "../screens/FounderReportsScreen";
 import FounderStatsScreen from "../screens/FounderStatsScreen";
 import FounderTicketsScreen from "../screens/FounderTicketsScreen";
 import FounderUsersScreen from "../screens/FounderUsersScreen";
 import FounderVerificationRequestsScreen from "../screens/FounderVerificationRequestsScreen";
 import GroupChatScreen from "../screens/GroupChatScreen";
+import LeaderboardScreen from "../screens/LeaderboardScreen";
 import LegalScreen from "../screens/LegalScreen";
 import MomentsArchiveScreen from "../screens/MomentsArchiveScreen";
 import MyStatsScreen from "../screens/MyStatsScreen";
@@ -65,6 +69,7 @@ import UserProfileScreen from "../screens/UserProfileScreen";
 import VerificationRequestScreen from "../screens/VerificationRequestScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
 import StoryViewerScreen from "../screens/StoryViewerScreen";
+import WrappedScreen from "../screens/WrappedScreen";
 import { colors } from "../theme/colors";
 import AuthNavigator from "./AuthNavigator";
 import MainTabNavigator from "./MainTabNavigator";
@@ -380,6 +385,31 @@ export default function RootNavigator() {
             name="CreatorStudio"
             component={CreatorStudioScreen}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Challenges"
+            component={ChallengesScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ChallengeFeed"
+            component={ChallengeFeedScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Leaderboard"
+            component={LeaderboardScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderFeatureFlags"
+            component={FounderFeatureFlagsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Wrapped"
+            component={WrappedScreen}
+            options={{ headerShown: false, presentation: "fullScreenModal" }}
           />
           <Stack.Screen
             name="Referral"

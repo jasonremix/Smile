@@ -4,6 +4,7 @@ import {
   FlatList,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -32,6 +33,9 @@ export default function SnapPreviewScreen({ route, navigation }) {
   const [storyVisibility, setStoryVisibility] = useState("friends"); // "friends" | "custom" | "close"
   const [sending, setSending] = useState(false);
   const [filter, setFilter] = useState(initialFilter || "none");
+  const [showPoll, setShowPoll] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
 
   useEffect(() => {
     const unsubscribe = listenFriends(user.uid, setFriends);
@@ -72,6 +76,12 @@ export default function SnapPreviewScreen({ route, navigation }) {
   const isCustomVisibility = storyVisibility === "custom" || storyVisibility === "close";
   const showFriendPicker = !isStory || isCustomVisibility;
 
+  const validPollOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
+  const pollPayload =
+    showPoll && pollQuestion.trim() && validPollOptions.length >= 2
+      ? { question: pollQuestion.trim().slice(0, 100), options: validPollOptions.slice(0, 4) }
+      : null;
+
   const handleSend = async () => {
     if (isStory && isCustomVisibility && selected.length === 0) return;
     if (!isStory && selected.length === 0) return;
@@ -88,6 +98,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
           visibility: isCustomVisibility ? "custom" : storyVisibility,
           visibleTo: isCustomVisibility ? selected : [],
           filter,
+          poll: pollPayload,
         });
       } else {
         await sendSnap({
@@ -198,6 +209,47 @@ export default function SnapPreviewScreen({ route, navigation }) {
                 Enge Freunde
               </Text>
             </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {isStory ? (
+          <TouchableOpacity style={styles.pollToggle} onPress={() => setShowPoll((v) => !v)}>
+            <Icon name="chat" size={14} color={colors.creator} />
+            <Text style={styles.pollToggleText}>
+              {showPoll ? "Umfrage entfernen" : "Umfrage hinzufügen"}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {isStory && showPoll ? (
+          <View style={styles.pollBox}>
+            <TextInput
+              style={styles.pollInput}
+              placeholder="Frage (z.B. Pizza oder Pasta?)"
+              placeholderTextColor={colors.textMuted}
+              value={pollQuestion}
+              onChangeText={(t) => setPollQuestion(t.slice(0, 100))}
+            />
+            {pollOptions.map((opt, i) => (
+              <TextInput
+                key={i}
+                style={styles.pollInput}
+                placeholder={`Option ${i + 1}`}
+                placeholderTextColor={colors.textMuted}
+                value={opt}
+                onChangeText={(t) =>
+                  setPollOptions((prev) => prev.map((o, idx) => (idx === i ? t.slice(0, 40) : o)))
+                }
+              />
+            ))}
+            {pollOptions.length < 4 ? (
+              <TouchableOpacity
+                style={styles.addOptionButton}
+                onPress={() => setPollOptions((prev) => [...prev, ""])}
+              >
+                <Text style={styles.addOptionText}>+ Weitere Option</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
 
@@ -347,6 +399,40 @@ const styles = StyleSheet.create({
   },
   visibilityTextActive: {
     color: colors.text,
+  },
+  pollToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 12,
+  },
+  pollToggleText: {
+    color: colors.creator,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  pollBox: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  pollInput: {
+    backgroundColor: colors.surfaceElevated,
+    color: colors.text,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 14,
+  },
+  addOptionButton: {
+    alignSelf: "flex-start",
+  },
+  addOptionText: {
+    color: colors.creator,
+    fontSize: 12,
+    fontWeight: "600",
   },
   circleRow: {
     marginBottom: 12,

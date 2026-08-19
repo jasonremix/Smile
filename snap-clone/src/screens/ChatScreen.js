@@ -26,6 +26,9 @@ import {
   listenMessages,
   listenReactions,
   markChatRead,
+  markSharedGoalReached,
+  proposeSharedGoal,
+  respondToSharedGoal,
   sendMessage,
   sendVoiceMessage,
   setTypingStatus,
@@ -75,6 +78,7 @@ export default function ChatScreen({ route, navigation }) {
   const [otherAvatarColor, setOtherAvatarColor] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [scheduledFor, setScheduledFor] = useState(null);
+  const [sharedGoal, setSharedGoal] = useState(null);
   const listRef = useRef(null);
   const chatIdRef = useRef(chatId);
   const isTypingRef = useRef(false);
@@ -176,8 +180,21 @@ export default function ChatScreen({ route, navigation }) {
       markChatRead(id, user.uid).catch(() => {});
       unsubscribeMessages = listenMessages(id, setMessages);
       unsubscribeChat = listenChat(id, (chat) => {
-        setStreakCount(chat && isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0);
+        const activeStreak = chat && isStreakActive(chat.streakLastDate) ? chat.streakCount || 0 : 0;
+        setStreakCount(activeStreak);
         setOtherIsTyping(!!chat?.typing?.[otherUser.id]);
+        if (chat?.sharedGoalStatus) {
+          setSharedGoal({
+            days: chat.sharedGoalDays,
+            status: chat.sharedGoalStatus,
+            proposedBy: chat.sharedGoalProposedBy,
+          });
+          if (chat.sharedGoalStatus === "active" && activeStreak >= chat.sharedGoalDays) {
+            markSharedGoalReached(id).catch(() => {});
+          }
+        } else {
+          setSharedGoal(null);
+        }
       });
     })();
 
@@ -331,12 +348,65 @@ export default function ChatScreen({ route, navigation }) {
     setText("");
   };
 
+  const handleProposeGoal = (days) => {
+    proposeSharedGoal(chatIdRef.current, user.uid, days).catch(() => {});
+  };
+
+  const handleRespondGoal = (accept) => {
+    respondToSharedGoal(chatIdRef.current, accept).catch(() => {});
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={90}
     >
+      {sharedGoal?.status === "proposed" ? (
+        sharedGoal.proposedBy === user.uid ? (
+          <View style={styles.goalBanner}>
+            <Text style={styles.goalBannerText}>
+              Ziel vorgeschlagen: {sharedGoal.days} Tage Streak halten - wartet auf Antwort.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.goalBanner}>
+            <Text style={styles.goalBannerText}>
+              {otherUser.name} schlägt vor: {sharedGoal.days} Tage Streak halten.
+            </Text>
+            <View style={styles.goalBannerActions}>
+              <TouchableOpacity onPress={() => handleRespondGoal(true)}>
+                <Text style={styles.goalBannerAccept}>Annehmen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleRespondGoal(false)}>
+                <Text style={styles.goalBannerDecline}>Ablehnen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )
+      ) : sharedGoal?.status === "active" ? (
+        <View style={styles.goalBanner}>
+          <Text style={styles.goalBannerText}>
+            Gemeinsames Ziel: {streakCount}/{sharedGoal.days} Tage Streak 🔥
+          </Text>
+        </View>
+      ) : sharedGoal?.status === "reached" ? (
+        <View style={styles.goalBanner}>
+          <Text style={styles.goalBannerText}>🎉 Gemeinsames Ziel von {sharedGoal.days} Tagen erreicht!</Text>
+        </View>
+      ) : streakCount >= 3 ? (
+        <View style={styles.goalBanner}>
+          <Text style={styles.goalBannerText}>Gemeinsames Streak-Ziel setzen?</Text>
+          <View style={styles.goalBannerActions}>
+            {[7, 30, 100].map((d) => (
+              <TouchableOpacity key={d} onPress={() => handleProposeGoal(d)}>
+                <Text style={styles.goalBannerAccept}>{d}d</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       <FlatList
         ref={listRef}
         data={messages}
@@ -435,6 +505,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  goalBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.creatorSoft,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  goalBannerText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 12.5,
+    fontWeight: "600",
+  },
+  goalBannerActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  goalBannerAccept: {
+    color: colors.creator,
+    fontWeight: "800",
+    fontSize: 12.5,
+  },
+  goalBannerDecline: {
+    color: colors.textMuted,
+    fontWeight: "700",
+    fontSize: 12.5,
   },
   headerTitleRow: {
     flexDirection: "row",

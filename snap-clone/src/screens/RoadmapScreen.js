@@ -12,6 +12,9 @@ import { typography } from "../theme/typography";
 // echten, aktuellen Backlog - ohne feste Datumszusagen, die wir als
 // Beta-Team nicht garantieren koennen.
 const SHIPPED = [
+  "Neues, großes Beta-Paket: Challenges (zeitlich begrenzte Themen mit eigenem Feed und Teilnahme-Abzeichen), Umfrage-Sticker in Momenten, wöchentliches Leaderboard unter Connections, gemeinsame Streak-Ziele im Chat, Text-/Musik-Sticker beim Aufnehmen, Collab-Beiträge zu zweit, Zitat-Beiträge - alle aus echten Daten, ohne neue native Installation",
+  "Nata Wrapped: ab dem 25. September jedes Jahr ein persönlicher Jahresrückblick aus echten Daten, mit jedes Jahr neuem Farb-Stil und Teilen-Funktion",
+  "Gründer: Kohorten-Rückkehrquote (Tag 1/7/30) und zentrale Feature-Schalter für neue Beta-Funktionen",
   "Creator-Modus (Beta): eigenes goldenes Abzeichen, Antrag über die Einstellungen, Gründer prüft und entscheidet - wer angenommen wird, bekommt ein eigenes Creator-Studio mit echten Statistiken zu den eigenen Beiträgen (Reaktionen, Kommentare, meistbeachteter Beitrag)",
   "Sprachanrufe direkt in der App (Beta): Anrufen-Button im Chat und auf Profilen von Connections, eigener Anrufverlauf - braucht die neueste Version aus dem Beta-Kanal (neues natives Modul, kein reines Update)",
   "Eigene Kreise: beliebig viele selbst benannte Gruppen (z.B. Familie, Arbeit, Gaming) zum gezielten Teilen von Momenten - zusätzlich zur festen \"Enge Freunde\"-Liste",
@@ -54,6 +57,21 @@ const SHIPPED = [
 ];
 
 const PLANNED = [
+  {
+    title: "GIF-Suche beim Aufnehmen",
+    detail:
+      "Bewusst nicht umgesetzt - braucht einen externen API-Key (z.B. Giphy/Tenor), den nur der Gruender besorgen kann.",
+  },
+  {
+    title: "Freihand-Zeichnen-Tool beim Aufnehmen",
+    detail:
+      "Bewusst nicht umgesetzt - bräuchte eine neue native Grafik-Bibliothek und damit einen neuen Build (wie bei den Anrufen, die iOS-Build-Zugang blockiert weiterhin einen sofortigen neuen Build).",
+  },
+  {
+    title: "Feature-Schalter steuern noch keine UI-Sichtbarkeit",
+    detail:
+      "Die Schalter im Gründer-Bereich existieren und speichern echte Werte - sie blenden aktuell aber noch keine einzelnen App-Bereiche aus, sondern dienen als zentraler Statusüberblick.",
+  },
   {
     title: "Push-Benachrichtigungen",
     detail:

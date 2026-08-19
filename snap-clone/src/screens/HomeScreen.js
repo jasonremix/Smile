@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BetaCountdownBanner from "../components/BetaCountdownBanner";
 import EmptyState from "../components/EmptyState";
@@ -11,16 +12,20 @@ import { PostCardSkeletonList } from "../components/PostCardSkeleton";
 import StatusStrip from "../components/StatusStrip";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
+import { db } from "../config/firebase";
 import { useUnreadChats } from "../hooks/useUnreadChats";
 import { useUnseenAnnouncementCount } from "../hooks/useUnseenAnnouncementCount";
 import { listenFriends, listenIncomingRequests } from "../services/friendService";
+import { ensureWeeklySnapshot } from "../services/leaderboardService";
 import { listenUnreadNotificationCount } from "../services/notificationService";
 import {
   fetchMoreFollowingPosts,
   fetchMorePosts,
   listenFeed,
   listenFollowingFeed,
+  listenMyCollabInvites,
   POSTS_PAGE_SIZE,
+  respondToCollabInvite,
 } from "../services/postService";
 import { listenScoreEventsSince } from "../services/userService";
 import { colors } from "../theme/colors";
@@ -69,6 +74,34 @@ export default function HomeScreen({ navigation }) {
     const unsubscribe = listenIncomingRequests(user.uid, setIncomingRequests);
     return unsubscribe;
   }, [user.uid]);
+
+  const [collabInvites, setCollabInvites] = useState([]);
+  useEffect(() => {
+    const unsubscribe = listenMyCollabInvites(user.uid, setCollabInvites);
+    return unsubscribe;
+  }, [user.uid]);
+
+  // Einmalig pro Home-Aufruf: echtes Aktivitaets-Signal fuer die
+  // Gruender-Kohorten-Analyse (siehe FounderStatsScreen.js) und der
+  // woechentliche Punktestand-Schnappschuss fuers Leaderboard (siehe
+  // leaderboardService.js) - beide bewusst hier statt in AuthContext, damit
+  // sie nur bei echter App-Nutzung (nicht bei jedem Profil-Snapshot)
+  // aktualisiert werden.
+  useEffect(() => {
+    updateDoc(doc(db, "users", user.uid), { lastActiveAt: serverTimestamp() }).catch(() => {});
+    ensureWeeklySnapshot(user.uid, user.nataScore).catch(() => {});
+  }, [user.uid]);
+
+  // Nata Wrapped: einmal jaehrlich ab dem 25. September, nur wenn die eigene
+  // Person es fuer dieses Jahr noch nicht gesehen hat (wrappedSeenYear).
+  useEffect(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const wrappedLive = now >= new Date(year, 8, 25);
+    if (wrappedLive && user.wrappedSeenYear !== year) {
+      navigation.navigate("Wrapped");
+    }
+  }, [user.uid, user.wrappedSeenYear]);
 
   useEffect(() => {
     const unsubscribe = listenScoreEventsSince(user.uid, startOfWeek(), setWeeklyEvents);
@@ -211,6 +244,23 @@ export default function HomeScreen({ navigation }) {
 
       <BetaCountdownBanner />
 
+      {collabInvites.map((invite) => (
+        <View key={invite.id} style={styles.collabInviteBanner}>
+          <Icon name="people" size={14} color={colors.creator} />
+          <Text style={styles.collabInviteText} numberOfLines={2}>
+            {invite.authorName} möchte gemeinsam posten: „{invite.text}"
+          </Text>
+          <View style={styles.collabInviteActions}>
+            <TouchableOpacity onPress={() => respondToCollabInvite(invite.id, true)}>
+              <Text style={styles.collabInviteAccept}>Annehmen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => respondToCollabInvite(invite.id, false)}>
+              <Text style={styles.collabInviteDecline}>Ablehnen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+
       <View style={styles.greetingRow}>
         <View style={styles.greetingTextBlock}>
           <View style={styles.nameRow}>
@@ -318,6 +368,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  collabInviteBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.creatorSoft,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.sm,
+  },
+  collabInviteText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 12.5,
+    fontWeight: "600",
+  },
+  collabInviteActions: {
+    gap: 6,
+    alignItems: "flex-end",
+  },
+  collabInviteAccept: {
+    color: colors.creator,
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  collabInviteDecline: {
+    color: colors.textMuted,
+    fontWeight: "700",
+    fontSize: 12,
   },
   content: {
     paddingHorizontal: spacing.xl,
