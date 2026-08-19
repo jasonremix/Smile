@@ -110,6 +110,7 @@ service cloud.firestore {
       // gesetzt.
       allow create: if isOwner(userId)
         && !('verified' in request.resource.data)
+        && !('isCreator' in request.resource.data)
         && request.resource.data.uid == userId
         && request.resource.data.nataScore == 0
         && request.resource.data.username is string
@@ -135,7 +136,7 @@ service cloud.firestore {
       // aufheben) - sonst nichts an einem fremden Profil.
       allow update: if (
           isFounder()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['restrictedUntil', 'verified'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['restrictedUntil', 'verified', 'isCreator'])
           && (
             !('restrictedUntil' in request.resource.data.diff(resource.data).affectedKeys())
             || request.resource.data.restrictedUntil == null
@@ -145,11 +146,17 @@ service cloud.firestore {
             !('verified' in request.resource.data.diff(resource.data).affectedKeys())
             || request.resource.data.verified is bool
           )
+          && (
+            !('isCreator' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.isCreator is bool
+          )
         ) || (
         isOwner(userId)
-        // "verified" ist auch beim Update fest gesperrt - nur Admin-Zugriff
-        // (Service Account, ausserhalb der Client-Regeln) darf es setzen.
+        // "verified" und "isCreator" sind auch beim Update fest gesperrt -
+        // nur Admin-Zugriff (Service Account, ausserhalb der Client-Regeln)
+        // darf sie setzen.
         && !('verified' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('isCreator' in request.resource.data.diff(resource.data).affectedKeys())
         // verifiedSeen darf die eigene Person nur auf true setzen (einmalige
         // Glueckwunsch-Anzeige quittieren), nie zurueck auf false.
         && (
@@ -876,6 +883,49 @@ service cloud.firestore {
         ||
         // Gruender entscheidet - darf nur Status/Notiz/Zeitpunkt aendern,
         // nie die von der Person eingereichten Inhalte.
+        (isFounder()
+          && resource.data.status == 'pending'
+          && request.resource.data.status in ['approved', 'rejected']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['status', 'founderNote', 'reviewedAt']
+             ))
+      );
+      allow delete: if false;
+    }
+
+    // Creator-Anfragen (Beta-Funktion, siehe CreatorRequestScreen.js/
+    // creatorService.js) - exakt dasselbe Muster wie verificationRequests
+    // oben: feste Dokument-ID = eigene uid, damit "hat diese Person schon
+    // eine Anfrage" ohne Query direkt am Dokumentpfad geprueft werden kann.
+    match /creatorRequests/{uid} {
+      allow read: if isOwner(uid) || isFounder();
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.username is string
+        && request.resource.data.displayName is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.links is list
+        && request.resource.data.links.size() <= 5
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'username', 'displayName', 'reason', 'links', 'status', 'createdAt']
+           );
+      allow update: if (
+        (isOwner(uid) && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.username is string
+          && request.resource.data.displayName is string
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() > 0
+          && request.resource.data.reason.size() <= 500
+          && request.resource.data.links is list
+          && request.resource.data.links.size() <= 5
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['username', 'displayName', 'reason', 'links', 'status', 'createdAt', 'founderNote', 'reviewedAt']
+             ))
+        ||
         (isFounder()
           && resource.data.status == 'pending'
           && request.resource.data.status in ['approved', 'rejected']

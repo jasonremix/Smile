@@ -31,6 +31,10 @@ export const colors = {
   // als reine Textfarbe auf dunklem Hintergrund weiterhin gut lesbar.
   danger: "#dc2626",
   online: "#2ecc71",
+  // Eigener Akzent fuer den Creator-Modus - bewusst warm/gold statt violett,
+  // damit CreatorBadge auf einen Blick von VerifiedBadge unterscheidbar ist.
+  creator: "#F5A524",
+  creatorSoft: "rgba(245, 165, 36, 0.16)",
   bubbleMine: "#8B5CF6",
   bubbleTheirs: "#262626",
 };

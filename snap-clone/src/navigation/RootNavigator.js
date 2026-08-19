@@ -35,6 +35,9 @@ import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import FeedbackScreen from "../screens/FeedbackScreen";
 import FounderAnnouncementScreen from "../screens/FounderAnnouncementScreen";
+import CreatorRequestScreen from "../screens/CreatorRequestScreen";
+import CreatorStudioScreen from "../screens/CreatorStudioScreen";
+import FounderCreatorRequestsScreen from "../screens/FounderCreatorRequestsScreen";
 import FounderDashboardScreen from "../screens/FounderDashboardScreen";
 import FounderReportsScreen from "../screens/FounderReportsScreen";
 import FounderStatsScreen from "../screens/FounderStatsScreen";
@@ -361,6 +364,21 @@ export default function RootNavigator() {
           <Stack.Screen
             name="VerificationRequest"
             component={VerificationRequestScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FounderCreatorRequests"
+            component={FounderCreatorRequestsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreatorRequest"
+            component={CreatorRequestScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreatorStudio"
+            component={CreatorStudioScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen

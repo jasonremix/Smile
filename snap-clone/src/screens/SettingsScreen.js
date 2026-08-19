@@ -109,6 +109,21 @@ export default function SettingsScreen({ navigation }) {
               badge={<BetaBadge style={styles.feedbackBadge} />}
             />
           ) : null}
+          {user?.isCreator ? (
+            <SettingsRow
+              icon="star"
+              label="Creator-Studio"
+              onPress={() => navigation.navigate("CreatorStudio")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : (
+            <SettingsRow
+              icon="star"
+              label="Creator werden"
+              onPress={() => navigation.navigate("CreatorRequest")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          )}
         </SettingsSection>
 
         <Text style={styles.sectionLabel}>Privatsphäre</Text>

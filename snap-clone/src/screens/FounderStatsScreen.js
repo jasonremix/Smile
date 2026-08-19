@@ -11,6 +11,7 @@ import { typography } from "../theme/typography";
 const STAT_META = [
   { key: "userCount", label: "Nutzer:innen" },
   { key: "postCount", label: "Beiträge" },
+  { key: "creatorCount", label: "Creator" },
   { key: "openTicketCount", label: "Offene Tickets" },
   { key: "reportCount", label: "Meldungen (gesamt)" },
   { key: "feedbackCount", label: "Feedback (gesamt)" },

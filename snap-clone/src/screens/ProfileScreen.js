@@ -17,6 +17,7 @@ import NataScoreCard from "../components/NataScoreCard";
 import PostCard from "../components/PostCard";
 import ScreenHeader from "../components/ScreenHeader";
 import StatusEditor from "../components/StatusEditor";
+import CreatorBadge from "../components/CreatorBadge";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { PostCardSkeletonList } from "../components/PostCardSkeleton";
@@ -182,6 +183,7 @@ export default function ProfileScreen({ navigation }) {
               <View style={styles.nameRow}>
                 <Text style={styles.displayName}>{user?.displayName}</Text>
                 {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
+                {user?.isCreator ? <CreatorBadge size={18} style={styles.verifiedBadge} /> : null}
               </View>
               <Text style={styles.username}>@{user?.username}</Text>
 

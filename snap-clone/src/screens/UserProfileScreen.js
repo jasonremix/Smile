@@ -7,6 +7,7 @@ import PostCard from "../components/PostCard";
 import { PostCardSkeletonList } from "../components/PostCardSkeleton";
 import ReportModal from "../components/ReportModal";
 import ScreenHeader from "../components/ScreenHeader";
+import CreatorBadge from "../components/CreatorBadge";
 import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
 import { getChatId } from "../services/chatService";
@@ -148,6 +149,7 @@ export default function UserProfileScreen({ route, navigation }) {
           <View style={styles.nameRow}>
             <Text style={styles.displayName}>{profile.displayName}</Text>
             {profile.verified ? <VerifiedBadge size={18} style={{ marginTop: 2 }} /> : null}
+            {profile.isCreator ? <CreatorBadge size={18} style={{ marginTop: 2 }} /> : null}
           </View>
           <Text style={styles.username}>@{profile.username}</Text>
 

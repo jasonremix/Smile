@@ -4,6 +4,7 @@ import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import ScreenHeader from "../components/ScreenHeader";
 import { getAppStats } from "../services/adminService";
+import { listenPendingCreatorRequests } from "../services/creatorService";
 import { listenPendingVerificationRequests } from "../services/verificationService";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -16,6 +17,7 @@ import { typography } from "../theme/typography";
 export default function FounderDashboardScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [pendingVerifications, setPendingVerifications] = useState([]);
+  const [pendingCreatorRequests, setPendingCreatorRequests] = useState([]);
 
   useEffect(() => {
     getAppStats().then(setStats).catch(() => {});
@@ -23,6 +25,11 @@ export default function FounderDashboardScreen({ navigation }) {
 
   useEffect(() => {
     const unsubscribe = listenPendingVerificationRequests(setPendingVerifications);
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = listenPendingCreatorRequests(setPendingCreatorRequests);
     return unsubscribe;
   }, []);
 
@@ -52,10 +59,19 @@ export default function FounderDashboardScreen({ navigation }) {
       onPress: () => navigation.navigate("FounderVerificationRequests"),
     },
     {
+      key: "creatorRequests",
+      icon: "star",
+      title: "Creator-Anfragen",
+      subtitle: "Beantragten Creator-Modus prüfen",
+      badge: pendingCreatorRequests.length,
+      badgeTint: colors.creator,
+      onPress: () => navigation.navigate("FounderCreatorRequests"),
+    },
+    {
       key: "users",
       icon: "people",
       title: "Nutzer-Verwaltung",
-      subtitle: "Konten, Sperren, Verifizierung",
+      subtitle: "Konten, Sperren, Verifizierung, Creator",
       badge: stats?.activeRestrictionCount,
       badgeTint: colors.danger,
       onPress: () => navigation.navigate("FounderUsers"),
@@ -83,6 +99,7 @@ export default function FounderDashboardScreen({ navigation }) {
         <View style={styles.statsRow}>
           <StatChip label="Nutzer" value={stats?.userCount} />
           <StatChip label="Beiträge" value={stats?.postCount} />
+          <StatChip label="Creator" value={stats?.creatorCount} />
           <StatChip label="Offene Tickets" value={stats?.openTicketCount} highlight={!!stats?.openTicketCount} />
         </View>
 
@@ -164,7 +181,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 38,
     height: 38,
-    borderRadius: 19,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
     marginRight: spacing.md,
@@ -185,7 +202,7 @@ const styles = StyleSheet.create({
   badge: {
     minWidth: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",

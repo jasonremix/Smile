@@ -57,6 +57,10 @@ export async function toggleVerified(uid, verified) {
   await updateDoc(doc(db, "users", uid), { verified });
 }
 
+export async function toggleCreator(uid, isCreator) {
+  await updateDoc(doc(db, "users", uid), { isCreator });
+}
+
 const MIN = 60 * 1000;
 export const MANUAL_RESTRICTION_PRESETS = [
   { id: "1h", label: "1 Stunde", ms: 60 * MIN },
@@ -82,13 +86,14 @@ export async function setManualRestriction(uid, durationMs) {
 // getCountFromServer statt alle Dokumente herunterzuladen - guenstig und
 // schnell, unabhaengig von der tatsaechlichen Nutzerzahl.
 export async function getAppStats() {
-  const [users, posts, openTickets, reports, feedback, activeRestrictions] = await Promise.all([
+  const [users, posts, openTickets, reports, feedback, activeRestrictions, creators] = await Promise.all([
     getCountFromServer(collection(db, "users")),
     getCountFromServer(collection(db, "posts")),
     getCountFromServer(query(collection(db, "tickets"), where("status", "in", ["escalated", "answered"]))),
     getCountFromServer(collection(db, "reports")),
     getCountFromServer(collection(db, "feedback")),
     getCountFromServer(query(collection(db, "users"), where("restrictedUntil", ">", Timestamp.now()))),
+    getCountFromServer(query(collection(db, "users"), where("isCreator", "==", true))),
   ]);
   return {
     userCount: users.data().count,
@@ -97,6 +102,7 @@ export async function getAppStats() {
     reportCount: reports.data().count,
     feedbackCount: feedback.data().count,
     activeRestrictionCount: activeRestrictions.data().count,
+    creatorCount: creators.data().count,
   };
 }
 

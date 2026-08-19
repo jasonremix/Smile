@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import CreatorBadge from "../components/CreatorBadge";
 import ScreenHeader from "../components/ScreenHeader";
 import VerifiedBadge from "../components/VerifiedBadge";
 import {
   MANUAL_RESTRICTION_PRESETS,
   listenAllUsers,
   setManualRestriction,
+  toggleCreator,
   toggleVerified,
 } from "../services/adminService";
 import { formatRestrictionUntil, getRestrictionStatus } from "../services/moderationService";
@@ -37,6 +39,17 @@ export default function FounderUsersScreen({ navigation }) {
     setBusyUid(u.uid);
     try {
       await toggleVerified(u.uid, !u.verified);
+    } catch (e) {
+      Alert.alert("Fehler", "Konnte nicht geändert werden.");
+    } finally {
+      setBusyUid(null);
+    }
+  };
+
+  const handleToggleCreator = async (u) => {
+    setBusyUid(u.uid);
+    try {
+      await toggleCreator(u.uid, !u.isCreator);
     } catch (e) {
       Alert.alert("Fehler", "Konnte nicht geändert werden.");
     } finally {
@@ -110,6 +123,7 @@ export default function FounderUsersScreen({ navigation }) {
                   <View style={styles.nameRow}>
                     <Text style={styles.name}>{u.displayName}</Text>
                     {u.verified ? <VerifiedBadge size={13} style={styles.badge} /> : null}
+                    {u.isCreator ? <CreatorBadge size={13} style={styles.badge} /> : null}
                   </View>
                   <Text style={styles.username}>@{u.username}</Text>
                   {restriction.restricted ? (
@@ -129,6 +143,16 @@ export default function FounderUsersScreen({ navigation }) {
                   >
                     <Text style={styles.verifyButtonText}>
                       {u.verified ? "Verifizierung entfernen" : "Verifizieren"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.creatorButton}
+                    onPress={() => handleToggleCreator(u)}
+                    disabled={busy}
+                  >
+                    <Text style={styles.creatorButtonText}>
+                      {u.isCreator ? "Creator-Modus entfernen" : "Zum Creator machen"}
                     </Text>
                   </TouchableOpacity>
 
@@ -240,6 +264,16 @@ const styles = StyleSheet.create({
   },
   verifyButtonText: {
     color: colors.text,
+    ...typography.subhead,
+  },
+  creatorButton: {
+    backgroundColor: colors.creator,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+  },
+  creatorButtonText: {
+    color: colors.background,
     ...typography.subhead,
   },
   liftButton: {
