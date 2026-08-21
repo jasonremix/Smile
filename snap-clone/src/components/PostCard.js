@@ -119,9 +119,14 @@ export default function PostCard({ post, navigation }) {
 
   const createdAtDate = post.createdAt?.toDate ? post.createdAt.toDate() : null;
 
+  // "Tabs" + verschachteltes { screen } statt navigate("Profile") direkt -
+  // PostCard wird auch von Screens ausserhalb des Tab-Navigators gerendert
+  // (SavedPosts, ChallengeFeed), von dort aus findet navigate("Profile")
+  // den Tab nicht und tut stumm nichts. Ueber den Stack-Screen "Tabs"
+  // funktioniert es von ueberall aus.
   const openAuthorProfile = () => {
     if (isOwn) {
-      navigation.navigate("Profile");
+      navigation.navigate("Tabs", { screen: "Profile" });
     } else {
       navigation.navigate("UserProfile", { uid: post.authorId });
     }

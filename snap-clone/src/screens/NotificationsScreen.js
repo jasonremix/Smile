@@ -116,7 +116,7 @@ export default function NotificationsScreen({ navigation }) {
     if (n.type === "like" || n.type === "comment") {
       navigation.navigate("Comments", { postId: n.postId, postAuthorId: user.uid });
     } else if (n.type === "friend_request") {
-      navigation.navigate("Friends");
+      navigation.navigate("Tabs", { screen: "Friends" });
     } else if (n.type === "friend_accept") {
       navigation.navigate("UserProfile", { uid: n.fromUid });
     }
