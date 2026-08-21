@@ -18,7 +18,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Nata braucht Zugriff auf die Kamera, um Snaps aufzunehmen.",
         "NSMicrophoneUsageDescription": "Nata braucht Zugriff auf das Mikrofon, um Videos mit Ton aufzunehmen.",
-        "NSLocationWhenInUseUsageDescription": "Nata nutzt deinen Standort nur, wenn du in den Profileinstellungen aktiv deine Stadt teilst."
+        "NSLocationWhenInUseUsageDescription": "Nata nutzt deinen Standort nur, wenn du in den Profileinstellungen aktiv deine Stadt teilst.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
