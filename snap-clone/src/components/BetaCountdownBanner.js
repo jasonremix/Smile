@@ -66,7 +66,7 @@ export default function BetaCountdownBanner() {
         <Animated.View style={{ transform: [{ scale: expired ? 1 : pulse }] }}>
           <Icon name="warning" size={13} color={colors.primaryLight} />
         </Animated.View>
-        <Text style={styles.text}>{label} · endet 24.09.</Text>
+        <Text style={styles.text}>{expired ? label : `${label} · endet 24.09.`}</Text>
       </Pressable>
     </Animated.View>
   );

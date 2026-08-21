@@ -106,10 +106,9 @@ const PLANNED = [
   {
     title: "Einreichung im App Store & Play Store",
     detail:
-      "Damit Nata ohne Beta-Kanal installierbar wird. Ziel: dein Konto, deine Connections, Beiträge " +
-      "und dein Nata Score bleiben beim Umstieg von der Beta erhalten - das ist unser Plan, aber " +
-      "noch keine feste Zusage, da der genaue Ablauf von der App-Store-Freigabe abhängt. Rechtzeitig " +
-      "vor dem 24.09.2026 informieren wir hier und per Ankündigung genauer.",
+      "Die Beta wurde vorzeitig beendet, damit Nata ohne Beta-Kanal installierbar wird. Dein Konto, " +
+      "deine Connections, Beiträge und dein Nata Score bleiben erhalten - keine Neuregistrierung " +
+      "nötig.",
   },
 ];
 

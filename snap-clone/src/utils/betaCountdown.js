@@ -1,9 +1,12 @@
-// Festes, oeffentlich kommuniziertes Enddatum der Beta - Ende des Tages
-// (23:59:59 lokale Zeit), damit der 24.09.2026 selbst noch vollstaendig
-// zaehlt. Muss man aendern, falls sich das Enddatum je verschiebt - bewusst
-// keine Fernkonfiguration ueber Firestore, um kein neues Missbrauchsziel
-// (jeder Client koennte sonst ein falsches Enddatum vorspiegeln) zu schaffen.
-export const BETA_END_DATE = new Date(2026, 8, 24, 23, 59, 59);
+// Festes, oeffentlich kommuniziertes Enddatum der Beta. Urspruenglich auf
+// den 24.09.2026 angesetzt, dann vorzeitig beendet (siehe announcements-
+// Eintrag "Beta beendet") - hier auf den tatsaechlichen Beendigungstag
+// vorgezogen, damit die Pille ("Noch X Tage Beta") nicht weiter einen
+// laengst ueberholten Countdown zeigt und der Ankuendigung widerspricht.
+// Bewusst keine Fernkonfiguration ueber Firestore, um kein neues
+// Missbrauchsziel (jeder Client koennte sonst ein falsches Enddatum
+// vorspiegeln) zu schaffen.
+export const BETA_END_DATE = new Date(2026, 7, 21, 0, 0, 0);
 
 export function getBetaCountdown(now = new Date()) {
   const remainingMs = BETA_END_DATE.getTime() - now.getTime();

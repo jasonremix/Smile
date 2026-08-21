@@ -31,7 +31,7 @@ const SLIDES = [
   {
     icon: "shield",
     title: "Sicher unterwegs",
-    text: "Automatische Inhaltsprüfung, Melden & Blockieren, und ein Gründer, der Support-Tickets persönlich liest. Nata ist aktuell in der Beta - bis 24.09.2026.",
+    text: "Automatische Inhaltsprüfung, Melden & Blockieren, und ein Gründer, der Support-Tickets persönlich liest.",
   },
 ];
 
