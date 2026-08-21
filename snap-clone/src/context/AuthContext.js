@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
   signInAnonymously,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -69,6 +70,15 @@ export function AuthProvider({ children }) {
   // durch einen voruebergehenden Netzwerkfehler beim Registrieren), landet
   // der Account sonst dauerhaft unbrauchbar und unsichtbar in der Suche.
   const needsProfileSetup = isRealAuthUser && profileLoaded && !profile;
+
+  // E-Mail-Verifizierung ist nur fuer Passwort-Konten noetig - Google/Apple
+  // Sign-In liefert bereits einen vom jeweiligen Anbieter bestaetigten
+  // E-Mail-Status, ein zusaetzlicher Verifizierungs-Schritt waere dort nur
+  // Reibung ohne echten Sicherheitsgewinn.
+  const isPasswordAccount = isRealAuthUser
+    ? authUser.providerData.some((p) => p.providerId === "password")
+    : false;
+  const needsEmailVerification = isPasswordAccount && !authUser?.emailVerified;
 
   // Login funktioniert sowohl mit E-Mail als auch mit Benutzername. Fuer
   // Benutzername gibt es in Firebase Auth selbst keinen direkten Weg - die
@@ -150,6 +160,16 @@ export function AuthProvider({ children }) {
     await updateProfile(credential.user, { displayName });
     await createProfileDoc(credential.user.uid, username, displayName, email);
 
+    // Bewusst "best effort" wie Beta-Tester-Nummer/Einladung unten - ein
+    // Versandfehler (z.B. Netzwerk) darf die Registrierung nicht blockieren,
+    // die Person kann sich die Mail spaeter erneut zusenden lassen
+    // (siehe resendVerificationEmail()).
+    try {
+      await sendEmailVerification(credential.user);
+    } catch {
+      // Verifizierungs-Mail ist nachholbar, kein kritischer Registrierungsschritt.
+    }
+
     // Beta-Tester-Nummer und Einladung sind bewusst "best effort" nach dem
     // eigentlichen Profil - ein Fehler hier darf die Registrierung selbst
     // nicht scheitern lassen, das Konto ist zu diesem Zeitpunkt schon nutzbar.
@@ -182,18 +202,35 @@ export function AuthProvider({ children }) {
 
   const logout = () => signOut(auth);
 
+  // Fuer VerifyEmailScreen.js: erneutes Zusenden, falls die erste Mail
+  // verloren ging/im Spam landete.
+  const resendVerificationEmail = () => sendEmailVerification(auth.currentUser);
+
+  // Firebase aktualisiert emailVerified am User-Objekt nicht von selbst,
+  // solange die App offen bleibt - reload() holt den aktuellen Stand vom
+  // Server, das Neu-Zuweisen als eigenes Objekt (statt derselben Referenz)
+  // stoesst danach den Re-Render an, der needsEmailVerification neu bewertet.
+  const refreshAuthUser = async () => {
+    if (!auth.currentUser) return;
+    await auth.currentUser.reload();
+    setAuthUser({ ...auth.currentUser });
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         initializing,
         needsProfileSetup,
+        needsEmailVerification,
         login,
         signup,
         completeProfile,
         logout,
         loginWithGoogleIdToken,
         loginWithAppleCredential,
+        resendVerificationEmail,
+        refreshAuthUser,
       }}
     >
       {children}

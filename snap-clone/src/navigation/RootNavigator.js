@@ -67,6 +67,7 @@ import SnapPreviewScreen from "../screens/SnapPreviewScreen";
 import TicketsScreen from "../screens/TicketsScreen";
 import UserProfileScreen from "../screens/UserProfileScreen";
 import VerificationRequestScreen from "../screens/VerificationRequestScreen";
+import VerifyEmailScreen from "../screens/VerifyEmailScreen";
 import SnapViewerScreen from "../screens/SnapViewerScreen";
 import StoryViewerScreen from "../screens/StoryViewerScreen";
 import WrappedScreen from "../screens/WrappedScreen";
@@ -98,7 +99,7 @@ const navTheme = {
 const INTRO_STEPS = ["onboarding", "interests", "goals"];
 
 export default function RootNavigator() {
-  const { user, initializing, needsProfileSetup } = useAuth();
+  const { user, initializing, needsProfileSetup, needsEmailVerification } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [introStep, setIntroStep] = useState(null);
 
@@ -112,12 +113,12 @@ export default function RootNavigator() {
   // Einmaliger Erster-Start-Flow, sobald ein Profil existiert (nach
   // CompleteProfileScreen) - pro Geraet, siehe onboardingSeen.js.
   useEffect(() => {
-    if (!user?.uid || needsProfileSetup) return;
+    if (!user?.uid || needsProfileSetup || needsEmailVerification) return;
     hasSeenOnboarding(user.uid).then((seen) => {
       setIntroStep(seen ? null : INTRO_STEPS[0]);
       setOnboardingChecked(true);
     });
-  }, [user?.uid, needsProfileSetup]);
+  }, [user?.uid, needsProfileSetup, needsEmailVerification]);
 
   const finishIntro = () => {
     if (user?.uid) markOnboardingSeen(user.uid);
@@ -131,7 +132,10 @@ export default function RootNavigator() {
     else finishIntro();
   };
 
-  if (initializing || (user && !needsProfileSetup && !onboardingChecked)) {
+  if (
+    initializing ||
+    (user && !needsProfileSetup && !needsEmailVerification && !onboardingChecked)
+  ) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center" }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -151,7 +155,7 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef} theme={navTheme}>
-      {user && !needsProfileSetup ? (
+      {user && !needsProfileSetup && !needsEmailVerification ? (
         <>
           <NewMessageBanner />
           <UpdateAnnouncementBanner />
@@ -163,6 +167,8 @@ export default function RootNavigator() {
       ) : null}
       {needsProfileSetup ? (
         <CompleteProfileScreen />
+      ) : needsEmailVerification ? (
+        <VerifyEmailScreen />
       ) : user ? (
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={MainTabNavigator} options={{ headerShown: false }} />
