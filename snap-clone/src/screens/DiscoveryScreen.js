@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   matchPercent: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.caption,
     fontWeight: "700",
     marginTop: 4,
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   emptyActionText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontWeight: "700",
     fontSize: 13,
   },

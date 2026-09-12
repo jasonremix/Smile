@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -26,
     right: 0,
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontSize: 13,
     fontWeight: "800",
     zIndex: 2,

@@ -15,7 +15,7 @@ const SUBJECT_MAX = 100;
 const MESSAGE_MAX = 1000;
 
 const STATUS_META = {
-  bot_resolved: { label: "Bot-Antwort erhalten", color: colors.primaryLight },
+  bot_resolved: { label: "Bot-Antwort erhalten", color: colors.primaryDark },
   escalated: { label: "An Gründer weitergeleitet", color: colors.online },
   answered: { label: "Antwort vom Gründer", color: colors.primary },
   closed: { label: "Geschlossen", color: colors.textMuted },
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   botLabel: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.caption,
     marginBottom: 4,
   },
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   },
   founderLabel: {
     flex: 1,
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.caption,
   },
   resolutionBadge: {

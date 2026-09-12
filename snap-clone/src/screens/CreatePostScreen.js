@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   addPhotoText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontSize: 14,
     fontWeight: "600",
   },

@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   emptyButtonText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontWeight: "700",
     fontSize: 13,
   },

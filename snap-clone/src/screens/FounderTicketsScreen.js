@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   blockLabel: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.caption,
     marginBottom: 4,
   },

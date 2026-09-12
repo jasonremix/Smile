@@ -26,7 +26,7 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
 const STATUS_META = {
-  pending: { label: "Wird geprüft", color: colors.primaryLight },
+  pending: { label: "Wird geprüft", color: colors.primaryDark },
   approved: { label: "Angenommen", color: colors.online },
   rejected: { label: "Abgelehnt", color: colors.danger },
 };

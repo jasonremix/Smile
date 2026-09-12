@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
@@ -26,6 +26,7 @@ export default function ChatListScreen({ navigation }) {
   const [incomingSnaps, setIncomingSnaps] = useState([]);
   const [blocked, setBlocked] = useState([]);
   const [pinnedIds, setPinnedIds] = useState([]);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const unsubGroups = listenGroups(user.uid, setGroups);
@@ -121,6 +122,11 @@ export default function ChatListScreen({ navigation }) {
 
   const openNewGroup = () => navigation.navigate("CreateGroup");
 
+  const trimmedQuery = query.trim().toLowerCase();
+  const filteredConversations = trimmedQuery
+    ? conversations.filter((item) => item.name.toLowerCase().includes(trimmedQuery))
+    : conversations;
+
   return (
     <View style={styles.container}>
       <ScreenHeader
@@ -138,29 +144,52 @@ export default function ChatListScreen({ navigation }) {
         }
       />
 
-      <NataAIListRow onPress={() => navigation.navigate("NataAI")} />
+      <View style={styles.searchBar}>
+        <Icon name="search" size={16} color={colors.textMuted} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Suchen"
+          placeholderTextColor={colors.textFaint}
+          value={query}
+          onChangeText={setQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+        />
+        {query.length > 0 ? (
+          <TouchableOpacity onPress={() => setQuery("")} hitSlop={8}>
+            <Icon name="close" size={15} color={colors.textMuted} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
-      {visibleSnaps.length > 0 ? (
-        <View style={styles.snapsSection}>
-          <Text style={styles.sectionTitle}>Neue Snaps</Text>
-          {visibleSnaps.map((snap) => (
-            <TouchableOpacity
-              key={snap.id}
-              style={styles.snapRow}
-              onPress={() => navigation.navigate("SnapViewer", { snap })}
-            >
-              <View style={styles.snapIconCircle}>
-                <Icon name={snap.mediaType === "video" ? "video" : "camera"} size={16} color={colors.onPrimary} />
-              </View>
-              <Text style={styles.snapSender}>{snap.senderName}</Text>
-              <Text style={styles.snapCta}>Antippen zum Ansehen</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      {!trimmedQuery ? (
+        <>
+          <NataAIListRow onPress={() => navigation.navigate("NataAI")} />
+
+          {visibleSnaps.length > 0 ? (
+            <View style={styles.snapsSection}>
+              <Text style={styles.sectionTitle}>Neue Snaps</Text>
+              {visibleSnaps.map((snap) => (
+                <TouchableOpacity
+                  key={snap.id}
+                  style={styles.snapRow}
+                  onPress={() => navigation.navigate("SnapViewer", { snap })}
+                >
+                  <View style={styles.snapIconCircle}>
+                    <Icon name={snap.mediaType === "video" ? "video" : "camera"} size={16} color={colors.onPrimary} />
+                  </View>
+                  <Text style={styles.snapSender}>{snap.senderName}</Text>
+                  <Text style={styles.snapCta}>Antippen zum Ansehen</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+        </>
       ) : null}
 
       <FlatList
-        data={conversations}
+        data={filteredConversations}
         keyExtractor={(item) => `${item.type}-${item.id}`}
         renderItem={({ item }) => (
           <ChatListItem
@@ -180,12 +209,16 @@ export default function ChatListScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          <EmptyState
-            title="Noch keine Nachrichten"
-            text="Deine Unterhaltungen erscheinen hier."
-            actionLabel="Menschen entdecken"
-            onAction={() => navigation.navigate("Tabs", { screen: "Discovery" })}
-          />
+          trimmedQuery ? (
+            <EmptyState title="Keine Treffer" text={`Niemand gefunden für "${query}".`} />
+          ) : (
+            <EmptyState
+              title="Noch keine Nachrichten"
+              text="Deine Unterhaltungen erscheinen hier."
+              actionLabel="Menschen entdecken"
+              onAction={() => navigation.navigate("Tabs", { screen: "Discovery" })}
+            />
+          )
         }
       />
     </View>
@@ -202,6 +235,23 @@ const styles = StyleSheet.create({
   },
   headerIconButton: {
     marginLeft: 16,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+    padding: 0,
   },
   snapsSection: {
     paddingHorizontal: 16,
@@ -264,7 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   emptyButtonText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontWeight: "700",
     fontSize: 13,
   },

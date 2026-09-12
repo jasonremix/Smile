@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BetaBadge from "../components/BetaBadge";
 import Icon from "../components/Icon";
@@ -30,6 +30,20 @@ export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [quietHours, setQuietHoursState] = useState({ enabled: false, startHour: 22, endHour: 8 });
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const matches = (label) => !q || label.toLowerCase().includes(q);
+  const anyMatch = (labels) => !q || labels.some(matches);
+  const ALL_LABELS = [
+    "Mein Nata-Code", "Einladungen", "Connections verwalten", "Enge Freunde", "Meine Kreise",
+    "Entdecken", "Gespeicherte Beiträge", "Meine Statistik", "Momente-Archiv", "Anrufe", "Challenges",
+    "Leaderboard", "Nata Wrapped", "Verifizierung beantragen", "Creator-Studio", "Creator werden",
+    "Privatsphäre", "Datenschutz & Nutzungsbedingungen", "Eigene Daten herunterladen",
+    "Benachrichtigungen ansehen", "Sound-Effekte im Chat", "Nicht-stören-Zeiten",
+    "Sicherheitsmaßnahmen", "Support-Tickets", "Blockierte Nutzer", "Konto löschen",
+    "Gründer-Dashboard", "Über Nata", "Roadmap", "Feedback geben", "Abmelden",
+  ];
+  const hasAnyResult = !q || ALL_LABELS.some(matches);
 
   useEffect(() => {
     getSoundEffectsEnabled().then(setSoundEnabled);
@@ -72,8 +86,27 @@ export default function SettingsScreen({ navigation }) {
           <Icon name="back" size={18} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.bigTitle}>Einstellungen{"\n"}und Datenschutz</Text>
+        <View style={styles.searchBar}>
+          <Icon name="search" size={16} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Einstellungen durchsuchen"
+            placeholderTextColor={colors.textFaint}
+            value={query}
+            onChangeText={setQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {query.length > 0 ? (
+            <TouchableOpacity onPress={() => setQuery("")} hitSlop={8}>
+              <Icon name="close" size={15} color={colors.textMuted} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!q ? (
         <TouchableOpacity
           style={styles.profileCard}
           onPress={() => navigation.navigate("EditProfile")}
@@ -89,52 +122,83 @@ export default function SettingsScreen({ navigation }) {
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
+        ) : null}
 
+        {anyMatch(["Mein Nata-Code", "Einladungen", "Connections verwalten", "Enge Freunde", "Meine Kreise"]) ? (
+        <>
         <Text style={styles.sectionLabel}>Konto</Text>
         <SettingsSection>
-          <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
-          <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
-          <SettingsRow
-            icon="people"
-            label="Connections verwalten"
-            onPress={() => navigation.navigate("Tabs", { screen: "Friends" })}
-          />
-          <SettingsRow icon="star" label="Enge Freunde" onPress={() => navigation.navigate("CloseFriends")} />
-          <SettingsRow icon="people" label="Meine Kreise" onPress={() => navigation.navigate("Circles")} />
+          {matches("Mein Nata-Code") ? (
+            <SettingsRow icon="grid" label="Mein Nata-Code" onPress={() => navigation.navigate("QRCode")} />
+          ) : null}
+          {matches("Einladungen") ? (
+            <SettingsRow icon="ticket" label="Einladungen" onPress={() => navigation.navigate("Referral")} />
+          ) : null}
+          {matches("Connections verwalten") ? (
+            <SettingsRow
+              icon="people"
+              label="Connections verwalten"
+              onPress={() => navigation.navigate("Tabs", { screen: "Friends" })}
+            />
+          ) : null}
+          {matches("Enge Freunde") ? (
+            <SettingsRow icon="star" label="Enge Freunde" onPress={() => navigation.navigate("CloseFriends")} />
+          ) : null}
+          {matches("Meine Kreise") ? (
+            <SettingsRow icon="people" label="Meine Kreise" onPress={() => navigation.navigate("Circles")} />
+          ) : null}
         </SettingsSection>
+        </>
+        ) : null}
 
+        {anyMatch(["Entdecken", "Gespeicherte Beiträge", "Meine Statistik", "Momente-Archiv", "Anrufe", "Challenges", "Leaderboard", "Nata Wrapped"]) ? (
+        <>
         <Text style={styles.sectionLabel}>Aktivität</Text>
         <SettingsSection>
-          <SettingsRow
-            icon="search"
-            label="Entdecken"
-            onPress={() => navigation.navigate("Tabs", { screen: "Discovery" })}
-          />
-          <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
-          <SettingsRow icon="grid" label="Meine Statistik" onPress={() => navigation.navigate("MyStats")} />
-          <SettingsRow icon="moment" label="Momente-Archiv" onPress={() => navigation.navigate("MomentsArchive")} />
-          <SettingsRow
-            icon="call"
-            label="Anrufe"
-            onPress={() => navigation.navigate("CallHistory")}
-            badge={<BetaBadge style={styles.feedbackBadge} />}
-          />
-          <SettingsRow
-            icon="flame"
-            label="Challenges"
-            onPress={() => navigation.navigate("Challenges")}
-            badge={<BetaBadge style={styles.feedbackBadge} />}
-          />
-          <SettingsRow
-            icon="star"
-            label="Leaderboard"
-            onPress={() => navigation.navigate("Leaderboard")}
-            badge={<BetaBadge style={styles.feedbackBadge} />}
-          />
+          {matches("Entdecken") ? (
+            <SettingsRow
+              icon="search"
+              label="Entdecken"
+              onPress={() => navigation.navigate("Tabs", { screen: "Discovery" })}
+            />
+          ) : null}
+          {matches("Gespeicherte Beiträge") ? (
+            <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
+          ) : null}
+          {matches("Meine Statistik") ? (
+            <SettingsRow icon="grid" label="Meine Statistik" onPress={() => navigation.navigate("MyStats")} />
+          ) : null}
+          {matches("Momente-Archiv") ? (
+            <SettingsRow icon="moment" label="Momente-Archiv" onPress={() => navigation.navigate("MomentsArchive")} />
+          ) : null}
+          {matches("Anrufe") ? (
+            <SettingsRow
+              icon="call"
+              label="Anrufe"
+              onPress={() => navigation.navigate("CallHistory")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : null}
+          {matches("Challenges") ? (
+            <SettingsRow
+              icon="flame"
+              label="Challenges"
+              onPress={() => navigation.navigate("Challenges")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : null}
+          {matches("Leaderboard") ? (
+            <SettingsRow
+              icon="star"
+              label="Leaderboard"
+              onPress={() => navigation.navigate("Leaderboard")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : null}
           {(() => {
             const now = new Date();
             const wrappedLive = now >= new Date(now.getFullYear(), now.getMonth(), 20, 2, 0, 0);
-            return wrappedLive ? (
+            return wrappedLive && matches("Nata Wrapped") ? (
               <SettingsRow
                 icon="sparkle"
                 label="Nata Wrapped"
@@ -144,10 +208,14 @@ export default function SettingsScreen({ navigation }) {
             ) : null;
           })()}
         </SettingsSection>
+        </>
+        ) : null}
 
+        {anyMatch(["Verifizierung beantragen", "Creator-Studio", "Creator werden"]) ? (
+        <>
         <Text style={styles.sectionLabel}>Creator</Text>
         <SettingsSection>
-          {!user?.verified ? (
+          {!user?.verified && matches("Verifizierung beantragen") ? (
             <SettingsRow
               icon="shield"
               label="Verifizierung beantragen"
@@ -156,54 +224,78 @@ export default function SettingsScreen({ navigation }) {
             />
           ) : null}
           {user?.isCreator ? (
-            <SettingsRow
-              icon="star"
-              label="Creator-Studio"
-              onPress={() => navigation.navigate("CreatorStudio")}
-              badge={<BetaBadge style={styles.feedbackBadge} />}
-            />
-          ) : (
+            matches("Creator-Studio") ? (
+              <SettingsRow
+                icon="star"
+                label="Creator-Studio"
+                onPress={() => navigation.navigate("CreatorStudio")}
+                badge={<BetaBadge style={styles.feedbackBadge} />}
+              />
+            ) : null
+          ) : matches("Creator werden") ? (
             <SettingsRow
               icon="star"
               label="Creator werden"
               onPress={() => navigation.navigate("CreatorRequest")}
               badge={<BetaBadge style={styles.feedbackBadge} />}
             />
-          )}
+          ) : null}
         </SettingsSection>
+        </>
+        ) : null}
 
+        {anyMatch(["Privatsphäre", "Datenschutz & Nutzungsbedingungen", "Eigene Daten herunterladen"]) ? (
+        <>
         <Text style={styles.sectionLabel}>Privatsphäre</Text>
         <SettingsSection>
-          <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
-          <SettingsRow
-            icon="document"
-            label="Datenschutz & Nutzungsbedingungen"
-            onPress={() => navigation.navigate("Legal")}
-          />
-          <SettingsRow icon="document" label="Eigene Daten herunterladen" onPress={handleDataExport} />
+          {matches("Privatsphäre") ? (
+            <SettingsRow icon="lock" label="Privatsphäre" onPress={() => navigation.navigate("Privacy")} />
+          ) : null}
+          {matches("Datenschutz & Nutzungsbedingungen") ? (
+            <SettingsRow
+              icon="document"
+              label="Datenschutz & Nutzungsbedingungen"
+              onPress={() => navigation.navigate("Legal")}
+            />
+          ) : null}
+          {matches("Eigene Daten herunterladen") ? (
+            <SettingsRow icon="document" label="Eigene Daten herunterladen" onPress={handleDataExport} />
+          ) : null}
         </SettingsSection>
+        </>
+        ) : null}
 
+        {anyMatch(["Benachrichtigungen ansehen", "Sound-Effekte im Chat", "Nicht-stören-Zeiten"]) ? (
+        <>
         <Text style={styles.sectionLabel}>Benachrichtigungen</Text>
         <SettingsSection>
-          <SettingsRow
-            icon="bell"
-            label="Benachrichtigungen ansehen"
-            onPress={() => navigation.navigate("Notifications")}
-          />
-          <SettingsToggleRow
-            icon="chat"
-            label="Sound-Effekte im Chat"
-            value={soundEnabled}
-            onValueChange={handleToggleSound}
-          />
-          <SettingsToggleRow
-            icon="bell"
-            label="Nicht-stören-Zeiten"
-            value={quietHours.enabled}
-            onValueChange={(value) => updateQuietHours({ enabled: value })}
-          />
+          {matches("Benachrichtigungen ansehen") ? (
+            <SettingsRow
+              icon="bell"
+              label="Benachrichtigungen ansehen"
+              onPress={() => navigation.navigate("Notifications")}
+            />
+          ) : null}
+          {matches("Sound-Effekte im Chat") ? (
+            <SettingsToggleRow
+              icon="chat"
+              label="Sound-Effekte im Chat"
+              value={soundEnabled}
+              onValueChange={handleToggleSound}
+            />
+          ) : null}
+          {matches("Nicht-stören-Zeiten") ? (
+            <SettingsToggleRow
+              icon="bell"
+              label="Nicht-stören-Zeiten"
+              value={quietHours.enabled}
+              onValueChange={(value) => updateQuietHours({ enabled: value })}
+            />
+          ) : null}
         </SettingsSection>
-        {quietHours.enabled ? (
+        </>
+        ) : null}
+        {quietHours.enabled && matches("Nicht-stören-Zeiten") ? (
           <View style={styles.quietHoursCard}>
             <Text style={styles.quietHoursText}>
               Stumm von {String(quietHours.startHour).padStart(2, "0")}:00 bis{" "}
@@ -228,20 +320,32 @@ export default function SettingsScreen({ navigation }) {
           </View>
         ) : null}
 
+        {anyMatch(["Sicherheitsmaßnahmen", "Support-Tickets", "Blockierte Nutzer", "Konto löschen"]) ? (
+        <>
         <Text style={styles.sectionLabel}>Sicherheit</Text>
         <SettingsSection>
-          <SettingsRow icon="shield" label="Sicherheitsmaßnahmen" onPress={() => navigation.navigate("Security")} />
-          <SettingsRow icon="chat" label="Support-Tickets" onPress={() => navigation.navigate("Tickets")} />
-          <SettingsRow icon="block" label="Blockierte Nutzer" onPress={() => navigation.navigate("BlockedUsers")} />
-          <SettingsRow
-            icon="trash"
-            label="Konto löschen"
-            onPress={() => navigation.navigate("DeleteAccount")}
-            tint={colors.danger}
-          />
+          {matches("Sicherheitsmaßnahmen") ? (
+            <SettingsRow icon="shield" label="Sicherheitsmaßnahmen" onPress={() => navigation.navigate("Security")} />
+          ) : null}
+          {matches("Support-Tickets") ? (
+            <SettingsRow icon="chat" label="Support-Tickets" onPress={() => navigation.navigate("Tickets")} />
+          ) : null}
+          {matches("Blockierte Nutzer") ? (
+            <SettingsRow icon="block" label="Blockierte Nutzer" onPress={() => navigation.navigate("BlockedUsers")} />
+          ) : null}
+          {matches("Konto löschen") ? (
+            <SettingsRow
+              icon="trash"
+              label="Konto löschen"
+              onPress={() => navigation.navigate("DeleteAccount")}
+              tint={colors.danger}
+            />
+          ) : null}
         </SettingsSection>
+        </>
+        ) : null}
 
-        {user?.username === FOUNDER_USERNAME ? (
+        {user?.username === FOUNDER_USERNAME && matches("Gründer-Dashboard") ? (
           <>
             <Text style={styles.sectionLabel}>Gründer</Text>
             <SettingsSection>
@@ -254,23 +358,41 @@ export default function SettingsScreen({ navigation }) {
           </>
         ) : null}
 
+        {anyMatch(["Über Nata", "Roadmap", "Feedback geben", "Abmelden"]) ? (
+        <>
         <Text style={styles.sectionLabel}>App</Text>
         <SettingsSection>
-          <SettingsRow icon="info" label="Über Nata" onPress={() => navigation.navigate("About")} />
-          <SettingsRow icon="roadmap" label="Roadmap" onPress={() => navigation.navigate("Roadmap")} />
-          <SettingsRow
-            icon="chat"
-            label="Feedback geben"
-            onPress={() => navigation.navigate("Feedback")}
-            badge={<BetaBadge style={styles.feedbackBadge} />}
-          />
-          <SettingsRow icon="logout" label="Abmelden" onPress={handleLogout} tint={colors.danger} />
+          {matches("Über Nata") ? (
+            <SettingsRow icon="info" label="Über Nata" onPress={() => navigation.navigate("About")} />
+          ) : null}
+          {matches("Roadmap") ? (
+            <SettingsRow icon="roadmap" label="Roadmap" onPress={() => navigation.navigate("Roadmap")} />
+          ) : null}
+          {matches("Feedback geben") ? (
+            <SettingsRow
+              icon="chat"
+              label="Feedback geben"
+              onPress={() => navigation.navigate("Feedback")}
+              badge={<BetaBadge style={styles.feedbackBadge} />}
+            />
+          ) : null}
+          {matches("Abmelden") ? (
+            <SettingsRow icon="logout" label="Abmelden" onPress={handleLogout} tint={colors.danger} />
+          ) : null}
         </SettingsSection>
+        </>
+        ) : null}
 
-        <Text style={styles.footerText}>
-          Nata {APP_VERSION}
-          {user?.betaTesterNumber ? ` · Beta-Tester #${user.betaTesterNumber}` : ""}
-        </Text>
+        {q && !hasAnyResult ? (
+          <Text style={styles.noResultsText}>Keine Einstellung gefunden für "{query}".</Text>
+        ) : null}
+
+        {!q ? (
+          <Text style={styles.footerText}>
+            Nata {APP_VERSION}
+            {user?.betaTesterNumber ? ` · Beta-Tester #${user.betaTesterNumber}` : ""}
+          </Text>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -312,6 +434,22 @@ const styles = StyleSheet.create({
   bigTitle: {
     color: colors.text,
     ...typography.hero,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    marginTop: spacing.md,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+    padding: 0,
   },
   scroll: {
     paddingHorizontal: spacing.lg,
@@ -368,6 +506,12 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.textMuted,
     ...typography.caption,
+    textAlign: "center",
+    marginTop: spacing.xxl,
+  },
+  noResultsText: {
+    color: colors.textMuted,
+    ...typography.subhead,
     textAlign: "center",
     marginTop: spacing.xxl,
   },

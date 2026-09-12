@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   refreshButtonText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontWeight: "700",
     fontSize: 12,
   },

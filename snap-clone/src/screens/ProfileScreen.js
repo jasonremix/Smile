@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   testerBadgeText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.caption,
   },
   scoreSection: {

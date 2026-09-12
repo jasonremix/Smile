@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   value: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontSize: 28,
     fontWeight: "800",
   },

@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   linkText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.caption,
     textDecorationLine: "underline",
   },

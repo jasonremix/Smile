@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   markAllText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.footnote,
     fontWeight: "600",
   },

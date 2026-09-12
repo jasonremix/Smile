@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   connectedPillText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontSize: 11,
     fontWeight: "700",
   },

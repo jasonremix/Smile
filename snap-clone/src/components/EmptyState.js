@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   actionText: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     fontWeight: "700",
     fontSize: 13,
   },

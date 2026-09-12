@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     ...shadow.sm,
   },
   resendLink: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     textAlign: "center",
     marginTop: 20,
     fontWeight: "600",

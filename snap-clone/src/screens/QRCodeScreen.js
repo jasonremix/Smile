@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     ...typography.subhead,
   },
   eyebrow: {
-    color: colors.primaryLight,
+    color: colors.primaryDark,
     ...typography.sectionLabel,
     letterSpacing: 1.2,
     marginBottom: spacing.lg,
