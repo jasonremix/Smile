@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ChatRowSkeletonList } from "../components/ChatRowSkeleton";
 import ChatListItem from "../components/ChatListItem";
 import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
@@ -21,15 +22,19 @@ function toMillis(timestamp) {
 
 export default function ChatListScreen({ navigation }) {
   const { user } = useAuth();
-  const { chats } = useUnreadChats();
+  const { chats, loading: chatsLoading } = useUnreadChats();
   const [groups, setGroups] = useState([]);
+  const [groupsLoaded, setGroupsLoaded] = useState(false);
   const [incomingSnaps, setIncomingSnaps] = useState([]);
   const [blocked, setBlocked] = useState([]);
   const [pinnedIds, setPinnedIds] = useState([]);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    const unsubGroups = listenGroups(user.uid, setGroups);
+    const unsubGroups = listenGroups(user.uid, (next) => {
+      setGroups(next);
+      setGroupsLoaded(true);
+    });
     const unsubSnaps = listenIncomingSnaps(user.uid, setIncomingSnaps);
     const unsubBlocked = listenBlockedUsers(user.uid, setBlocked);
     getPinnedChatIds().then(setPinnedIds);
@@ -126,6 +131,7 @@ export default function ChatListScreen({ navigation }) {
   const filteredConversations = trimmedQuery
     ? conversations.filter((item) => item.name.toLowerCase().includes(trimmedQuery))
     : conversations;
+  const isLoading = (chatsLoading || !groupsLoaded) && conversations.length === 0;
 
   return (
     <View style={styles.container}>
@@ -188,6 +194,9 @@ export default function ChatListScreen({ navigation }) {
         </>
       ) : null}
 
+      {isLoading ? (
+        <ChatRowSkeletonList />
+      ) : (
       <FlatList
         data={filteredConversations}
         keyExtractor={(item) => `${item.type}-${item.id}`}
@@ -221,6 +230,7 @@ export default function ChatListScreen({ navigation }) {
           )
         }
       />
+      )}
     </View>
   );
 }

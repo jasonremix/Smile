@@ -18,14 +18,18 @@ export function isChatUnread(chat, uid) {
 export function useUnreadChats() {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.uid) return;
-    const unsubscribe = listenChats(user.uid, setChats);
+    const unsubscribe = listenChats(user.uid, (next) => {
+      setChats(next);
+      setLoading(false);
+    });
     return unsubscribe;
   }, [user?.uid]);
 
   const unreadCount = user?.uid ? chats.filter((c) => isChatUnread(c, user.uid)).length : 0;
 
-  return { chats, unreadCount };
+  return { chats, unreadCount, loading };
 }
