@@ -1,3 +1,4 @@
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -151,6 +152,7 @@ export default function StoryViewerScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={styles.progressRow}>
         {items.map((_, i) => (
           <View key={i} style={styles.progressTrack}>

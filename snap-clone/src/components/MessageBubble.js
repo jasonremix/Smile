@@ -63,16 +63,26 @@ export default function MessageBubble({
         ) : null}
         {!isMine && senderName ? <Text style={styles.senderName}>{senderName}</Text> : null}
         {isLocked ? (
-          <Text style={styles.bubbleText}>🕐 Zeitkapsel-Nachricht - sichtbar ab {formatVisibleAt(message.visibleAt)}</Text>
+          <Text style={[styles.bubbleText, isMine ? styles.bubbleTextMine : styles.bubbleTextTheirs]}>
+            🕐 Zeitkapsel-Nachricht - sichtbar ab {formatVisibleAt(message.visibleAt)}
+          </Text>
         ) : message.voiceUrl ? (
           <VoiceMessageBubble voiceUrl={message.voiceUrl} durationMs={message.voiceDurationMs} />
         ) : (
-          <Text style={styles.bubbleText}>{message.text}</Text>
+          <Text style={[styles.bubbleText, isMine ? styles.bubbleTextMine : styles.bubbleTextTheirs]}>
+            {message.text}
+          </Text>
         )}
         {isMine && visibleAtMs && visibleAtMs > Date.now() ? (
-          <Text style={styles.editedLabel}>⏳ wird sichtbar ab {formatVisibleAt(message.visibleAt)}</Text>
+          <Text style={[styles.editedLabel, isMine ? styles.editedLabelMine : styles.editedLabelTheirs]}>
+            ⏳ wird sichtbar ab {formatVisibleAt(message.visibleAt)}
+          </Text>
         ) : null}
-        {message.edited ? <Text style={styles.editedLabel}>bearbeitet</Text> : null}
+        {message.edited ? (
+          <Text style={[styles.editedLabel, isMine ? styles.editedLabelMine : styles.editedLabelTheirs]}>
+            bearbeitet
+          </Text>
+        ) : null}
       </TouchableOpacity>
       <MessageReactionBadge
         reactorUids={reactorUids}
@@ -110,18 +120,34 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 6,
   },
   senderName: {
-    color: colors.primaryLight,
+    // Sitzt auf der (immer hellen) bubbleTheirs-Flaeche, nicht auf primary -
+    // deshalb primaryDark statt primaryLight, sonst zu wenig Kontrast.
+    color: colors.primaryDark,
     fontSize: 11,
     fontWeight: "700",
     marginBottom: 2,
   },
   bubbleText: {
-    color: "#fff",
     fontSize: 15,
   },
+  // "Mine" sitzt immer auf der fest violetten Gradient-Flaeche (siehe
+  // GradientView oben) - deshalb fest onPrimary statt des theme-abhaengigen
+  // colors.text/textMuted, sonst waere der Text im Hellmodus dunkel auf
+  // Violett statt weiss auf Violett.
+  bubbleTextMine: {
+    color: colors.onPrimary,
+  },
+  bubbleTextTheirs: {
+    color: colors.text,
+  },
   editedLabel: {
-    color: "rgba(255,255,255,0.55)",
     fontSize: 10,
     marginTop: 2,
+  },
+  editedLabelMine: {
+    color: "rgba(255,255,255,0.7)",
+  },
+  editedLabelTheirs: {
+    color: colors.textMuted,
   },
 });

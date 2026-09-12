@@ -36,7 +36,12 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <AuthProvider>
-            <StatusBar style="light" />
+            {/* Dunkle Status-Leiste passt zum jetzt hellen Grundthema. Die
+                wenigen bewusst dunkel gebliebenen Vollbild-Screens (Kamera,
+                Snap/Story-Vorschau, Anruf, QR-Scan) setzen dort lokal ihre
+                eigene <StatusBar style="light" />, die diese globale waehrend
+                ihres Fokus ueberschreibt. */}
+            <StatusBar style="dark" />
             <RootNavigator />
           </AuthProvider>
         </SafeAreaProvider>

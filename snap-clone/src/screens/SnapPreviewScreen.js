@@ -1,3 +1,4 @@
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -126,6 +127,7 @@ export default function SnapPreviewScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={styles.mediaContainer}>
         <FilteredMedia
           uri={uri}

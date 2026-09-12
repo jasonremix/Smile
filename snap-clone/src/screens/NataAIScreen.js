@@ -87,7 +87,7 @@ export default function NataAIScreen({ navigation, route }) {
             <View style={[styles.bubble, styles.bubbleMine]}>
               {item.hasImage ? (
                 <View style={styles.imageTag}>
-                  <Icon name="camera" size={11} color={colors.text} />
+                  <Icon name="camera" size={11} color={colors.onPrimary} />
                   <Text style={styles.imageTagText}>Bild</Text>
                 </View>
               ) : null}
@@ -96,7 +96,7 @@ export default function NataAIScreen({ navigation, route }) {
           ) : (
             <View style={styles.aiRow}>
               <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.aiAvatar}>
-                <Icon name="sparkle" size={13} color={colors.text} />
+                <Icon name="sparkle" size={13} color={colors.onPrimary} />
               </GradientView>
               <View style={[styles.bubble, styles.bubbleAi]}>
                 <Text style={styles.bubbleTextAi}>{item.text}</Text>
@@ -107,7 +107,7 @@ export default function NataAIScreen({ navigation, route }) {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.emptyIcon}>
-              <Icon name="sparkle" size={24} color={colors.text} />
+              <Icon name="sparkle" size={24} color={colors.onPrimary} />
             </GradientView>
             <Text style={styles.emptyTitle}>Frag mich etwas</Text>
             <Text style={styles.emptyText}>
@@ -161,7 +161,7 @@ export default function NataAIScreen({ navigation, route }) {
           style={!text.trim() && !pendingImageUri && styles.sendButtonDisabled}
         >
           <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.sendButton}>
-            <Icon name="send" size={16} color={colors.text} />
+            <Icon name="send" size={16} color={colors.onPrimary} />
           </GradientView>
         </TouchableOpacity>
       </View>
@@ -217,8 +217,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.xs,
   },
+  // Sitzt auf der fest violetten bubbleMine-Flaeche - deshalb fest
+  // onPrimary statt des theme-abhaengigen colors.text (sonst dunkler Text
+  // auf Violett im Hellmodus statt weiss auf Violett).
   bubbleTextMine: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 15,
     lineHeight: 20,
   },
@@ -308,7 +311,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   imageTagText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 10,
     fontWeight: "700",
   },

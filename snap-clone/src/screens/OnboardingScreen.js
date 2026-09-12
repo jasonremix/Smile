@@ -82,7 +82,7 @@ export default function OnboardingScreen({ onSkip, onNext }) {
               <Image source={require("../../assets/logo-full.png")} style={styles.logo} resizeMode="contain" />
             ) : (
               <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.iconRing}>
-                <Icon name={slide.icon} size={30} color={colors.text} />
+                <Icon name={slide.icon} size={30} color={colors.onPrimary} />
               </GradientView>
             )}
             <Text style={styles.title}>{slide.title}</Text>

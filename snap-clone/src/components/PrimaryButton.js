@@ -33,7 +33,7 @@ export default function PrimaryButton({ title, onPress, disabled, loading, style
         />
       )}
       {loading ? (
-        <ActivityIndicator color={isOutline ? colors.primary : colors.text} />
+        <ActivityIndicator color={isOutline ? colors.primary : colors.onPrimary} />
       ) : (
         <Text style={[styles.text, isOutline && styles.textOutline]}>{title}</Text>
       )}
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   text: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "600",
     fontSize: 17,
   },

@@ -14,7 +14,7 @@ export default function NataAIListRow({ onPress }) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.85}>
       <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatar}>
-        <Icon name="sparkle" size={20} color={colors.text} />
+        <Icon name="sparkle" size={20} color={colors.onPrimary} />
       </GradientView>
       <View style={styles.textContainer}>
         <View style={styles.nameRow}>

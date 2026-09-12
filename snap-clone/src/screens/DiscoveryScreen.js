@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   matchButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
     fontSize: 11,
   },

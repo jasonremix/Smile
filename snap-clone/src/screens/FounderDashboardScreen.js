@@ -113,7 +113,7 @@ export default function FounderDashboardScreen({ navigation }) {
         {cards.map((card) => (
           <TouchableOpacity key={card.key} style={styles.card} onPress={card.onPress} activeOpacity={0.85}>
             <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.iconCircle}>
-              <Icon name={card.icon} size={17} color={colors.text} />
+              <Icon name={card.icon} size={17} color={colors.onPrimary} />
             </GradientView>
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>{card.title}</Text>

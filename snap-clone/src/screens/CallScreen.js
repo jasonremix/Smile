@@ -1,4 +1,5 @@
 import { requestRecordingPermissionsAsync } from "expo-audio";
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
@@ -229,6 +230,7 @@ export default function CallScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={[styles.avatar, { backgroundColor: otherUser.avatarColor || colors.primary }]}>
         <Text style={styles.avatarText}>{(otherUser.displayName || "?").charAt(0).toUpperCase()}</Text>
       </View>

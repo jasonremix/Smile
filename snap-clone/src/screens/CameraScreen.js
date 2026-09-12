@@ -1,4 +1,5 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
+import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FilterPickerRow from "../components/FilterPickerRow";
@@ -108,6 +109,10 @@ export default function CameraScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
+      {/* Kamera bleibt bewusst dunkel (immersiver Vollbild-Kontext, wie bei
+          jeder Kamera-App ueblich) - ueberschreibt die globale, jetzt helle
+          Status-Leiste lokal, solange dieser Screen fokussiert ist. */}
+      <StatusBar style="light" />
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} flash={flash} mode="video">
         {filterMeta.overlayColor ? (
           <View

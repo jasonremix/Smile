@@ -1,3 +1,4 @@
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
@@ -79,6 +80,7 @@ export default function SnapViewerScreen({ route, navigation }) {
   return (
     <TouchableWithoutFeedback onPress={handleTap}>
       <View style={styles.container}>
+        <StatusBar style="light" />
         <FilteredMedia
           key={round}
           uri={snap.mediaUrl}
