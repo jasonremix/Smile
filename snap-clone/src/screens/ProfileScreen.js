@@ -180,27 +180,46 @@ export default function ProfileScreen({ navigation }) {
         ListHeaderComponent={
           <View>
             <View style={styles.identitySection}>
-              <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
-                {user?.avatarUrl ? (
-                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-                    <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+              <View style={styles.headerRow}>
+                <View style={styles.headerTextBlock}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.displayName}>{user?.displayName}</Text>
+                    {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
+                    {user?.isCreator ? <CreatorBadge size={18} style={styles.verifiedBadge} /> : null}
                   </View>
-                )}
-              </GradientView>
+                  <Text style={styles.username}>@{user?.username}</Text>
 
-              <View style={styles.nameRow}>
-                <Text style={styles.displayName}>{user?.displayName}</Text>
-                {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
-                {user?.isCreator ? <CreatorBadge size={18} style={styles.verifiedBadge} /> : null}
+                  <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statValue}>{friends.length}</Text>
+                      <Text style={styles.statLabel}>Connections</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statValue}>{postCount}</Text>
+                      <Text style={styles.statLabel}>Beiträge</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statValue}>{getLevelInfo(user?.nataScore ?? 0).score}</Text>
+                      <Text style={styles.statLabel}>Score</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
+                  {user?.avatarUrl ? (
+                    <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+                      <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+                    </View>
+                  )}
+                </GradientView>
               </View>
-              <Text style={styles.username}>@{user?.username}</Text>
 
               {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
 
-              <InterestChips interests={user?.interests} style={styles.interestChips} />
-              <ChallengeBadgeChips badges={user?.seasonalBadges} style={styles.interestChips} />
+              <InterestChips interests={user?.interests} style={styles.interestChipsLeft} />
+              <ChallengeBadgeChips badges={user?.seasonalBadges} style={styles.interestChipsLeft} />
 
               {user?.location?.city ? (
                 <View style={styles.locationRow}>
@@ -208,23 +227,6 @@ export default function ProfileScreen({ navigation }) {
                   <Text style={styles.locationText}>{user.location.city}</Text>
                 </View>
               ) : null}
-
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{postCount}</Text>
-                  <Text style={styles.statLabel}>Beiträge</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{friends.length}</Text>
-                  <Text style={styles.statLabel}>Connections</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{getLevelInfo(user?.nataScore ?? 0).score}</Text>
-                  <Text style={styles.statLabel}>Score</Text>
-                </View>
-              </View>
 
               <TouchableOpacity style={styles.statusRow} onPress={() => setStatusEditorVisible(true)}>
                 <Icon name="sparkle" size={13} color={colors.primaryLight} />
@@ -241,6 +243,15 @@ export default function ProfileScreen({ navigation }) {
                   accessibilityLabel="Profil bearbeiten"
                 >
                   <Text style={styles.editButtonText}>Profil bearbeiten</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.pillButton}
+                  onPress={() => navigation.navigate("QRCode")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mein Nata-Code"
+                >
+                  <Icon name="grid" size={13} color={colors.text} style={styles.pillIcon} />
+                  <Text style={styles.pillButtonText}>Code</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.shareButton}
@@ -342,28 +353,35 @@ const styles = StyleSheet.create({
     ...typography.headline,
   },
   identitySection: {
-    alignItems: "center",
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: spacing.lg,
+  },
   avatarRing: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: spacing.lg,
   },
   avatar: {
-    width: 94,
-    height: 94,
-    borderRadius: 47,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
     color: "#000",
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "800",
   },
   nameRow: {
@@ -386,14 +404,11 @@ const styles = StyleSheet.create({
   bio: {
     color: colors.text,
     ...typography.body,
-    textAlign: "center",
     marginTop: spacing.md,
-    maxWidth: "90%",
   },
-  interestChips: {
-    justifyContent: "center",
+  interestChipsLeft: {
+    justifyContent: "flex-start",
     marginTop: spacing.sm,
-    maxWidth: "90%",
   },
   locationRow: {
     flexDirection: "row",
@@ -408,11 +423,13 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: spacing.xl,
+    gap: spacing.lg,
+    marginTop: spacing.md,
   },
   statItem: {
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
   },
   statValue: {
     color: colors.text,
@@ -421,12 +438,6 @@ const styles = StyleSheet.create({
   statLabel: {
     color: colors.textMuted,
     ...typography.caption,
-    marginTop: 2,
-  },
-  statDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 24,
-    backgroundColor: colors.border,
   },
   statusRow: {
     flexDirection: "row",
@@ -437,7 +448,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     marginTop: spacing.lg,
-    maxWidth: "90%",
+    alignSelf: "flex-start",
+    maxWidth: "100%",
   },
   statusText: {
     color: colors.text,
@@ -451,22 +463,38 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   editButton: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.surfaceLight,
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.sm + 2,
   },
   editButtonText: {
     color: colors.text,
     ...typography.subhead,
+    fontWeight: "700",
+  },
+  pillButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+  },
+  pillIcon: {
+    marginRight: 4,
+  },
+  pillButtonText: {
+    color: colors.text,
+    ...typography.subhead,
+    fontWeight: "700",
   },
   shareButton: {
     width: 38,
     height: 38,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceLight,
     justifyContent: "center",
     alignItems: "center",
   },

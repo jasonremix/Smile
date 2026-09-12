@@ -149,7 +149,9 @@ export default function ChatListScreen({ navigation }) {
               style={styles.snapRow}
               onPress={() => navigation.navigate("SnapViewer", { snap })}
             >
-              <Icon name={snap.mediaType === "video" ? "video" : "camera"} size={17} color={colors.primaryLight} style={styles.snapIcon} />
+              <View style={styles.snapIconCircle}>
+                <Icon name={snap.mediaType === "video" ? "video" : "camera"} size={16} color={colors.onPrimary} />
+              </View>
               <Text style={styles.snapSender}>{snap.senderName}</Text>
               <Text style={styles.snapCta}>Antippen zum Ansehen</Text>
             </TouchableOpacity>
@@ -220,7 +222,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 6,
   },
-  snapIcon: {
+  snapIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 10,
   },
   snapSender: {
