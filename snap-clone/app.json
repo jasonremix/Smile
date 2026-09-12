@@ -3,8 +3,7 @@
     "name": "Nata",
     "slug": "snap-clone",
     "scheme": "nata",
-    "version": "1.2.0",
-    "privacy": "unlisted",
+    "version": "1.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
@@ -69,7 +68,12 @@
           "color": "#9333EA"
         }
       ],
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-audio",
+      "expo-video",
+      "expo-asset"
     ],
     "extra": {
       "eas": {

@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
@@ -81,11 +81,11 @@ export default function CallScreen({ navigation, route }) {
       try {
         // getUserMedia() von react-native-webrtc fragt auf Android KEINE
         // Laufzeit-Berechtigung selbststaendig ab (anders als expo-camera/
-        // expo-av) - ohne diesen expliziten Request schlaegt der Anruf auf
+        // expo-audio) - ohne diesen expliziten Request schlaegt der Anruf auf
         // einem Geraet, das Nata noch nie um Mikrofonzugriff gebeten hat,
-        // sonst still fehl. expo-av ist bereits fuer Sprachnachrichten im
+        // sonst still fehl. expo-audio ist bereits fuer Sprachnachrichten im
         // Einsatz und deckt iOS+Android einheitlich ab.
-        const { status } = await Audio.requestPermissionsAsync();
+        const { status } = await requestRecordingPermissionsAsync();
         if (status !== "granted") {
           if (!cancelled) setSetupError("Kein Mikrofon-Zugriff - in den Geräteeinstellungen erlauben.");
           return;

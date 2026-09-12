@@ -1,5 +1,5 @@
-import { Audio } from "expo-av";
-import React, { useEffect, useRef, useState } from "react";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import React, { useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "./Icon";
 import { colors } from "../theme/colors";
@@ -11,50 +11,34 @@ function formatTime(ms) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// Wiedergabe fuer Sprachnachrichten (Beta) - laedt den Sound erst beim
-// ersten Antippen, danach pausiert/spielt dieselbe Instanz weiter.
+// Wiedergabe fuer Sprachnachrichten (Beta) - der Player startet ohne Quelle
+// (source: null) und laedt die eigentliche Datei erst beim ersten Antippen
+// per replace(), damit nicht jede Sprachnachricht in einem Chat sofort beim
+// Oeffnen im Hintergrund geladen wird.
 export default function VoiceMessageBubble({ voiceUrl, durationMs = 0 }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [positionMs, setPositionMs] = useState(0);
-  const soundRef = useRef(null);
+  const player = useAudioPlayer(null);
+  const status = useAudioPlayerStatus(player);
+  const loadedRef = useRef(false);
 
-  useEffect(() => {
-    return () => {
-      soundRef.current?.unloadAsync();
-    };
-  }, []);
-
-  const handleStatusUpdate = (status) => {
-    if (!status.isLoaded) return;
-    setPositionMs(status.positionMillis || 0);
-    setIsPlaying(status.isPlaying);
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-      setPositionMs(0);
-    }
-  };
-
-  const handlePress = async () => {
-    if (soundRef.current) {
-      const status = await soundRef.current.getStatusAsync();
-      if (status.isPlaying) {
-        await soundRef.current.pauseAsync();
-      } else {
-        if (status.positionMillis >= status.durationMillis) {
-          await soundRef.current.setPositionAsync(0);
-        }
-        await soundRef.current.playAsync();
-      }
+  const handlePress = () => {
+    if (!loadedRef.current) {
+      loadedRef.current = true;
+      player.replace({ uri: voiceUrl });
+      player.play();
       return;
     }
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: voiceUrl },
-      { shouldPlay: true },
-      handleStatusUpdate
-    );
-    soundRef.current = sound;
+    if (status.playing) {
+      player.pause();
+    } else {
+      if (status.duration > 0 && status.currentTime >= status.duration) {
+        player.seekTo(0);
+      }
+      player.play();
+    }
   };
 
+  const isPlaying = status.playing;
+  const positionMs = status.currentTime * 1000;
   const progress = durationMs > 0 ? Math.min(1, positionMs / durationMs) : 0;
 
   return (

@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from "expo-audio";
 import React, { useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "./Icon";
@@ -8,32 +8,33 @@ import { spacing } from "../theme/spacing";
 
 const MIN_DURATION_MS = 700;
 
-// Sprachnachrichten (Beta) - expo-av ist bereits fuer Video-Wiedergabe im
-// Einsatz und damit in allen aktuell verteilten Builds nativ vorhanden,
-// braucht also anders als expo-location keinen soft-load. Tap zum Starten/
-// Stoppen statt Halten - zuverlaessiger auf beiden Plattformen als eine
-// Press-and-Hold-Geste.
+// Sprachnachrichten (Beta) - expo-audio (Nachfolger von expo-av, siehe
+// utils/soundEffects.js) ist bereits fuer Video-Wiedergabe im Einsatz und
+// damit in allen aktuell verteilten Builds nativ vorhanden, braucht also
+// anders als expo-location keinen soft-load. Tap zum Starten/Stoppen statt
+// Halten - zuverlaessiger auf beiden Plattformen als eine Press-and-Hold-
+// Geste.
 export default function VoiceRecorderButton({ onRecorded, disabled }) {
-  const [recording, setRecording] = useState(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [isRecording, setIsRecording] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const startRef = useRef(0);
   const timerRef = useRef(null);
 
   const startRecording = async () => {
-    if (disabled || recording) return;
+    if (disabled || isRecording) return;
     try {
-      const { status } = await Audio.requestPermissionsAsync();
+      const { status } = await requestRecordingPermissionsAsync();
       if (status !== "granted") {
         Alert.alert("Kein Zugriff", "Nata braucht Mikrofon-Zugriff für Sprachnachrichten.");
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const rec = new Audio.Recording();
-      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await rec.startAsync();
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       startRef.current = Date.now();
       setElapsedMs(0);
-      setRecording(rec);
+      setIsRecording(true);
       timerRef.current = setInterval(() => setElapsedMs(Date.now() - startRef.current), 200);
     } catch (e) {
       Alert.alert("Fehler", "Aufnahme konnte nicht gestartet werden.");
@@ -41,15 +42,14 @@ export default function VoiceRecorderButton({ onRecorded, disabled }) {
   };
 
   const stopRecording = async (shouldSend) => {
-    if (!recording) return;
+    if (!isRecording) return;
     clearInterval(timerRef.current);
     const duration = Date.now() - startRef.current;
-    const activeRecording = recording;
-    setRecording(null);
+    setIsRecording(false);
     setElapsedMs(0);
     try {
-      await activeRecording.stopAndUnloadAsync();
-      const uri = activeRecording.getURI();
+      await recorder.stop();
+      const uri = recorder.uri;
       if (shouldSend && duration >= MIN_DURATION_MS && uri) {
         onRecorded(uri, duration);
       }
@@ -65,7 +65,7 @@ export default function VoiceRecorderButton({ onRecorded, disabled }) {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  if (recording) {
+  if (isRecording) {
     return (
       <View style={styles.recordingRow}>
         <View style={styles.recordDot} />

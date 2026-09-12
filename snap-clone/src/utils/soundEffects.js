@@ -1,13 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// expo-av ist bereits Teil der ausgelieferten Builds (siehe FilteredMedia.js,
-// das Video daraus ohne Soft-Load direkt importiert) - kein neues natives
-// Modul, also kein Absturzrisiko fuer Alt-Versionen.
-let Audio = null;
+// expo-audio (Nachfolger von expo-av) ist bereits Teil der ausgelieferten
+// Builds (siehe FilteredMedia.js, das expo-video ohne Soft-Load direkt
+// importiert) - kein neues natives Modul, also kein Absturzrisiko fuer
+// Alt-Versionen.
+let createAudioPlayer = null;
 try {
-  Audio = require("expo-av").Audio;
+  createAudioPlayer = require("expo-audio").createAudioPlayer;
 } catch (e) {
-  Audio = null;
+  createAudioPlayer = null;
 }
 
 const STORAGE_KEY = "nata_sound_effects_enabled";
@@ -38,15 +39,16 @@ export async function setSoundEffectsEnabled(enabled) {
 // wieder entladen statt dauerhaft im Speicher gehalten, da sie selten genug
 // ausgeloest werden, dass das keine spuerbare Verzoegerung verursacht.
 async function play(asset) {
-  if (!Audio) return;
+  if (!createAudioPlayer) return;
   const enabled = await getSoundEffectsEnabled();
   if (!enabled) return;
   try {
-    const { sound } = await Audio.Sound.createAsync(asset, { volume: 0.7 });
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) sound.unloadAsync().catch(() => {});
+    const player = createAudioPlayer(asset);
+    player.volume = 0.7;
+    player.addListener("playbackStatusUpdate", (status) => {
+      if (status.didJustFinish) player.remove();
     });
-    await sound.playAsync();
+    player.play();
   } catch (e) {
     // Ton ist rein kosmetisch - kein Fehler, der die Nachricht selbst betrifft.
   }
