@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChatListItem from "../components/ChatListItem";
 import EmptyState from "../components/EmptyState";
 import Icon from "../components/Icon";
 import NataAIListRow from "../components/NataAIListRow";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
-import { isStreakActive } from "../services/chatService";
-import { listenGroups } from "../services/groupService";
+import { deleteChat, isStreakActive } from "../services/chatService";
+import { leaveGroup, listenGroups } from "../services/groupService";
 import { listenBlockedUsers } from "../services/moderationService";
 import { listenIncomingSnaps } from "../services/snapService";
 import { colors } from "../theme/colors";
@@ -41,6 +41,29 @@ export default function ChatListScreen({ navigation }) {
 
   const handleTogglePin = (pinKey) => {
     togglePinnedChat(pinKey).then(setPinnedIds);
+  };
+
+  const handleDelete = (item) => {
+    const isGroup = item.type === "group";
+    Alert.alert(
+      isGroup ? "Gruppe verlassen" : "Unterhaltung löschen",
+      isGroup
+        ? `Möchtest du "${item.name}" wirklich verlassen?`
+        : `Möchtest du die Unterhaltung mit ${item.name} wirklich löschen? Das kann nicht rückgängig gemacht werden.`,
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: isGroup ? "Verlassen" : "Löschen",
+          style: "destructive",
+          onPress: () => {
+            const action = isGroup ? leaveGroup(item.groupId, user.uid) : deleteChat(item.id);
+            action.catch(() =>
+              Alert.alert("Fehler", "Das hat gerade nicht geklappt. Bitte erneut versuchen.")
+            );
+          },
+        },
+      ]
+    );
   };
 
   const blockedIds = useMemo(() => new Set(blocked.map((b) => b.uid)), [blocked]);
@@ -150,7 +173,8 @@ export default function ChatListScreen({ navigation }) {
                 ? navigation.navigate("GroupChat", { groupId: item.groupId, groupName: item.groupName })
                 : navigation.navigate("Chat", { chatId: item.id, otherUser: item.otherUser })
             }
-            onLongPress={() => handleTogglePin(item.pinKey)}
+            onTogglePin={() => handleTogglePin(item.pinKey)}
+            onDelete={() => handleDelete(item)}
           />
         )}
         ListEmptyComponent={

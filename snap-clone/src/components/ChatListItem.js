@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import Icon from "./Icon";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 
+// Nach links wischen zeigt Anpinnen/Loeschen statt eines zusaetzlichen
+// Long-Press-Gestus - eine Geste statt zwei sich ueberschneidende, und naeher
+// an dem, was man aus anderen Messaging-Apps bereits kennt ("modern/klarer").
 export default function ChatListItem({
   name,
   avatarColor,
@@ -13,31 +17,61 @@ export default function ChatListItem({
   unread,
   pinned,
   onPress,
-  onLongPress,
+  onTogglePin,
+  onDelete,
 }) {
+  const swipeableRef = useRef(null);
+
+  const renderRightActions = () => (
+    <View style={styles.actionsRow}>
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: colors.primary }]}
+        onPress={() => {
+          swipeableRef.current?.close();
+          onTogglePin?.();
+        }}
+      >
+        <Icon name="pin" size={17} color={colors.text} />
+        <Text style={styles.actionText}>{pinned ? "Lösen" : "Anpinnen"}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: colors.danger }]}
+        onPress={() => {
+          swipeableRef.current?.close();
+          onDelete?.();
+        }}
+      >
+        <Icon name="trash" size={17} color={colors.text} />
+        <Text style={styles.actionText}>Löschen</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress} onLongPress={onLongPress}>
-      <View style={[styles.avatar, { backgroundColor: avatarColor || colors.primary }]}>
-        <Text style={styles.avatarText}>{(name || "?").charAt(0).toUpperCase()}</Text>
-      </View>
-      <View style={styles.textContainer}>
-        <View style={styles.nameRow}>
-          {pinned ? <Icon name="pin" size={11} color={colors.textMuted} /> : null}
-          <Text style={[styles.name, unread && styles.nameUnread]}>{name}</Text>
-          {streakCount > 0 ? (
-            <View style={styles.streakRow}>
-              <Icon name="flame" size={12} color={colors.textMuted} />
-              <Text style={styles.streak}>{streakCount}</Text>
-            </View>
-          ) : null}
+    <Swipeable ref={swipeableRef} renderRightActions={renderRightActions} overshootRight={false}>
+      <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
+        <View style={[styles.avatar, { backgroundColor: avatarColor || colors.primary }]}>
+          <Text style={styles.avatarText}>{(name || "?").charAt(0).toUpperCase()}</Text>
         </View>
-        <Text numberOfLines={1} style={[styles.preview, unread && styles.previewUnread]}>
-          {isMine ? "Du: " : ""}
-          {lastMessage || "Neue Unterhaltung"}
-        </Text>
-      </View>
-      {unread ? <View style={styles.unreadDot} /> : null}
-    </TouchableOpacity>
+        <View style={styles.textContainer}>
+          <View style={styles.nameRow}>
+            {pinned ? <Icon name="pin" size={11} color={colors.textMuted} /> : null}
+            <Text style={[styles.name, unread && styles.nameUnread]}>{name}</Text>
+            {streakCount > 0 ? (
+              <View style={styles.streakRow}>
+                <Icon name="flame" size={12} color={colors.textMuted} />
+                <Text style={styles.streak}>{streakCount}</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text numberOfLines={1} style={[styles.preview, unread && styles.previewUnread]}>
+            {isMine ? "Du: " : ""}
+            {lastMessage || "Neue Unterhaltung"}
+          </Text>
+        </View>
+        {unread ? <View style={styles.unreadDot} /> : null}
+      </TouchableOpacity>
+    </Swipeable>
   );
 }
 
@@ -49,6 +83,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
   avatar: {
     width: 46,
@@ -103,5 +138,19 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.primary,
     marginLeft: 8,
+  },
+  actionsRow: {
+    flexDirection: "row",
+  },
+  actionButton: {
+    width: 72,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+  },
+  actionText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: "700",
   },
 });

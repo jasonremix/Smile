@@ -61,10 +61,10 @@ export default function IncomingCallOverlay() {
         <Text style={styles.subtitle}>Nata-Anruf …</Text>
       </View>
       <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={handleDecline}>
-        <Icon name="close" size={18} color="#fff" />
+        <Icon name="close" size={18} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={handleAccept}>
-        <Icon name="check" size={18} color="#fff" />
+        <Icon name="check" size={18} color={colors.text} />
       </TouchableOpacity>
     </View>
   );
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1a1a",
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 20,
     padding: 12,
     gap: 10,

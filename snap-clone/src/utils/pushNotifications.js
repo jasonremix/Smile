@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 import { navigationRef } from "../navigation/navigationRef";
+import { colors } from "../theme/colors";
 
 // expo-notifications ist ein natives Modul, das erst mit dem naechsten
 // nativen Build in den ausgelieferten Apps steckt - genau wie bei
@@ -35,7 +36,7 @@ export async function registerForPushNotifications(uid, savePushToken) {
         name: "Nata",
         importance: Notifications.AndroidImportance.DEFAULT,
         vibrationPattern: [0, 150, 100, 150],
-        lightColor: "#9333EA",
+        lightColor: colors.primary,
       });
     }
 

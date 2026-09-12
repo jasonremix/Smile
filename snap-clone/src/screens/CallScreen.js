@@ -260,7 +260,7 @@ export default function CallScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0d0d0d",
+    backgroundColor: colors.background,
     alignItems: "center",
     paddingTop: 100,
     paddingBottom: 60,

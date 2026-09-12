@@ -11,10 +11,10 @@
 export const typography = {
   // "Hero" fuer wenige, bewusst grosse Momente (Feier-Screens, Onboarding) -
   // wird sparsam eingesetzt, nicht als Standard-Screen-Titel.
-  hero: { fontSize: 36, fontWeight: "800", letterSpacing: -0.6, lineHeight: 40 },
+  hero: { fontSize: 36, fontWeight: "800", letterSpacing: -0.8, lineHeight: 40 },
   // "Display" fuer grosse Screen-Titel (Entdecken, Connections, Profil) -
   // leicht engeres Letter Spacing wirkt hochwertiger als reines Bold allein.
-  largeTitle: { fontSize: 30, fontWeight: "800", letterSpacing: -0.4, lineHeight: 36 },
+  largeTitle: { fontSize: 30, fontWeight: "800", letterSpacing: -0.5, lineHeight: 36 },
   title: { fontSize: 22, fontWeight: "700", letterSpacing: -0.2, lineHeight: 28 },
   headline: { fontSize: 17, fontWeight: "700", lineHeight: 22 },
   body: { fontSize: 15, fontWeight: "400", lineHeight: 21 },

@@ -218,6 +218,16 @@ export async function proposeSharedGoal(chatId, uid, days) {
   });
 }
 
+// Loescht die Unterhaltung fuer BEIDE Beteiligten (kein "nur bei mir
+// ausblenden") - firestore.rules erlaubt delete bereits fuer jede Person in
+// participants. Die messages-Subcollection wird dabei NICHT mitgeloescht
+// (Firestore loescht Unterdokumente nie automatisch mit); das ist
+// unproblematisch, da sie ohne das uebergeordnete Chat-Dokument von der App
+// aus nirgends mehr abgefragt/erreicht wird.
+export async function deleteChat(chatId) {
+  await deleteDoc(doc(db, "chats", chatId));
+}
+
 export async function respondToSharedGoal(chatId, accept) {
   await updateDoc(doc(db, "chats", chatId), {
     sharedGoalStatus: accept ? "active" : "declined",
