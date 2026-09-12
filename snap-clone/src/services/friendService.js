@@ -13,24 +13,45 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { createNotification } from "./notificationService";
 
-// Sucht Nutzer anhand des Benutzernamens (Praefix-Suche).
+// Sucht Nutzer per Praefix - sowohl ueber den Benutzernamen als auch den
+// Anzeigenamen, damit man mit beidem faendig wird. Firestore kann kein ODER
+// ueber zwei verschiedene Range-Filter in einer Abfrage, daher zwei separate
+// Abfragen parallel und die Treffer clientseitig zusammenfuehren.
 export async function searchUsersByUsername(searchTerm, currentUid) {
   const term = searchTerm.trim().toLowerCase();
   if (!term) return [];
 
   const usersRef = collection(db, "users");
-  const q = query(
+  const usernameQuery = query(
     usersRef,
     orderBy("username"),
     where("username", ">=", term),
     where("username", "<=", term + ""),
     limit(20)
   );
-  const snap = await getDocs(q);
-  return snap.docs
-    .map((d) => d.data())
-    .filter((u) => u.uid !== currentUid);
+  const displayNameQuery = query(
+    usersRef,
+    orderBy("displayNameLower"),
+    where("displayNameLower", ">=", term),
+    where("displayNameLower", "<=", term + ""),
+    limit(20)
+  );
+
+  const [usernameSnap, displayNameSnap] = await Promise.all([
+    getDocs(usernameQuery),
+    getDocs(displayNameQuery),
+  ]);
+
+  const results = new Map();
+  for (const d of [...usernameSnap.docs, ...displayNameSnap.docs]) {
+    results.set(d.data().uid, d.data());
+  }
+  // "discoverable" faellt nur die Suche/Vorschlaege raus, nicht das
+  // eigentliche Leserecht auf das Profil - wer den Nata-Code oder Link einer
+  // Person hat, findet sie weiterhin ganz normal.
+  return Array.from(results.values()).filter((u) => u.uid !== currentUid && u.discoverable !== false);
 }
 
 export async function sendFriendRequest(fromUser, toUser) {
@@ -43,6 +64,7 @@ export async function sendFriendRequest(fromUser, toUser) {
     status: "pending",
     createdAt: serverTimestamp(),
   });
+  await createNotification(toUser.uid, fromUser, { type: "friend_request" });
 }
 
 export function listenIncomingRequests(uid, callback) {
@@ -72,10 +94,27 @@ export async function acceptFriendRequest(request, currentUser) {
     username: currentUser.username,
     addedAt: serverTimestamp(),
   });
+
+  await createNotification(request.from, currentUser, { type: "friend_accept" });
 }
 
 export async function declineFriendRequest(request) {
   await updateDoc(doc(db, "friendRequests", request.id), { status: "declined" });
+}
+
+// Einmaliger Check, ob bereits eine offene Anfrage von fromUid an toUid
+// existiert - fuers Fremdprofil, damit der "Verbinden"-Button nicht doppelt
+// gedrueckt werden kann.
+export async function hasPendingRequest(fromUid, toUid) {
+  const q = query(
+    collection(db, "friendRequests"),
+    where("from", "==", fromUid),
+    where("to", "==", toUid),
+    where("status", "==", "pending"),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  return !snap.empty;
 }
 
 export function listenFriends(uid, callback) {
@@ -83,4 +122,37 @@ export function listenFriends(uid, callback) {
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => d.data()));
   });
+}
+
+// Einmaliger (nicht live) Read der eigenen Freundesliste - fuer die
+// Nata-Code-Scan-Vorschau, wo kein Listener noetig ist.
+export async function getFriendsOnce(uid) {
+  const snap = await getDocs(collection(db, "users", uid, "friends"));
+  return snap.docs.map((d) => d.data());
+}
+
+// Gemeinsame Connections fuer die Scan-Vorschau, OHNE direkten Lesezugriff
+// auf die (bei Fremden per Regel gesperrte) Freundesliste der gescannten
+// Person zu brauchen: stattdessen wird bei den EIGENEN Freunden nachgesehen,
+// wer von ihnen targetUid ebenfalls als Freund fuehrt (isFriendOf greift
+// hier, weil man mit diesen Personen ja bereits befreundet ist). Genau das
+// gleiche Muster wie getFriendSuggestions - private Freundeslisten einzelner
+// gemeinsamer Freunde werden dabei einfach uebersprungen statt abzustuerzen.
+export async function getMutualConnections(myFriends, targetUid) {
+  if (!myFriends || myFriends.length === 0) return [];
+  const sample = myFriends.slice(0, 20);
+  const mutual = [];
+  await Promise.all(
+    sample.map(async (friend) => {
+      try {
+        const snap = await getDocs(collection(db, "users", friend.uid, "friends"));
+        if (snap.docs.some((d) => d.data().uid === targetUid)) {
+          mutual.push(friend);
+        }
+      } catch (e) {
+        // Freundesliste dieser Person ist privat - einfach ueberspringen.
+      }
+    })
+  );
+  return mutual;
 }

@@ -6,53 +6,1275 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Gruender-Sonderzugriff fuer die Ticket-Bearbeitung (Annehmen/Ablehnen/
+    // Antworten, Sperren manuell aufheben) - bewusst als feste UID statt
+    // eines Lookups auf "username == jasonbuerger": ein Lookup waere ein
+    // zusaetzlicher, in Regeln fehleranfaelliger Read, und der Benutzername
+    // koennte sich theoretisch aendern. Diese UID gehoert zum echten
+    // "jasonbuerger"-Konto (Gruender-Account), keine Rolle/Custom-Claim
+    // noetig, da es nur eine einzige Person mit diesem Zugriff gibt.
+    function isFounder() {
+      return isSignedIn() && request.auth.uid == 'O4xRu9e0qFRfnzsmgKWLNjE6r9U2';
+    }
+
+    // true, wenn der anfragende Nutzer mit ownerId befreundet ist (Freunde
+    // werden beim Annehmen einer Anfrage auf beiden Seiten gespeichert,
+    // ein Blick auf die Seite des Owners reicht daher aus).
+    function isFriendOf(ownerId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(ownerId)/friends/$(request.auth.uid));
+    }
+
+    // Dieselbe Sichtbarkeits-Logik wie beim Story-Lesen (siehe unten bei
+    // stories/{storyId}), aber fuer die verschachtelte reactions-Subcollection
+    // wiederverwendbar, wo resource.data die Reaktion ist, nicht die Story.
+    function canViewStory(ownerId, storyId) {
+      let story = get(/databases/$(database)/documents/users/$(ownerId)/stories/$(storyId)).data;
+      return isOwner(ownerId)
+        || (story.visibility == 'friends' && isFriendOf(ownerId))
+        || (story.visibility == 'custom' && request.auth.uid in story.visibleTo);
+    }
+
+    // Automatische Sperr-/Timeout-Durchsetzung (siehe moderationService.js
+    // fuer die Strike-Vergabe): unabhaengig davon, ob der Client brav
+    // mitspielt, kann eine bereits gesetzte Sperre serverseitig nicht
+    // umgangen werden - jeder Versuch, waehrend einer aktiven Sperre neuen
+    // Inhalt zu erstellen, wird hier unabhaengig vom Inhalt selbst abgelehnt.
+    function isCurrentlyRestricted(uid) {
+      let restrictedUntil = get(/databases/$(database)/documents/users/$(uid)).data.get('restrictedUntil', null);
+      return restrictedUntil != null && restrictedUntil > request.time;
+    }
+
+    // Mehrfach-Reaktionen auf Beitraege (siehe utils/postReactions.js fuer
+    // die Kategorien): nur bekannte Reaktionstypen als nicht-negative
+    // Ganzzahl. Bewusst kein Versuch, den exakten Delta pro Schreibvorgang
+    // zu erzwingen (schwer generisch in Firestore-Regeln abzubilden) -
+    // gleiches, bereits akzeptiertes Vertrauensmodell wie bei
+    // likeCount/nataScore (kein Cloud-Function-Backend, siehe dortige
+    // Kommentare).
+    function isValidReactionsMap(m) {
+      return m is map
+        && (!('heart' in m) || (m.heart is int && m.heart >= 0))
+        && (!('laugh' in m) || (m.laugh is int && m.laugh >= 0))
+        && (!('wow' in m) || (m.wow is int && m.wow >= 0))
+        && (!('sad' in m) || (m.sad is int && m.sad >= 0))
+        && (!('fire' in m) || (m.fire is int && m.fire >= 0));
+    }
+
+    // Stimmen-Zaehler fuer Umfrage-Sticker in Momenten (siehe stories/{storyId}
+    // unten) - maximal 4 Optionen, analog zur festen Reaktionsliste oben statt
+    // eines generischen, schwerer pruefbaren Feldes.
+    function isValidPollVotesMap(m) {
+      return m is map
+        && (!('0' in m) || (m['0'] is int && m['0'] >= 0))
+        && (!('1' in m) || (m['1'] is int && m['1'] >= 0))
+        && (!('2' in m) || (m['2'] is int && m['2'] >= 0))
+        && (!('3' in m) || (m['3'] is int && m['3'] >= 0));
+    }
+
+    // Ein Beitrag darf sich nur einer Challenge zuordnen, die es wirklich
+    // gibt UND die gerade laeuft - verhindert, dass jemand einen laengst
+    // abgelaufenen oder frei erfundenen Tag eintraegt (siehe challenges/
+    // weiter unten, Dokument-ID = Tag-Slug).
+    function isValidChallengeTag(tag) {
+      let challenge = get(/databases/$(database)/documents/challenges/$(tag)).data;
+      return challenge.startAt <= request.time && challenge.endAt >= request.time;
+    }
+
+    // Serverseitige Haelfte der automatischen Inhaltspruefung (siehe
+    // src/utils/contentFilter.js fuer die clientseitige Vorab-Pruefung mit
+    // Leetspeak-Normalisierung und URL-/Kontakt-Heuristiken - das laesst
+    // sich in der begrenzten Firestore-Regelsprache nicht 1:1 nachbauen).
+    // Diese Funktion deckt die Kernliste an Begriffen/Phrasen ab und greift
+    // unabhaengig vom Client, also auch bei direkten Schreibversuchen gegen
+    // Firestore. Bewusst dieselbe Wortliste wie im Client, damit beide
+    // Ebenen konsistent bleiben.
+    function containsBlockedTerm(text) {
+      return text is string
+        && text.lower().matches(
+          '.*(hurensohn|wichser|wixxer|arschloch|missgeburt|untermensch|abschaum|fotze'
+          + '|schlampe|hure|bastard|wixer|hackfresse|spacko|vollidiot|penner'
+          + '|spast|spasti|mongo|kanake|kameltreiber|judensau|zigeuner'
+          + '|schwuchtel|kampflesbe|tunte'
+          + '|nigger|nigga|faggot|retard|chink|kike|spic|tranny|whore|slut|bitch|cunt'
+          + '|schick mir nacktbilder|zeig mir deine titten|schick nudes|nacktfoto von dir'
+          + '|ich bringe dich um|ich toete dich|ich töte dich|ich tote dich'
+          + '|ich schlage dich|ich steche dich|ich erstech dich|du wirst sterben|du bist tot'
+          + '|ich mach dich fertig|ich finde dich und'
+          + '|ich weiss wo du wohnst|ich weiß wo du wohnst|ich vergewaltige dich'
+          + '|bring dich um|ritz dich|du solltest dich umbringen|du solltest sterben'
+          + '|ich will nicht mehr leben|ich will sterben|ich bring mich um|ich bringe mich um'
+          + '|ich toete mich|ich töte mich|ich mache schluss mit allem'
+          + '|ich will mir das leben nehmen|suizid begehen|selbstmord begehen'
+          + '|ich ritze mich|ich schneide mich|keinen grund mehr weiterzuleben'
+          + '|klick hier|jetzt klicken|gratis geld|schnell reich werden'
+          + '|geld verdienen von zuhause|jetzt kaufen|bitcoin investment|krypto investment'
+          + '|kostenlos abstauben|nur heute kostenlos|folge mir für follower'
+          + '|gewinnspiel teilnehmen jetzt|kostenloses iphone'
+          + '|verifiziere dein konto hier|dein konto wird gesperrt|bestätige deine daten hier'
+          + '|dein paket konnte nicht zugestellt werden).*'
+        );
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId;
-      allow delete: if false;
 
+      // "verified" darf beim Erstellen des eigenen Profils nie mitgeschickt
+      // werden - sonst koennte sich jede Person durch einen manipulierten
+      // Signup-Request selbst den Verifizierungs-Haken geben. Der Status
+      // wird ausschliesslich per Admin-Zugriff (auszerhalb der Client-Regeln)
+      // gesetzt.
+      allow create: if isOwner(userId)
+        && !('verified' in request.resource.data)
+        && !('isCreator' in request.resource.data)
+        && request.resource.data.uid == userId
+        && request.resource.data.nataScore == 0
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 20
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 40
+        && !containsBlockedTerm(request.resource.data.displayName);
+
+      // Manipulationsschutz auf Basis reiner Firestore-Regeln hat Grenzen:
+      // nataScore darf sich pro Schreibvorgang nur um einen kleinen,
+      // plausiblen Betrag aendern statt auf beliebige Werte gesetzt zu
+      // werden. Obergrenze +20 pro Schreibvorgang - muss zu
+      // MAX_SCORE_PER_ACTION in userService.js passen (hoechste einzelne
+      // Aktion: Beitrag +6, Snap-Fanout gedeckelt auf +20). Wirklich
+      // serverseitig garantiert faelschungssicher wird der Score erst mit
+      // einer Cloud Function statt Client-Schreibzugriff (siehe Roadmap).
+      // Gruender-Ausnahme als eigener, schmaler Zweig statt in die
+      // Owner-gebundenen Klauseln unten verwoben: der Gruender ist bei
+      // fremden Konten nie isOwner(userId), darf aber gezielt NUR
+      // restrictedUntil anfassen (Sperre nach Ticket-Pruefung manuell
+      // aufheben) - sonst nichts an einem fremden Profil.
+      allow update: if (
+          isFounder()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['restrictedUntil', 'verified', 'isCreator'])
+          && (
+            !('restrictedUntil' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.restrictedUntil == null
+            || request.resource.data.restrictedUntil is timestamp
+          )
+          && (
+            !('verified' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.verified is bool
+          )
+          && (
+            !('isCreator' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.isCreator is bool
+          )
+        ) || (
+        isOwner(userId)
+        // "verified" und "isCreator" sind auch beim Update fest gesperrt -
+        // nur Admin-Zugriff (Service Account, ausserhalb der Client-Regeln)
+        // darf sie setzen.
+        && !('verified' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('isCreator' in request.resource.data.diff(resource.data).affectedKeys())
+        // verifiedSeen darf die eigene Person nur auf true setzen (einmalige
+        // Glueckwunsch-Anzeige quittieren), nie zurueck auf false.
+        && (
+          !('verifiedSeen' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.verifiedSeen == true
+        )
+        && (
+          !('nataScore' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.nataScore >= resource.data.nataScore
+              && request.resource.data.nataScore <= resource.data.nataScore + 20)
+        )
+        && (
+          !('username' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.username is string
+              && request.resource.data.username.size() >= 3
+              && request.resource.data.username.size() <= 20)
+        )
+        && (
+          !('displayName' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.displayName is string
+              && request.resource.data.displayName.size() >= 1
+              && request.resource.data.displayName.size() <= 40
+              && !containsBlockedTerm(request.resource.data.displayName))
+        )
+        // betaTesterNumber/referredBy werden einmalig direkt nach der
+        // Registrierung gesetzt und danach nie wieder geaendert.
+        && (
+          !('betaTesterNumber' in request.resource.data.diff(resource.data).affectedKeys())
+          || (!('betaTesterNumber' in resource.data) && request.resource.data.betaTesterNumber is int)
+        )
+        && (
+          !('referredBy' in request.resource.data.diff(resource.data).affectedKeys())
+          || (!('referredBy' in resource.data) && request.resource.data.referredBy is string)
+        )
+        // "Was ist gerade los" - reiner Text-Status, kein Standort-Feld.
+        // Nur kurze Texte, kein beliebiger Payload.
+        && (
+          !('status' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.status == null
+          || (request.resource.data.status.text is string
+              && request.resource.data.status.text.size() > 0
+              && request.resource.data.status.text.size() <= 60
+              && !containsBlockedTerm(request.resource.data.status.text))
+        )
+        && (
+          !('bio' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.bio == null
+          || (request.resource.data.bio is string
+              && request.resource.data.bio.size() <= 150
+              && !containsBlockedTerm(request.resource.data.bio))
+        )
+        && (
+          !('avatarColor' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.avatarColor is string
+              && request.resource.data.avatarColor.size() <= 9)
+        )
+        // Standort ist explizites Opt-in (siehe ProfileEditScreen) und wird
+        // nur grob als Stadtname gespeichert, nie als exakte Koordinaten -
+        // deshalb "city" statt lat/lng.
+        && (
+          !('location' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.location == null
+          || (request.resource.data.location.city is string
+              && request.resource.data.location.city.size() > 0
+              && request.resource.data.location.city.size() <= 60)
+        )
+        // Sichtbarkeitseinstellungen (siehe PrivacyScreen): "discoverable"
+        // blendet die eigene Person aus Suche/Vorschlaegen aus (das Profil
+        // selbst bleibt fuer alle Signed-in-Nutzer lesbar - siehe oben),
+        // "connectionsVisibility" steuert, wer die eigene Connections-Liste
+        // sehen darf (siehe friends-Subcollection-Regel unten).
+        && (
+          !('discoverable' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.discoverable is bool
+        )
+        && (
+          !('connectionsVisibility' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.connectionsVisibility in ['everyone', 'onlyMe']
+        )
+        // "Enge Freunde"-Liste fuer Momente (siehe CloseFriendsScreen.js) -
+        // rein privat, nur die eigene Person liest/aendert sie. Keine
+        // Pruefung, ob jede ID auch tatsaechlich eine Connection ist (nicht
+        // sinnvoll generisch in Regeln pruefbar) - unproblematisch, da diese
+        // Liste selbst keine Sichtbarkeit gewaehrt, sondern nur die
+        // Empfaenger-Auswahl beim Teilen eines Moments vorausfuellt.
+        && (
+          !('closeFriends' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.closeFriends is list
+              && request.resource.data.closeFriends.size() <= 200)
+        )
+        // Automatische Sperr-/Timeout-Eskalation (siehe recordStrike() in
+        // moderationService.js): strikeWeight darf nur steigen, nie sinken,
+        // und pro Schreibvorgang nur um einen plausiblen Betrag (hoechstes
+        // Einzelgewicht ist "threat" mit 8, +10 Sicherheitsspanne).
+        // restrictedUntil darf ebenfalls nur nach vorne verschoben, nie
+        // verkuerzt oder geloescht werden - so kann sich niemand selbst
+        // entsperren, selbst mit einer manipulierten App.
+        && (
+          !('strikeWeight' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.strikeWeight is int
+              && request.resource.data.strikeWeight >= resource.data.get('strikeWeight', 0)
+              && request.resource.data.strikeWeight <= resource.data.get('strikeWeight', 0) + 10)
+        )
+        // restrictedUntil darf die betroffene Person selbst (auch mit
+        // manipulierter App) nur nach vorne verschieben, nie verkuerzen
+        // oder loeschen - die einzige Ausnahme ist der separate
+        // Gruender-Zweig oben.
+        && (
+          !('restrictedUntil' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.restrictedUntil is timestamp
+              && request.resource.data.restrictedUntil >= resource.data.get('restrictedUntil', request.time))
+        )
+        // Selbst gewaehlte Interessens-Badges (siehe EditProfileScreen) - nur
+        // aus einer festen Liste, keine freien Texte, deshalb reicht eine
+        // Groessen-/Typpruefung ohne Inhaltsfilter.
+        && (
+          !('interests' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.interests is list
+              && request.resource.data.interests.size() <= 5)
+        )
+        // Personalisierungs-Ziele (siehe PersonalizeGoalsScreen.js) - reine
+        // Selbstauskunft, keine Ranking-Garantie, deshalb nur Typ-/Groeszen-
+        // pruefung wie bei interests.
+        && (
+          !('goals' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.goals is list
+              && request.resource.data.goals.size() <= 10)
+        )
+        // Echtes Aktivitaets-Signal fuer die Gruender-Kohorten-Analyse (siehe
+        // FounderStatsScreen) - bewusst kein Firebase-Auth-Zeitstempel (der
+        // ist clientseitig nur fuer die eigene Person abrufbar, nicht fuer
+        // eine Liste aller Nutzer:innen), sondern ein eigenes, echtes Feld,
+        // das beim App-Start selbst geschrieben wird. Nur die eigene Person
+        // darf es setzen, kein Vorteil durch Faelschen, daher nur Typ-Check.
+        && (
+          !('lastActiveAt' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.lastActiveAt is timestamp
+        )
+        // Merkt sich, fuer welches Jahr die eigene Person das Nata-Wrapped
+        // schon gesehen hat (siehe WrappedScreen.js) - rein privat, verhindert
+        // nur eine wiederholte Anzeige bei der eigenen Person selbst.
+        && (
+          !('wrappedSeenYear' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.wrappedSeenYear is int
+        )
+        // Woechentlicher Punktestand-Schnappschuss fuer das Leaderboard
+        // (siehe leaderboardService.js) - bewusst KEINE Listen-Abfrage ueber
+        // fremde scoreEvents-Subcollections (Firestore kann exists()/get()-
+        // Aufrufe in Regeln nicht fuer Listen-Anfragen auswerten, nur fuer
+        // Einzeldokument-Zugriffe - empirisch waehrend der Regel-Tests
+        // bestaetigt). Stattdessen ein simpler, selbst geschriebener
+        // Schnappschuss auf dem ohnehin oeffentlich lesbaren users-Dokument.
+        && (
+          !('scoreSnapshotAt' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.scoreSnapshotAt is timestamp
+        )
+        && (
+          !('scoreAtSnapshot' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.scoreAtSnapshot is int
+        )
+        // Teilnahme-Abzeichen fuer Challenges (siehe challengeService.js
+        // awardChallengeBadge) - Badge-ID = Challenge-Tag. Selbst geschrieben
+        // statt aus fremden Daten berechnet, damit es auch auf fremden
+        // Profilen sichtbar ist (users/{userId} ist ohnehin oeffentlich
+        // lesbar) - dieselbe Abwaegung wie bei den Feldern oben.
+        && (
+          !('seasonalBadges' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.seasonalBadges is list
+              && request.resource.data.seasonalBadges.size() <= 30)
+        )
+      );
+
+      allow delete: if isOwner(userId);
+
+      // Eigene Freunde duerfen die Freundesliste mitlesen (nicht nur der
+      // Owner selbst) - noetig fuer "gemeinsame Freunde" und "Freunde von
+      // Freunden entdecken". Bewusster, ueblicher Kompromiss, kein oeffentlicher
+      // Zugriff: nur wer bereits verifiziert befreundet ist, sieht mit.
       match /friends/{friendId} {
-        allow read: if isSignedIn() && request.auth.uid == userId;
-        allow write: if isSignedIn() &&
-          (request.auth.uid == userId || request.auth.uid == friendId);
+        // "connectionsVisibility" == 'onlyMe' auf dem Owner-Profil schaltet
+        // den isFriendOf-Ausnahmefall ab (Standard weiterhin: Freunde von
+        // Freunden duerfen mitlesen, siehe isFriendOf oben).
+        allow read: if isOwner(userId)
+          || (
+            isFriendOf(userId)
+            && get(/databases/$(database)/documents/users/$(userId)).data.get('connectionsVisibility', 'everyone') != 'onlyMe'
+          );
+        allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
+      }
+
+      // Eigene, benannte Kreise (Familie/Arbeit/Gaming/...) fuer gezieltes
+      // Teilen von Momenten - rein privat, komplett anders als "friends"
+      // oben: kein isFriendOf-Ausnahmefall, nur der Owner selbst darf lesen
+      // oder schreiben. memberUids wird beim Teilen eines Moments lediglich
+      // als Ausgangsauswahl fuer die bereits bestehende "custom"-Sichtbarkeit
+      // (visibleTo) verwendet - dort greift weiterhin die normale Story-Regel.
+      match /circles/{circleId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 30
+          && request.resource.data.memberUids is list
+          && request.resource.data.memberUids.size() <= 200;
+      }
+
+      // Nachvollziehbare Score-Historie fuer die Home-/Score-Ansicht - reine
+      // Anzeige-Hilfe, kein Sicherheitsmechanismus (der eigentliche Schutz
+      // vor Score-Manipulation liegt auf dem nataScore-Feld selbst weiter
+      // oben). Nur create/read durch die eigene Person, unveraenderlich
+      // danach, damit die Historie nicht nachtraeglich "geschoent" wird.
+      match /scoreEvents/{eventId} {
+        // Freunde duerfen mitlesen (nicht nur die eigene Person) - fuer das
+        // woechentliche Leaderboard unter Connections (siehe
+        // leaderboardService.js). nataScore selbst ist ueber users/{userId}
+        // ohnehin schon fuer alle Signed-in-Nutzer:innen sichtbar (siehe
+        // oben) - die Historie hier ist eine kleinere, aehnliche Freigabe,
+        // kein neuer Sichtbarkeits-Sprung.
+        allow read: if isOwner(userId) || isFriendOf(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.amount is int
+          && request.resource.data.amount > 0
+          // Muss zu MAX_SCORE_PER_ACTION in userService.js passen - stand
+          // vorher bei 5, obwohl echte Aufrufstellen (z.B. Beitrag posten
+          // mit 6, oder Snap an mehrere Empfaenger mit recipientIds.length*3)
+          // schon laenger hoehere Betraege schicken. Der scoreEvents-Write
+          // schlug dadurch fuer diese Aktionen bisher still fehl (in
+          // bumpNataScore() abgefangen) - der nataScore-Zaehler selbst war
+          // korrekt, aber die Punkte-Historie hat diese Ereignisse verloren.
+          && request.resource.data.amount <= 20
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() <= 60;
+        allow update, delete: if false;
+      }
+
+      // Einladungs-Nachweis (siehe betaService.js applyReferral()) - die
+      // NEU registrierte Person legt hier einen Eintrag in der
+      // Subcollection DER WERBENDEN Person an, mit der eigenen uid als
+      // Dokument-ID. Bewusst kein Zaehlerfeld auf dem Nutzerdokument der
+      // werbenden Person (das koennte nur diese selbst beschreiben, aber
+      // die neu registrierte Person muesste den Schreibvorgang ausloesen -
+      // ein permission-mismatch, der vorher jede Einladung stumm scheitern
+      // liess). Die Anzahl ergibt sich aus der Groesse dieser Subcollection.
+      match /referrals/{referredUid} {
+        allow read: if isOwner(userId);
+        allow create: if isSignedIn() && request.auth.uid == referredUid;
+        allow update, delete: if false;
+      }
+
+      // Expo-Push-Tokens fuer Benachrichtigungen (siehe
+      // src/utils/pushNotifications.js) - bewusst eine eigene, nur fuer die
+      // Person selbst lesbare Subcollection statt eines Feldes auf dem
+      // (fuer alle Signed-in-Nutzer lesbaren) Hauptdokument: ein Push-Token
+      // erlaubt jedem, der ihn kennt, ueber Expos oeffentliche Push-API
+      // Benachrichtigungen an dieses Geraet zu schicken - darf also nicht
+      // oeffentlich lesbar sein. tokenId = der Token-String selbst, damit
+      // Mehrfach-Registrierung (z.B. beim erneuten Login) keine Duplikate
+      // erzeugt.
+      match /pushTokens/{tokenId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Nata-AI-Chatverlauf (siehe NataAIScreen.js/nataAiService.js) - rein
+      // privat, nur die eigene Person liest/schreibt ihn. "role" ist "user"
+      // oder "model" (Gemini-Antwort) - beide werden vom Client geschrieben,
+      // da es keinen Server/keine Cloud Function fuer den Gemini-Aufruf gibt.
+      match /aiMessages/{messageId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.role in ['user', 'model']
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 4000;
+        allow update, delete: if false;
+      }
+
+      // Taegliches Nutzungslimit fuer Nata AI (Kosten-/Missbrauchsschutz fuer
+      // den Gemini-Aufruf, der direkt vom Client kommt). docId = "YYYY-MM-DD"
+      // (lokales Datum), "count" zaehlt hoch und darf serverseitig nie ueber
+      // AI_DAILY_LIMIT steigen - so kann ein manipulierter Client den Zaehler
+      // nicht einfach ueberspringen.
+      match /aiUsage/{dateId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.count == 1;
+        allow update: if isOwner(userId)
+          && request.resource.data.count == resource.data.count + 1
+          && request.resource.data.count <= 40;
+        allow delete: if false;
+      }
+
+      // Wer blockiert wurde, steht hier - nur der blockierende Nutzer selbst
+      // darf seine eigene Liste sehen/aendern.
+      match /blocked/{blockedUid} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && blockedUid != userId;
+        allow delete: if isOwner(userId);
+        allow update: if false;
+      }
+
+      // Gemerkte Beitraege - rein privat, nur die eigene Person sieht/aendert
+      // ihre eigene Liste.
+      match /savedPosts/{postId} {
+        allow read, create, delete: if isOwner(userId);
+        allow update: if false;
+      }
+
+      // Live-Standort (striktes Opt-in, siehe locationService.js) - nur die
+      // eigenen "engen Freunde" (closeFriends-Liste auf DIESEM Profil) duerfen
+      // mitlesen, nicht alle Connections. Vordergrund-Standort, kein
+      // Hintergrund-Tracking - "current" wird bei jedem manuellen/App-offenen
+      // Update ueberschrieben, nie eine Historie angelegt.
+      match /liveLocation/{docId} {
+        allow read: if isOwner(userId)
+          || (request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.get('closeFriends', []));
+        allow create, update: if isOwner(userId)
+          && request.resource.data.ownerId == userId
+          && request.resource.data.lat is number
+          && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+          && request.resource.data.lng is number
+          && request.resource.data.lng >= -180 && request.resource.data.lng <= 180;
+        allow delete: if isOwner(userId);
       }
 
       match /stories/{storyId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn() && request.auth.uid == userId;
-        allow update: if isSignedIn(); // erlaubt anderen Nutzern, sich als "viewer" einzutragen
-        allow delete: if isSignedIn() && request.auth.uid == userId;
+        // Eigene Storys immer sichtbar; sonst nur laut gewaehlter Sichtbarkeit:
+        // "friends" braucht eine bestehende Freundschaft, "custom" braucht
+        // einen Eintrag in visibleTo.
+        allow read: if isOwner(userId)
+          || (resource.data.visibility == 'friends' && isFriendOf(userId))
+          || (resource.data.visibility == 'custom' && request.auth.uid in resource.data.visibleTo);
+        allow create: if isOwner(userId)
+          && request.resource.data.ownerId == userId
+          && request.resource.data.mediaUrl is string
+          && request.resource.data.visibility in ['friends', 'custom']
+          && (request.resource.data.visibility != 'custom' || request.resource.data.visibleTo is list)
+          && (
+            !('filter' in request.resource.data)
+            || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+          )
+          // Umfrage-Sticker (siehe pollVotes-Subcollection unten) - bei der
+          // Aufnahme fest angelegt, danach unveraenderlich (Momente sind
+          // ohnehin ephemer). pollVotes selbst wird erst durch die erste
+          // Stimme angelegt, deshalb hier nicht Teil der Pflichtfelder.
+          && (
+            !('pollQuestion' in request.resource.data)
+            || (request.resource.data.pollQuestion is string
+                && request.resource.data.pollQuestion.size() > 0
+                && request.resource.data.pollQuestion.size() <= 100
+                && request.resource.data.pollOptions is list
+                && request.resource.data.pollOptions.size() >= 2
+                && request.resource.data.pollOptions.size() <= 4)
+          );
+        // Erlaubt anderen Nutzern, sich als "viewer" einzutragen - dabei darf
+        // sich ausschliesslich das viewers-Feld aendern. Zuvor fehlten hier
+        // zwei Dinge: (1) dieselbe Sichtbarkeits-Bedingung wie beim Lesen -
+        // jede signed-in Person konnte das Feld aendern, auch ohne die Story
+        // ueberhaupt sehen zu duerfen; (2) eine Einschraenkung auf den
+        // tatsaechlichen arrayUnion(eigene uid)-Effekt - der neue Wert
+        // konnte beliebig sein (z.B. komplett geleert oder fremde UIDs
+        // eingeschleust). Jetzt exakt auf das begrenzt, was
+        // markStoryViewed() in storyService.js wirklich tut.
+        allow update: if isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers'])
+          && (
+            isOwner(userId)
+            || (resource.data.visibility == 'friends' && isFriendOf(userId))
+            || (resource.data.visibility == 'custom' && request.auth.uid in resource.data.visibleTo)
+          )
+          && (
+            request.resource.data.viewers == resource.data.viewers
+            || request.resource.data.viewers == resource.data.viewers.concat([request.auth.uid])
+          );
+        // Momente-Archiv: nur die eigene Person darf ihren Moment dauerhaft
+        // markieren/entmarkieren - unabhaengig vom Ablauf (expiresAtMs bleibt
+        // unveraendert, die Story existiert im Hintergrund ohnehin weiter).
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived', 'archivedAt'])
+          && request.resource.data.archived is bool;
+        // Umfrage-Ergebnis erhoehen: nur wer die Story sehen darf, und nur
+        // das pollVotes-Feld darf sich aendern - die eigentliche
+        // Stimmabgabe (Existenz-Check gegen Doppel-Vote) laeuft ueber die
+        // pollVotes-Subcollection direkt darunter.
+        allow update: if isSignedIn()
+          && canViewStory(userId, storyId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pollVotes'])
+          && isValidPollVotesMap(request.resource.data.pollVotes);
+        allow delete: if isOwner(userId);
+
+        // Doppel-Tipp-Reaktion (siehe StoryViewerScreen.js) - docId = uid der
+        // reagierenden Person, damit pro Person und Moment nur eine Reaktion
+        // existiert. Nur wer die Story ueberhaupt sehen darf, darf reagieren.
+        match /reactions/{reactorUid} {
+          allow read: if canViewStory(userId, storyId);
+          allow create: if isOwner(reactorUid)
+            && canViewStory(userId, storyId)
+            && request.resource.data.type in ['heart'];
+          allow delete: if isOwner(reactorUid);
+          allow update: if false;
+        }
+
+        // Umfrage-Stimme: Dokument-ID = uid, damit pro Person nur eine
+        // Stimme moeglich ist (Existenz-Check verhindert Doppel-Vote) und
+        // final - kein Aendern/Loeschen der eigenen Stimme, dieselbe
+        // Endgueltigkeit wie bei anderen Abstimmungs-Mustern hier im Projekt.
+        match /pollVotes/{voterUid} {
+          allow read: if canViewStory(userId, storyId);
+          allow create: if isOwner(voterUid)
+            && canViewStory(userId, storyId)
+            && request.resource.data.optionIndex is int
+            && request.resource.data.optionIndex >= 0
+            && request.resource.data.optionIndex
+                 < get(/databases/$(database)/documents/users/$(userId)/stories/$(storyId)).data.pollOptions.size();
+          allow update, delete: if false;
+        }
       }
+
+      // In-App-Benachrichtigungen: die aktive Person schreibt direkt in die
+      // notifications-Subcollection der Zielperson (kein Server/Cloud
+      // Function vorhanden). Deshalb streng auf eine feste Feldliste und
+      // erlaubte Typen begrenzt, damit niemand beliebige Inhalte in fremde
+      // Postfaecher schreiben kann. Gelesen/verwaltet wird ausschliesslich
+      // vom Empfaenger selbst; "read" darf er danach nur noch auf true
+      // setzen (quittieren), sonst nichts am Eintrag aendern.
+      match /notifications/{notificationId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.fromUid
+          && request.resource.data.fromUid != userId
+          && request.resource.data.type in ['like', 'comment', 'friend_request', 'friend_accept', 'streak_milestone']
+          && request.resource.data.fromDisplayName is string
+          && request.resource.data.fromDisplayName.size() <= 40
+          && request.resource.data.read == false
+          && request.resource.data.keys().hasOnly([
+            'type', 'fromUid', 'fromDisplayName', 'fromUsername', 'fromAvatarColor',
+            'postId', 'preview', 'read', 'createdAt'
+          ]);
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+          && request.resource.data.read == true;
+      }
+
+      // Unveraenderliches Protokoll der eigenen Verstoesse gegen die
+      // Inhaltspruefung (siehe recordStrike() in moderationService.js) -
+      // nur create, nie update/delete, damit es nicht nachtraeglich
+      // "bereinigt" werden kann. Gewicht ist an die Kategorie gekoppelt,
+      // damit niemand ein falsches (zu niedriges) Gewicht vortaeuscht.
+      match /moderationStrikes/{strikeId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && (
+            (request.resource.data.category == 'spam' && request.resource.data.weight == 1)
+            || (request.resource.data.category == 'language' && request.resource.data.weight == 3)
+            || (request.resource.data.category == 'threat' && request.resource.data.weight == 8)
+          );
+        allow update, delete: if false;
+      }
+    }
+
+    // Gemeinsamer Zaehler fuer die fortlaufende Beta-Tester-Nummer. Ohne
+    // Cloud Function nicht perfekt faelschungssicher (rein kosmetischer Wert,
+    // kein Sicherheitsmerkmal), deshalb wie an anderen Stellen auf einen
+    // plausiblen Sprung von maximal +1 pro Schreibvorgang begrenzt.
+    match /meta/counters {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.betaTesterCount == 1;
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['betaTesterCount'])
+        && request.resource.data.betaTesterCount == resource.data.betaTesterCount + 1;
+      allow delete: if false;
     }
 
     match /friendRequests/{requestId} {
       allow read: if isSignedIn() &&
         (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.from;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.to;
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.from
+        && request.resource.data.to != request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && request.auth.uid == resource.data.to
+        && request.resource.data.status in ['accepted', 'declined'];
       allow delete: if false;
     }
 
     match /snaps/{snapId} {
       allow read: if isSignedIn() &&
         (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId);
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.senderId
+        && request.resource.data.recipientId is string
+        && request.resource.data.mediaUrl is string
+        && request.resource.data.viewDuration >= 1
+        && request.resource.data.viewDuration <= 10
+        && (
+          !('filter' in request.resource.data)
+          || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+        )
+        && isFriendOf(request.resource.data.recipientId);
+      // replayUsed darf nur von der empfangenden Person und nur einmal von
+      // false/undefined auf true gesetzt werden - nie zurueck, damit das
+      // "einmal erneut ansehen" wirklich nur einmal moeglich ist.
+      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewed', 'viewedAt', 'replayUsed'])
+        && (
+          !('replayUsed' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.replayUsed == true
+        );
       allow delete: if isSignedIn() &&
         (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId);
     }
 
+    // Sprachanrufe: WebRTC-Signaling komplett ueber Firestore statt ueber
+    // einen eigenen Signaling-Server oder Cloud Functions (die auf dem noch
+    // gesperrten Blaze-Plan warten). Nur die beiden Teilnehmer lesen/
+    // schreiben; ICE-Kandidaten liegen in eigenen Subcollections statt im
+    // Hauptdokument, damit die vielen schnellen Schreibvorgaenge waehrend
+    // des Verbindungsaufbaus nicht mit dem Status-Feld kollidieren. Anrufe
+    // sind auf bestehende Connections beschraenkt (isFriendOf) - kein Ruf-
+    // Spam von Fremden.
+    match /calls/{callId} {
+      // isFounder()-Ausnahme nur fuers aggregierte Anruf-Statistik-Widget
+      // im Founder-Dashboard (Anzahl/Erfolgsquote) - keine Einzelgespraechs-
+      // inhalte, WebRTC-Angebote/Antworten sind reine Verbindungsdaten.
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId || isFounder());
+
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.callerId
+        && request.resource.data.calleeId != request.auth.uid
+        && request.resource.data.status == 'ringing'
+        && request.resource.data.offer is map
+        && !('answer' in request.resource.data)
+        && isFriendOf(request.resource.data.calleeId);
+
+      allow update: if isSignedIn() && (
+        // Callee nimmt an (mit Antwort-SDP) oder lehnt ab.
+        (request.auth.uid == resource.data.calleeId
+          && resource.data.status == 'ringing'
+          && (
+            (request.resource.data.status == 'accepted'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'answer', 'answeredAt'])
+              && request.resource.data.answer is map)
+            || (request.resource.data.status == 'declined'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+          ))
+        // Beide Seiten koennen jederzeit auflegen/abbrechen.
+        || ((request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId)
+          && resource.data.status in ['ringing', 'accepted']
+          && request.resource.data.status in ['ended', 'missed']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'endedAt', 'endedBy']))
+      );
+
+      allow delete: if isSignedIn() &&
+        (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId);
+
+      // callerId/calleeId stehen direkt auf jedem Kandidaten-Dokument (nicht
+      // nur per get() vom Call-Hauptdokument abgeleitet) - eine Leseregel,
+      // die bei einer Listenabfrage (list) auf ein ANDERES Dokument per
+      // get() verweist, wird von Firestore nicht zuverlaessig ausgewertet
+      // (nur bei Einzel-Reads/get). Beim Erstellen wird trotzdem gegen das
+      // echte Call-Dokument geprueft, damit die Felder nicht gefaelscht
+      // werden koennen.
+      match /callerCandidates/{candidateId} {
+        allow read: if isSignedIn() &&
+          (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId);
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.callerId
+          && request.resource.data.callerId == get(/databases/$(database)/documents/calls/$(callId)).data.callerId
+          && request.resource.data.calleeId == get(/databases/$(database)/documents/calls/$(callId)).data.calleeId;
+        allow update, delete: if false;
+      }
+
+      match /calleeCandidates/{candidateId} {
+        allow read: if isSignedIn() &&
+          (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId);
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.calleeId
+          && request.resource.data.callerId == get(/databases/$(database)/documents/calls/$(callId)).data.callerId
+          && request.resource.data.calleeId == get(/databases/$(database)/documents/calls/$(callId)).data.calleeId;
+        allow update, delete: if false;
+      }
+    }
+
     match /chats/{chatId} {
-      allow read, update, delete: if isSignedIn() && request.auth.uid in resource.data.participants;
-      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow read, delete: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() == 2;
+      // streakCount/streakLastDate/streakSentToday werden clientseitig beim
+      // Snap-Versand geschrieben (siehe recordStreakSnap) - ohne Cloud
+      // Function serverseitig nicht faelschungssicher, deshalb wie bei
+      // nataScore auf einen plausiblen Sprung von maximal +1 pro Schreibvorgang
+      // begrenzt.
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'participantNames',
+                       'streakCount', 'streakLastDate', 'streakSentToday', 'typing', 'lastReadAt',
+                       'sharedGoalDays', 'sharedGoalStatus', 'sharedGoalProposedBy', 'sharedGoalReachedAt'])
+        && (
+          !('streakCount' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.streakCount is int
+              && request.resource.data.streakCount >= 0
+              && request.resource.data.streakCount <= resource.data.get('streakCount', 0) + 1)
+        )
+        // Gemeinsames Streak-Ziel (siehe ChatScreen.js) - beide Beteiligten
+        // duerfen vorschlagen/annehmen/ablehnen, kein Cloud-Function-Backend
+        // noetig, deshalb nur Typ-/Wertebereich-Pruefung statt exaktem
+        // Zustandsautomaten.
+        && (
+          !('sharedGoalDays' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.sharedGoalDays is int
+              && request.resource.data.sharedGoalDays >= 1
+              && request.resource.data.sharedGoalDays <= 365)
+        )
+        && (
+          !('sharedGoalStatus' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.sharedGoalStatus in ['proposed', 'active', 'declined', 'reached']
+        )
+        && (
+          !('sharedGoalProposedBy' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.sharedGoalProposedBy in resource.data.participants
+        );
 
       match /messages/{messageId} {
         allow read: if isSignedIn() &&
           request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
-        allow update, delete: if false;
+        // Eine Nachricht ist entweder Text ODER Sprachnachricht (Beta) -
+        // nie beides gleichzeitig. voiceDurationMs auf 2 Minuten gedeckelt.
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.senderId
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && !isCurrentlyRestricted(request.auth.uid)
+          && (
+            (request.resource.data.text is string
+              && request.resource.data.text.size() > 0
+              && request.resource.data.text.size() <= 2000
+              && !containsBlockedTerm(request.resource.data.text)
+              && !('voiceUrl' in request.resource.data))
+            || (request.resource.data.voiceUrl is string
+              && request.resource.data.voiceDurationMs is int
+              && request.resource.data.voiceDurationMs > 0
+              && request.resource.data.voiceDurationMs <= 120000
+              && !('text' in request.resource.data))
+          )
+          // Zeitkapsel-Nachricht (siehe ChatScreen.js/GroupChatScreen.js) -
+          // optionaler Zeitpunkt, ab dem die Nachricht erst sichtbar wird.
+          // Nur clientseitig ausgeblendet (kein echter Verschluesselungs-
+          // schutz), deshalb hier nur eine plausible Obergrenze statt
+          // beliebig weit in der Zukunft liegender Werte.
+          && (
+            !('visibleAt' in request.resource.data)
+            || (request.resource.data.visibleAt is timestamp
+                && request.resource.data.visibleAt <= request.time + duration.value(30, 'd'))
+          );
+        // Nur die sendende Person darf ihre eigene Nachricht bearbeiten -
+        // ausschliesslich Text + "edited"-Markierung, sonst nichts.
+        allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && !containsBlockedTerm(request.resource.data.text)
+          && request.resource.data.edited == true;
+        allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
+
+        // Reaktionen als eigene Subcollection (Dokument-ID = Nutzer-uid),
+        // analog zu posts/likes - jede Person kann nur ihren eigenen
+        // Reaktions-Eintrag anlegen/loeschen.
+        match /reactions/{uid} {
+          allow read: if isSignedIn() &&
+            request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+          allow create, delete: if isOwner(uid) &&
+            request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+          allow update: if false;
+        }
       }
+    }
+
+    match /groups/{groupId} {
+      allow read, delete: if isSignedIn() && request.auth.uid in resource.data.memberIds;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.memberIds
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.memberIds.size() >= 2
+        && request.resource.data.memberIds.size() <= 50
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 50
+        && !containsBlockedTerm(request.resource.data.name);
+      // Jedes Mitglied darf umbenennen, selbst austreten oder neue Mitglieder
+      // hinzufuegen (einfaches Modell ohne Admin-Rolle fuer die erste Version).
+      allow update: if isSignedIn() && request.auth.uid in resource.data.memberIds
+        && request.resource.data.memberIds.size() <= 50
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastMessage', 'lastSenderId', 'updatedAt', 'memberIds', 'memberNames', 'name'])
+        && (
+          !('name' in request.resource.data.diff(resource.data).affectedKeys())
+          || !containsBlockedTerm(request.resource.data.name)
+        );
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+        // Eine Nachricht ist entweder Text ODER Sprachnachricht (Beta) -
+        // nie beides gleichzeitig. voiceDurationMs auf 2 Minuten gedeckelt.
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.senderId
+          && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds
+          && !isCurrentlyRestricted(request.auth.uid)
+          && (
+            (request.resource.data.text is string
+              && request.resource.data.text.size() > 0
+              && request.resource.data.text.size() <= 2000
+              && !containsBlockedTerm(request.resource.data.text)
+              && !('voiceUrl' in request.resource.data))
+            || (request.resource.data.voiceUrl is string
+              && request.resource.data.voiceDurationMs is int
+              && request.resource.data.voiceDurationMs > 0
+              && request.resource.data.voiceDurationMs <= 120000
+              && !('text' in request.resource.data))
+          )
+          // Zeitkapsel-Nachricht (siehe ChatScreen.js/GroupChatScreen.js) -
+          // optionaler Zeitpunkt, ab dem die Nachricht erst sichtbar wird.
+          // Nur clientseitig ausgeblendet (kein echter Verschluesselungs-
+          // schutz), deshalb hier nur eine plausible Obergrenze statt
+          // beliebig weit in der Zukunft liegender Werte.
+          && (
+            !('visibleAt' in request.resource.data)
+            || (request.resource.data.visibleAt is timestamp
+                && request.resource.data.visibleAt <= request.time + duration.value(30, 'd'))
+          );
+        allow update: if isSignedIn() && request.auth.uid == resource.data.senderId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && !containsBlockedTerm(request.resource.data.text)
+          && request.resource.data.edited == true;
+        allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
+
+        match /reactions/{uid} {
+          allow read: if isSignedIn() &&
+            request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+          allow create, delete: if isOwner(uid) &&
+            request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+          allow update: if false;
+        }
+      }
+    }
+
+    // Meldungen sind per create durch die meldende Person erreichbar -
+    // Einsicht nur durch den Gruender (Ticket-Verwaltung/Meldungen-Screen),
+    // Bearbeitung generell nie ueber die Client-App.
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.reporterId
+        && request.resource.data.reason in
+             ['spam', 'harassment', 'threat', 'inappropriate_content', 'impersonation', 'other']
+        && (
+          !('description' in request.resource.data)
+          || (request.resource.data.description is string
+              && request.resource.data.description.size() <= 1000)
+        )
+        && (
+          !('incidentTiming' in request.resource.data)
+          || request.resource.data.incidentTiming == null
+          || request.resource.data.incidentTiming in ['just_now', 'today', 'this_week', 'longer_ago']
+        );
+      allow read: if isFounder();
+      allow update, delete: if false;
+    }
+
+    // Beta-Feedback: per create durch die absendende Person, Einsicht nur
+    // durch den Gruender.
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.uid
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000;
+      allow read: if isFounder();
+      allow update, delete: if false;
+    }
+
+    // Ankuendigungen des Gruenders an alle Nutzer:innen - bewusst EIN
+    // gemeinsames Dokument-Set statt Fan-out in jede einzelne
+    // notifications-Subcollection (kein zusaetzlicher Schreibaufwand pro
+    // Nutzer:in, kein Skalierungsproblem). Jede Person liest dieselben
+    // Dokumente; "gesehen" wird rein lokal auf dem Geraet gemerkt (siehe
+    // FounderAnnouncementBanner.js, gleiches Prinzip wie
+    // UpdateAnnouncementBanner.js) - es gibt also KEINE Push-/E-Mail-
+    // Benachrichtigung, nur einen Banner beim naechsten App-Start.
+    // Verifizierungs-Anfragen (Beta-Funktion, siehe VerificationRequestScreen.js/
+    // verificationService.js) - feste Dokument-ID = eigene uid statt
+    // Zufalls-ID, damit sich "hat diese Person schon eine Anfrage" ohne
+    // Query direkt am Dokumentpfad pruefen laesst (Regeln koennen keine
+    // Query ausfuehren, nur bekannte Pfade lesen).
+    match /verificationRequests/{uid} {
+      allow read: if isOwner(uid) || isFounder();
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.username is string
+        && request.resource.data.displayName is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.links is list
+        && request.resource.data.links.size() <= 5
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'username', 'displayName', 'reason', 'links', 'status', 'createdAt']
+           );
+      allow update: if (
+        // Nach einer Ablehnung darf dieselbe Person erneut einreichen -
+        // dabei aendert sich nichts an den Gruender-Feldern.
+        (isOwner(uid) && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.username is string
+          && request.resource.data.displayName is string
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() > 0
+          && request.resource.data.reason.size() <= 500
+          && request.resource.data.links is list
+          && request.resource.data.links.size() <= 5
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['username', 'displayName', 'reason', 'links', 'status', 'createdAt', 'founderNote', 'reviewedAt']
+             ))
+        ||
+        // Gruender entscheidet - darf nur Status/Notiz/Zeitpunkt aendern,
+        // nie die von der Person eingereichten Inhalte.
+        (isFounder()
+          && resource.data.status == 'pending'
+          && request.resource.data.status in ['approved', 'rejected']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['status', 'founderNote', 'reviewedAt']
+             ))
+      );
+      allow delete: if false;
+    }
+
+    // Creator-Anfragen (Beta-Funktion, siehe CreatorRequestScreen.js/
+    // creatorService.js) - exakt dasselbe Muster wie verificationRequests
+    // oben: feste Dokument-ID = eigene uid, damit "hat diese Person schon
+    // eine Anfrage" ohne Query direkt am Dokumentpfad geprueft werden kann.
+    match /creatorRequests/{uid} {
+      allow read: if isOwner(uid) || isFounder();
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.username is string
+        && request.resource.data.displayName is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.links is list
+        && request.resource.data.links.size() <= 5
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'username', 'displayName', 'reason', 'links', 'status', 'createdAt']
+           );
+      allow update: if (
+        (isOwner(uid) && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.username is string
+          && request.resource.data.displayName is string
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() > 0
+          && request.resource.data.reason.size() <= 500
+          && request.resource.data.links is list
+          && request.resource.data.links.size() <= 5
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['username', 'displayName', 'reason', 'links', 'status', 'createdAt', 'founderNote', 'reviewedAt']
+             ))
+        ||
+        (isFounder()
+          && resource.data.status == 'pending'
+          && request.resource.data.status in ['approved', 'rejected']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+               ['status', 'founderNote', 'reviewedAt']
+             ))
+      );
+      allow delete: if false;
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create: if isFounder()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000;
+      allow update: if false;
+      allow delete: if isFounder();
+    }
+
+    // Support-Tickets: anders als Meldungen/Feedback darf die erstellende
+    // Person ihre eigenen Tickets lesen (Verlauf im TicketsScreen) und in
+    // engen Grenzen aendern - nur status ("bot_resolved" -> "escalated"
+    // oder "closed") und escalatedToFounder (nur false -> true, nie
+    // zurueck). Inhalt (category/subject/message/botResponse/uid) ist nach
+    // dem Erstellen unveraenderlich, damit niemand nachtraeglich die
+    // eigene Anfrage oder die geloggte Bot-Antwort umschreiben kann.
+    match /tickets/{ticketId} {
+      // Gruender sieht ALLE Tickets (fuer die Ticket-Verwaltung), normale
+      // Nutzer nur ihre eigenen.
+      allow read: if isOwner(resource.data.uid) || isFounder();
+      allow create: if isOwner(request.resource.data.uid)
+        && request.resource.data.category in
+             ['restriction_appeal', 'content_decision', 'account_issue', 'other']
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() <= 100
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.botResponse is string
+        && request.resource.data.botResponse.size() > 0
+        && request.resource.data.status == 'bot_resolved'
+        && request.resource.data.escalatedToFounder == false;
+      allow update: if (
+          isOwner(resource.data.uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'escalatedToFounder'])
+          && request.resource.data.status in ['escalated', 'closed']
+          && request.resource.data.escalatedToFounder is bool
+          && (
+            request.resource.data.escalatedToFounder == resource.data.escalatedToFounder
+            || request.resource.data.escalatedToFounder == true
+          )
+        ) || (
+          // Gruender-Bearbeitung: Annehmen/Ablehnen/Antworten. Aendert nie
+          // die vom Nutzer eingereichten Felder (uid/category/subject/
+          // message/botResponse/escalatedToFounder/createdAt) - nur die
+          // eigene Antwort und den Bearbeitungsstatus.
+          isFounder()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'resolution', 'founderResponse', 'founderResponseAt'])
+          && request.resource.data.status in ['answered', 'closed']
+          && request.resource.data.resolution in [null, 'accepted', 'rejected']
+          && (
+            !('founderResponse' in request.resource.data)
+            || (request.resource.data.founderResponse is string
+                && request.resource.data.founderResponse.size() <= 2000)
+          )
+          && request.resource.data.founderResponseAt is timestamp
+        );
+      allow delete: if false;
+    }
+
+    // Beitraege im Home-Feed. MVP-Entscheidung: Lesbar fuer alle
+    // angemeldeten Nutzer (wie "Entdecken"/Profile), nicht nur Connections -
+    // "Fuer dich" braucht eine gewisse Reichweite ueber die eigene
+    // Connections-Liste hinaus. likeCount/commentCount sind ohne Cloud
+    // Function nicht perfekt faelschungssicher, deshalb wie bei nataScore
+    // auf einen plausiblen Sprung von maximal +-1 pro Schreibvorgang begrenzt.
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && !isCurrentlyRestricted(request.auth.uid)
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && !containsBlockedTerm(request.resource.data.text)
+        && (
+          !('mediaUrl' in request.resource.data)
+          || request.resource.data.mediaUrl == null
+          || request.resource.data.mediaUrl is string
+        )
+        && (
+          !('filter' in request.resource.data)
+          || request.resource.data.filter == null
+          || request.resource.data.filter in ['none', 'warm', 'cool', 'sunset', 'night', 'retro']
+        )
+        && request.resource.data.likeCount == 0
+        && request.resource.data.commentCount == 0
+        // Challenge-Teilnahme (siehe challenges/ weiter unten, Dokument-ID
+        // = Tag-Slug) - nur ein Tag, der wirklich existiert und gerade laeuft.
+        && (
+          !('tag' in request.resource.data)
+          || request.resource.data.tag == null
+          || (request.resource.data.tag is string && isValidChallengeTag(request.resource.data.tag))
+        )
+        // Zitat-/Antwort-Beitrag (siehe QuotePostScreen.js) - reine
+        // Typpruefung, ein geloeschtes Original wird clientseitig sanft
+        // abgefangen (siehe savedPosts-Muster oben).
+        && (
+          !('quotedPostId' in request.resource.data)
+          || request.resource.data.quotedPostId == null
+          || request.resource.data.quotedPostId is string
+        )
+        // Collab-Beitrag: zweite Autoren-Person wird eingeladen, muss den
+        // Beitrag separat per Update annehmen/ablehnen (siehe Update-Regel
+        // unten) - beim Erstellen selbst immer 'pending' und nie die eigene
+        // Person als Mit-Autor.
+        && (
+          !('coAuthorId' in request.resource.data)
+          || request.resource.data.coAuthorId == null
+          || (request.resource.data.coAuthorId is string
+              && request.resource.data.coAuthorId != request.auth.uid
+              && request.resource.data.coAuthorStatus == 'pending')
+        )
+        // Text-/Musik-Sticker beim Aufnehmen (siehe CreatePostScreen.js) -
+        // reine Anzeige-Overlays auf dem Foto (keine Bildbearbeitung noetig,
+        // keine neue native Bibliothek), deshalb nur Text-/Laengen-Pruefung.
+        && (
+          !('textStickers' in request.resource.data)
+          || request.resource.data.textStickers == null
+          || (request.resource.data.textStickers is list
+              && request.resource.data.textStickers.size() <= 5)
+        )
+        && (
+          !('musicSticker' in request.resource.data)
+          || request.resource.data.musicSticker == null
+          || (request.resource.data.musicSticker is string
+              && request.resource.data.musicSticker.size() <= 60)
+        );
+      allow update: if isSignedIn()
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+            && (request.resource.data.likeCount == resource.data.likeCount + 1
+                || request.resource.data.likeCount == resource.data.likeCount - 1))
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
+            && request.resource.data.commentCount == resource.data.commentCount + 1)
+          // Neue Reaktion hinzufuegen oder vollstaendig entfernen: likeCount
+          // (Gesamtzahl aller Reaktionen) UND die reactions-Map aendern
+          // sich zusammen um jeweils +-1.
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'reactions'])
+            && (request.resource.data.likeCount == resource.data.likeCount + 1
+                || request.resource.data.likeCount == resource.data.likeCount - 1)
+            && isValidReactionsMap(request.resource.data.reactions))
+          // Reaktionstyp wechseln: nur die reactions-Map aendert sich
+          // (ein Typ -1, ein anderer +1), likeCount bleibt gleich.
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+            && isValidReactionsMap(request.resource.data.reactions))
+          // Collab-Einladung annehmen/ablehnen: nur die eingeladene Person,
+          // nur der Status, nie die eingereichten Inhalte des Beitrags.
+          || (request.auth.uid == resource.data.coAuthorId
+            && resource.data.coAuthorStatus == 'pending'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coAuthorStatus'])
+            && request.resource.data.coAuthorStatus in ['accepted', 'declined'])
+        );
+      allow delete: if isOwner(resource.data.authorId);
+
+      // Existenz des Dokuments (id = Nutzer-uid) bedeutet "reagiert" - das
+      // type-Feld legt fest, mit welcher Reaktion (siehe
+      // utils/postReactions.js). Wechsel/Entfernen laeuft ueber
+      // delete+create statt update (siehe setReaction() in postService.js),
+      // deshalb reicht create/delete durch die reagierende Person.
+      match /likes/{uid} {
+        allow read: if isSignedIn();
+        allow create: if isOwner(uid)
+          && request.resource.data.type in ['heart', 'laugh', 'wow', 'sad', 'fire'];
+        allow delete: if isOwner(uid);
+        allow update: if false;
+      }
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && !isCurrentlyRestricted(request.auth.uid)
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 300
+          && !containsBlockedTerm(request.resource.data.text);
+        allow delete: if isOwner(resource.data.authorId);
+        allow update: if false;
+      }
+    }
+
+    // Zeitlich begrenzte Themen-Challenges (siehe challengeService.js) -
+    // Dokument-ID = Tag-Slug, damit posts/{postId}.tag direkt per exists()/
+    // get() dagegen geprueft werden kann (siehe isValidChallengeTag oben),
+    // ohne eine zusaetzliche Query. Nur der Gruender legt Challenges an -
+    // eine offene Beta-Funktion, kein Nutzer-generierter Inhalt.
+    match /challenges/{tag} {
+      allow read: if isSignedIn();
+      allow create, update: if isFounder()
+        && request.resource.data.tag == tag
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 60
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 300
+        && request.resource.data.startAt is timestamp
+        && request.resource.data.endAt is timestamp
+        && request.resource.data.endAt > request.resource.data.startAt;
+      allow delete: if isFounder();
+    }
+
+    // Einfache Rollout-Schalter fuer neue Features (siehe adminService.js/
+    // FounderFeatureFlagsScreen.js) - rein clientseitig ausgewertet (kein
+    // Cloud-Function-Backend), reicht aber, um ein Feature bei Bedarf schnell
+    // fuer alle auszublenden, ohne einen neuen OTA-Publish abzuwarten.
+    match /featureFlags/{flagId} {
+      allow read: if isSignedIn();
+      allow write: if isFounder()
+        && request.resource.data.enabled is bool;
     }
   }
 }

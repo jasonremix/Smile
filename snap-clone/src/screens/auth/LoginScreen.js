@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -9,25 +9,27 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import PrimaryButton from "../../components/PrimaryButton";
+import SocialSignInRow, { socialSignInAvailable } from "../../components/SocialSignInRow";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setError("");
-    if (!email || !password) {
-      setError("Bitte E-Mail und Passwort eingeben.");
+    if (!identifier || !password) {
+      setError("Bitte E-Mail oder Benutzername und Passwort eingeben.");
       return;
     }
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(identifier.trim(), password);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
@@ -40,16 +42,30 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.logo}>👻 SnapClone</Text>
+      <View style={styles.header}>
+        <Image source={require("../../../assets/logo-full.png")} style={styles.logoImage} resizeMode="contain" />
+        <Text style={styles.greeting}>Hey, schön dass du wieder da bist!</Text>
+      </View>
+
+      {socialSignInAvailable ? (
+        <>
+          <SocialSignInRow buttonStyle={styles.socialButton} />
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>oder mit E-Mail</Text>
+            <View style={styles.dividerLine} />
+          </View>
+        </>
+      ) : null}
 
       <TextInput
         style={styles.input}
-        placeholder="E-Mail"
+        placeholder="E-Mail oder Benutzername"
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+        autoCorrect={false}
+        value={identifier}
+        onChangeText={setIdentifier}
       />
       <TextInput
         style={styles.input}
@@ -62,13 +78,7 @@ export default function LoginScreen({ navigation }) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color={colors.background} />
-        ) : (
-          <Text style={styles.buttonText}>Anmelden</Text>
-        )}
-      </TouchableOpacity>
+      <PrimaryButton title="Anmelden" onPress={handleLogin} loading={loading} style={styles.button} />
 
       <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
         <Text style={styles.link}>Noch kein Konto? Registrieren</Text>
@@ -97,33 +107,55 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 32,
   },
-  logo: {
-    fontSize: 34,
-    fontWeight: "800",
-    color: colors.primary,
+  header: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  logoImage: {
+    width: 260,
+    height: 87,
+    marginBottom: 4,
+  },
+  greeting: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textMuted,
     textAlign: "center",
-    marginBottom: 48,
   },
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
-    paddingHorizontal: 16,
+    borderRadius: 20,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 14,
     fontSize: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
     marginTop: 8,
   },
-  buttonText: {
-    color: "#000",
-    fontWeight: "700",
-    fontSize: 16,
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginHorizontal: 12,
+  },
+  socialButton: {
+    marginBottom: 12,
   },
   link: {
     color: colors.textMuted,

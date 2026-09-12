@@ -1,0 +1,22 @@
+[project]
+name = "nata-ads-automation"
+version = "0.1.0"
+description = "Kampagnen-Sync, Reporting und regelbasierte Budget-Optimierung für Google Ads & Meta Ads (Nata Inc)"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.1,<9",
+    "PyYAML>=6.0,<7",
+    "python-dotenv>=1.0,<2",
+    "google-ads>=24.0.0,<25",
+    "facebook-business>=20.0.0,<21",
+]
+
+[project.scripts]
+nata-ads = "nata_ads.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["nata_ads*"]

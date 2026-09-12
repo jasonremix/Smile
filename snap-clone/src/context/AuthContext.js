@@ -1,74 +1,241 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
+  signInAnonymously,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from "firebase/auth";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebase";
+import { auth, db, firebaseInitError } from "../config/firebase";
+import { applyReferral, assignBetaTesterNumber, findUserByUsername } from "../services/betaService";
+import { randomAvatarColor } from "../theme/avatarPalette";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  // Wird waehrend des Renderns geworfen (nicht schon beim Modul-Import),
+  // damit die ErrorBoundary in App.js den Fehler auffangen und anzeigen kann,
+  // statt dass die App stumm auf einem leeren Bildschirm haengen bleibt.
+  if (firebaseInitError) {
+    throw firebaseInitError;
+  }
+
   const [authUser, setAuthUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setAuthUser(firebaseUser);
-      if (!firebaseUser) setProfile(null);
+      if (!firebaseUser) {
+        setProfile(null);
+        setProfileLoaded(false);
+      }
       if (initializing) setInitializing(false);
     });
     return unsubscribe;
   }, [initializing]);
 
   useEffect(() => {
-    if (!authUser) return;
+    // Anonyme Sessions (siehe login() unten - kurzer Bruecken-Login fuer die
+    // Benutzername-Aufloesung) sind nie ein "richtiger" App-Nutzer und
+    // brauchen kein Profil-Listening.
+    if (!authUser || authUser.isAnonymous) {
+      setProfile(null);
+      setProfileLoaded(false);
+      return;
+    }
+    setProfileLoaded(false);
     const unsubscribe = onSnapshot(doc(db, "users", authUser.uid), (snap) => {
-      if (snap.exists()) setProfile(snap.data());
+      setProfile(snap.exists() ? snap.data() : null);
+      setProfileLoaded(true);
     });
     return unsubscribe;
   }, [authUser]);
 
   // "user" kombiniert die Firebase-Auth-Identitaet mit dem Firestore-Profil
-  // (username, avatarColor, snapScore), damit Screens nur eine Quelle brauchen.
-  const user = authUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
+  // (username, avatarColor, nataScore), damit Screens nur eine Quelle brauchen.
+  // Anonyme Sessions zaehlen nie als angemeldeter Nutzer.
+  const isRealAuthUser = !!authUser && !authUser.isAnonymous;
+  const user = isRealAuthUser ? { uid: authUser.uid, email: authUser.email, ...profile } : null;
 
-  const login = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+  // Falls die Firestore-Profildoc trotz vorhandenem Auth-Account fehlt (z.B.
+  // durch einen voruebergehenden Netzwerkfehler beim Registrieren), landet
+  // der Account sonst dauerhaft unbrauchbar und unsichtbar in der Suche.
+  const needsProfileSetup = isRealAuthUser && profileLoaded && !profile;
 
-  const signup = async (username, displayName, email, password) => {
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(credential.user, { displayName });
+  // E-Mail-Verifizierung ist nur fuer Passwort-Konten noetig - Google/Apple
+  // Sign-In liefert bereits einen vom jeweiligen Anbieter bestaetigten
+  // E-Mail-Status, ein zusaetzlicher Verifizierungs-Schritt waere dort nur
+  // Reibung ohne echten Sicherheitsgewinn.
+  const isPasswordAccount = isRealAuthUser
+    ? authUser.providerData.some((p) => p.providerId === "password")
+    : false;
+  const needsEmailVerification = isPasswordAccount && !authUser?.emailVerified;
 
-    await setDoc(doc(db, "users", credential.user.uid), {
-      uid: credential.user.uid,
+  // Login funktioniert sowohl mit E-Mail als auch mit Benutzername. Fuer
+  // Benutzername gibt es in Firebase Auth selbst keinen direkten Weg - die
+  // zugehoerige E-Mail muss vorher aus Firestore nachgeschlagen werden. Das
+  // "users"-Read setzt isSignedIn() voraus (siehe firestore.rules), noch
+  // bevor die eigentliche Anmeldung stattgefunden hat - deshalb kurz anonym
+  // anmelden, nur um den Lookup zu erlauben. Schlaegt der Lookup oder die
+  // eigentliche Anmeldung fehl, wird die anonyme Session wieder abgemeldet,
+  // damit sie nirgends faelschlich als "eingeloggt" durchgeht.
+  const login = async (identifier, password) => {
+    const trimmed = identifier.trim();
+    let email = trimmed;
+    let bridgedAnonymously = false;
+
+    if (!trimmed.includes("@")) {
+      await signInAnonymously(auth);
+      bridgedAnonymously = true;
+      const match = await findUserByUsername(trimmed);
+      if (!match?.email) {
+        await signOut(auth).catch(() => {});
+        throw Object.assign(new Error("Benutzername nicht gefunden."), {
+          code: "auth/user-not-found",
+        });
+      }
+      email = match.email;
+    }
+
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (e) {
+      if (bridgedAnonymously) await signOut(auth).catch(() => {});
+      throw e;
+    }
+  };
+
+  // Fuer neue Accounts greift danach automatisch derselbe
+  // needsProfileSetup/CompleteProfileScreen-Reparaturweg wie bei
+  // E-Mail-Registrierung mit fehlgeschlagenem Profil-Schreibvorgang -
+  // Google/Apple liefern keinen Nata-Benutzernamen, den fragt
+  // CompleteProfileScreen ohnehin schon ab.
+  const loginWithGoogleIdToken = (idToken) =>
+    signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+
+  const loginWithAppleCredential = (identityToken, rawNonce) =>
+    signInWithCredential(
+      auth,
+      new OAuthProvider("apple.com").credential({ idToken: identityToken, rawNonce })
+    );
+
+  async function createProfileDoc(uid, username, displayName, email) {
+    const data = {
+      uid,
       username: username.toLowerCase(),
       displayName,
+      // Normalisierte Kleinschreibung, damit die Freunde-Suche unabhaengig
+      // von Gross-/Kleinschreibung auch ueber den Anzeigenamen funktioniert.
+      displayNameLower: displayName.toLowerCase(),
       email,
       avatarColor: randomAvatarColor(),
-      snapScore: 0,
+      nataScore: 0,
       createdAt: serverTimestamp(),
-    });
+    };
+    // Reine Netzwerk-Resilienz gegen voruebergehende Fehler - kein Ersatz
+    // fuer eine korrekt konfigurierte Datenbankverbindung.
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await setDoc(doc(db, "users", uid), data);
+        return;
+      } catch (e) {
+        if (attempt === maxAttempts) throw e;
+        await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+  }
+
+  const signup = async (username, displayName, email, password, referralUsername) => {
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(credential.user, { displayName });
+    await createProfileDoc(credential.user.uid, username, displayName, email);
+
+    // Bewusst "best effort" wie Beta-Tester-Nummer/Einladung unten - ein
+    // Versandfehler (z.B. Netzwerk) darf die Registrierung nicht blockieren,
+    // die Person kann sich die Mail spaeter erneut zusenden lassen
+    // (siehe resendVerificationEmail()).
+    try {
+      await sendEmailVerification(credential.user);
+    } catch {
+      // Verifizierungs-Mail ist nachholbar, kein kritischer Registrierungsschritt.
+    }
+
+    // Beta-Tester-Nummer und Einladung sind bewusst "best effort" nach dem
+    // eigentlichen Profil - ein Fehler hier darf die Registrierung selbst
+    // nicht scheitern lassen, das Konto ist zu diesem Zeitpunkt schon nutzbar.
+    try {
+      await assignBetaTesterNumber(credential.user.uid);
+    } catch {
+      // Tester-Nummer ist ein Nice-to-have, kein kritischer Registrierungsschritt.
+    }
+
+    if (referralUsername && referralUsername.trim()) {
+      try {
+        const referrer = await findUserByUsername(referralUsername);
+        if (referrer && referrer.uid !== credential.user.uid) {
+          await applyReferral(credential.user.uid, referrer.uid);
+        }
+      } catch {
+        // Ungueltiger/falscher Einladungscode blockiert die Registrierung nicht.
+      }
+    }
 
     return credential;
   };
 
+  // Reparatur-Weg fuer Accounts, die needsProfileSetup treffen - gleiches
+  // Schema wie signup(), nur ohne erneute Kontoerstellung.
+  const completeProfile = async (username, displayName) => {
+    await updateProfile(auth.currentUser, { displayName });
+    await createProfileDoc(authUser.uid, username, displayName, authUser.email);
+  };
+
   const logout = () => signOut(auth);
 
+  // Fuer VerifyEmailScreen.js: erneutes Zusenden, falls die erste Mail
+  // verloren ging/im Spam landete.
+  const resendVerificationEmail = () => sendEmailVerification(auth.currentUser);
+
+  // Firebase aktualisiert emailVerified am User-Objekt nicht von selbst,
+  // solange die App offen bleibt - reload() holt den aktuellen Stand vom
+  // Server, das Neu-Zuweisen als eigenes Objekt (statt derselben Referenz)
+  // stoesst danach den Re-Render an, der needsEmailVerification neu bewertet.
+  const refreshAuthUser = async () => {
+    if (!auth.currentUser) return;
+    await auth.currentUser.reload();
+    setAuthUser({ ...auth.currentUser });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, initializing, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        initializing,
+        needsProfileSetup,
+        needsEmailVerification,
+        login,
+        signup,
+        completeProfile,
+        logout,
+        loginWithGoogleIdToken,
+        loginWithAppleCredential,
+        resendVerificationEmail,
+        refreshAuthUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
-
-function randomAvatarColor() {
-  const palette = ["#FFFC00", "#1E90FF", "#FF3B30", "#2ecc71", "#a55eea", "#ff9f43"];
-  return palette[Math.floor(Math.random() * palette.length)];
 }
 
 export function useAuth() {

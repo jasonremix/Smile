@@ -1,13 +1,16 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
+import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../context/AuthContext";
+import FilterPickerRow from "../components/FilterPickerRow";
+import Icon from "../components/Icon";
 import { colors } from "../theme/colors";
+import { radius } from "../theme/radius";
+import { getFilterById } from "../utils/photoFilters";
 
 const HOLD_THRESHOLD_MS = 250;
 
 export default function CameraScreen({ navigation, route }) {
-  const { user } = useAuth();
   const intent = route.params?.intent;
   const cameraRef = useRef(null);
   const pressTimer = useRef(null);
@@ -18,6 +21,8 @@ export default function CameraScreen({ navigation, route }) {
   const [facing, setFacing] = useState("back");
   const [flash, setFlash] = useState("off");
   const [recording, setRecording] = useState(false);
+  const [filter, setFilter] = useState("none");
+  const filterMeta = getFilterById(filter);
 
   if (!permission || !micPermission) {
     return <View style={styles.container} />;
@@ -27,7 +32,7 @@ export default function CameraScreen({ navigation, route }) {
     return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>
-          SnapClone braucht Zugriff auf Kamera und Mikrofon, um Snaps aufzunehmen.
+          Nata braucht Zugriff auf Kamera und Mikrofon, um Snaps aufzunehmen.
         </Text>
         <TouchableOpacity
           style={styles.permissionButton}
@@ -45,7 +50,23 @@ export default function CameraScreen({ navigation, route }) {
   const takePhoto = async () => {
     if (!cameraRef.current) return;
     const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
-    navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent });
+    if (intent === "post") {
+      // Beitraege haben eine eigene, einfachere Vorschau (kein
+      // Empfaenger-/Timer-Auswahl wie bei Snaps/Momenten) - direkt zurueck
+      // zum Beitrag-erstellen-Screen mit dem aufgenommenen Foto.
+      navigation.navigate("CreatePost", { photoUri: photo.uri, filter });
+    } else if (intent === "avatar") {
+      // Profilbild: wie beim Beitrag-Foto keine Vorschau/Timer-Auswahl noetig,
+      // direkt zurueck zum Profil-Bearbeiten-Screen mit dem aufgenommenen Foto.
+      navigation.navigate("EditProfile", { photoUri: photo.uri });
+    } else if (intent === "nataAiVision") {
+      // Nata AI mit Bild: keine Vorschau/Timer noetig, direkt zurueck zum
+      // Chat - das Bild wird dort nur inline an Gemini geschickt, nicht
+      // hochgeladen (Firebase Storage ist noch nicht aktiv).
+      navigation.navigate("NataAI", { photoUri: photo.uri });
+    } else {
+      navigation.navigate("SnapPreview", { uri: photo.uri, mediaType: "photo", intent, filter });
+    }
   };
 
   const startRecording = async () => {
@@ -55,7 +76,7 @@ export default function CameraScreen({ navigation, route }) {
     try {
       const video = await cameraRef.current.recordAsync({ maxDuration: 15 });
       if (video?.uri) {
-        navigation.navigate("SnapPreview", { uri: video.uri, mediaType: "video", intent });
+        navigation.navigate("SnapPreview", { uri: video.uri, mediaType: "video", intent, filter });
       }
     } finally {
       isRecording.current = false;
@@ -70,6 +91,7 @@ export default function CameraScreen({ navigation, route }) {
   };
 
   const handlePressIn = () => {
+    if (intent === "post" || intent === "avatar") return; // Kein Video fuer Beitraege/Profilbild.
     pressTimer.current = setTimeout(startRecording, HOLD_THRESHOLD_MS);
   };
 
@@ -87,27 +109,38 @@ export default function CameraScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
+      {/* Kamera bleibt bewusst dunkel (immersiver Vollbild-Kontext, wie bei
+          jeder Kamera-App ueblich) - ueberschreibt die globale, jetzt helle
+          Status-Leiste lokal, solange dieser Screen fokussiert ist. */}
+      <StatusBar style="light" />
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} flash={flash} mode="video">
+        {filterMeta.overlayColor ? (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              { backgroundColor: filterMeta.overlayColor, opacity: filterMeta.opacity },
+            ]}
+          />
+        ) : null}
+
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-            <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-              <Text style={styles.avatarText}>
-                {(user?.displayName || "?").charAt(0).toUpperCase()}
-              </Text>
-            </View>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+            <Icon name="close" size={16} color="#fff" />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setFlash((f) => (f === "off" ? "on" : "off"))}
             style={styles.iconButton}
           >
-            <Text style={styles.iconText}>{flash === "off" ? "⚡️" : "🔆"}</Text>
+            <Icon name={flash === "off" ? "flashOff" : "flash"} size={16} color="#fff" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.bottomBar}>
           <TouchableOpacity style={styles.sideButton} onPress={() => navigation.navigate("Chats")}>
-            <Text style={styles.sideButtonText}>💬{"\n"}Chat</Text>
+            <Icon name="chat" size={20} color="#fff" />
+            <Text style={styles.sideButtonText}>Chat</Text>
           </TouchableOpacity>
 
           <Pressable
@@ -122,12 +155,17 @@ export default function CameraScreen({ navigation, route }) {
             style={styles.sideButton}
             onPress={() => setFacing((f) => (f === "back" ? "front" : "back"))}
           >
-            <Text style={styles.sideButtonText}>🔄{"\n"}Wechseln</Text>
+            <Icon name="flip" size={20} color="#fff" />
+            <Text style={styles.sideButtonText}>Wechseln</Text>
           </TouchableOpacity>
         </View>
 
+        <FilterPickerRow value={filter} onChange={setFilter} style={styles.filterRow} />
+
         <View style={styles.hintContainer}>
-          <Text style={styles.hint}>Tippen fuer Foto - Halten fuer Video</Text>
+          <Text style={styles.hint}>
+            {intent === "post" ? "Tippen fuer Foto" : "Tippen fuer Foto - Halten fuer Video"}
+          </Text>
         </View>
       </CameraView>
     </View>
@@ -159,10 +197,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: radius.pill,
   },
   permissionButtonText: {
-    color: "#000",
+    color: colors.onPrimary,
     fontWeight: "700",
   },
   topBar: {
@@ -171,29 +209,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 56,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  avatarText: {
-    color: "#000",
-    fontWeight: "700",
-  },
   iconButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
-  iconText: {
-    fontSize: 18,
+  filterRow: {
+    position: "absolute",
+    bottom: 160,
+    width: "100%",
   },
   hintContainer: {
     position: "absolute",
@@ -222,11 +249,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 11,
     textAlign: "center",
+    marginTop: 4,
   },
   shutter: {
     width: 84,
     height: 84,
-    borderRadius: 42,
+    borderRadius: radius.pill,
     borderWidth: 5,
     borderColor: "#fff",
     justifyContent: "center",
@@ -238,11 +266,11 @@ const styles = StyleSheet.create({
   shutterInner: {
     width: 68,
     height: 68,
-    borderRadius: 34,
+    borderRadius: radius.pill,
     backgroundColor: "#fff",
   },
   shutterInnerRecording: {
-    borderRadius: 10,
+    borderRadius: radius.sm,
     backgroundColor: colors.danger,
     width: 40,
     height: 40,

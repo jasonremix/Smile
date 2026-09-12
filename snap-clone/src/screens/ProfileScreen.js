@@ -1,46 +1,308 @@
-import React from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Image,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import GradientView from "../components/GradientView";
+import Icon from "../components/Icon";
+import ChallengeBadgeChips from "../components/ChallengeBadgeChips";
+import InterestChips from "../components/InterestChips";
+import NataScoreCard from "../components/NataScoreCard";
+import PostCard from "../components/PostCard";
+import ScreenHeader from "../components/ScreenHeader";
+import StatusEditor from "../components/StatusEditor";
+import CreatorBadge from "../components/CreatorBadge";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { useAuth } from "../context/AuthContext";
+import { PostCardSkeletonList } from "../components/PostCardSkeleton";
+import { listenFriends } from "../services/friendService";
+import {
+  fetchMoreUserPosts,
+  getUserPostCount,
+  listenUserPosts,
+  POSTS_PAGE_SIZE,
+} from "../services/postService";
+import { clearStatus, isStatusActive, setStatus } from "../services/userService";
 import { colors } from "../theme/colors";
+import { getLevelInfo } from "../utils/nataLevel";
+import { radius } from "../theme/radius";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const isModal = navigation.canGoBack();
+  const [livePosts, setLivePosts] = useState([]);
+  const [morePosts, setMorePosts] = useState([]);
+  const [postsLastDoc, setPostsLastDoc] = useState(null);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [postCount, setPostCount] = useState(0);
+  const [friends, setFriends] = useState([]);
+  const [statusEditorVisible, setStatusEditorVisible] = useState(false);
+  const activeStatus = isStatusActive(user?.status) ? user.status : null;
 
-  const handleLogout = () => {
-    Alert.alert("Abmelden", "Moechtest du dich wirklich abmelden?", [
-      { text: "Abbrechen", style: "cancel" },
-      { text: "Abmelden", style: "destructive", onPress: logout },
-    ]);
+  // Collapsing Header: die grosse Identitaets-Sektion scrollt normal mit,
+  // eine schmale Leiste mit Mini-Avatar + Name blendet sich erst ein, wenn
+  // sie aus dem Blick gescrollt ist - wie bei einem nativen Large-Title, der
+  // beim Scrollen zu einem kompakten Titel wird.
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const compactHeaderOpacity = scrollY.interpolate({
+    inputRange: [70, 130],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    setPostsLoading(true);
+    setMorePosts([]);
+    setHasMore(true);
+    const unsubscribe = listenUserPosts(user.uid, (newPosts, lastDoc) => {
+      setLivePosts(newPosts);
+      setPostsLastDoc(lastDoc);
+      if (newPosts.length < POSTS_PAGE_SIZE) setHasMore(false);
+      setPostsLoading(false);
+      getUserPostCount(user.uid)
+        .then(setPostCount)
+        .catch(() => {});
+    });
+    return unsubscribe;
+  }, [user?.uid]);
+
+  // Live erste Seite + einmalig nachgeladene aeltere Seiten getrennt halten,
+  // siehe HomeScreen fuer den gleichen Ansatz beim "Fuer dich"-Feed.
+  const posts = useMemo(() => {
+    const seen = new Set(livePosts.map((p) => p.id));
+    return [...livePosts, ...morePosts.filter((p) => !seen.has(p.id))];
+  }, [livePosts, morePosts]);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || !postsLastDoc || postsLoading) return;
+    setLoadingMore(true);
+    try {
+      const result = await fetchMoreUserPosts(user.uid, postsLastDoc);
+      setMorePosts((prev) => [...prev, ...result.posts]);
+      if (result.lastDoc) setPostsLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
   };
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubscribe = listenFriends(user.uid, setFriends);
+    return unsubscribe;
+  }, [user?.uid]);
+
+  const handleShare = () => {
+    Share.share({
+      message: `Ich bin auf Nata - schreib mir: @${user?.username}`,
+    }).catch(() => {});
+  };
+
+  const handleBetaBadgePress = () => {
+    Alert.alert(
+      "Beta-Tester",
+      "Du gehörst zu den ersten Menschen, die Nata testen."
+    );
+  };
+
+  const settingsButton = (
+    <TouchableOpacity
+      style={styles.headerIconButton}
+      onPress={() => navigation.navigate("Settings")}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Einstellungen"
+    >
+      <Icon name="settings" size={18} color={colors.text} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.closeText}>✕</Text>
-      </TouchableOpacity>
+      {isModal ? (
+        <ScreenHeader
+          onBack={() => navigation.goBack()}
+          backIcon="close"
+          title="Profil"
+          right={settingsButton}
+        />
+      ) : (
+        <ScreenHeader title="Profil" right={settingsButton} />
+      )}
 
-      <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-        <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-      </View>
-
-      <Text style={styles.displayName}>{user?.displayName}</Text>
-      <Text style={styles.username}>@{user?.username}</Text>
-
-      <View style={styles.scoreCard}>
-        <Text style={styles.scoreLabel}>Snap-Score</Text>
-        <Text style={styles.scoreValue}>{user?.snapScore ?? 0}</Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => navigation.navigate("Friends")}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.compactHeader,
+          { paddingTop: insets.top + spacing.sm, opacity: compactHeaderOpacity },
+        ]}
       >
-        <Text style={styles.actionButtonText}>👥 Freunde verwalten</Text>
-      </TouchableOpacity>
+        {user?.avatarUrl ? (
+          <Image source={{ uri: user.avatarUrl }} style={styles.compactAvatar} />
+        ) : (
+          <View style={[styles.compactAvatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+            <Text style={styles.compactAvatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
+        <Text style={styles.compactName} numberOfLines={1}>
+          {user?.displayName}
+        </Text>
+      </Animated.View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Abmelden</Text>
-      </TouchableOpacity>
+      <Animated.FlatList
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        scrollEventThrottle={16}
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.postWrapper}>
+            <PostCard post={item} navigation={navigation} />
+          </View>
+        )}
+        ListHeaderComponent={
+          <View>
+            <View style={styles.identitySection}>
+              <View style={styles.headerRow}>
+                <View style={styles.headerTextBlock}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.displayName}>{user?.displayName}</Text>
+                    {user?.verified ? <VerifiedBadge size={18} style={styles.verifiedBadge} /> : null}
+                    {user?.isCreator ? <CreatorBadge size={18} style={styles.verifiedBadge} /> : null}
+                  </View>
+                  <Text style={styles.username}>@{user?.username}</Text>
+
+                  <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statValue}>{friends.length}</Text>
+                      <Text style={styles.statLabel}>Connections</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statValue}>{postCount}</Text>
+                      <Text style={styles.statLabel}>Beiträge</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statValue}>{getLevelInfo(user?.nataScore ?? 0).score}</Text>
+                      <Text style={styles.statLabel}>Score</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
+                  {user?.avatarUrl ? (
+                    <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+                      <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+                    </View>
+                  )}
+                </GradientView>
+              </View>
+
+              {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+
+              <InterestChips interests={user?.interests} style={styles.interestChipsLeft} />
+              <ChallengeBadgeChips badges={user?.seasonalBadges} style={styles.interestChipsLeft} />
+
+              {user?.location?.city ? (
+                <View style={styles.locationRow}>
+                  <Icon name="pin" size={12} color={colors.textMuted} />
+                  <Text style={styles.locationText}>{user.location.city}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity style={styles.statusRow} onPress={() => setStatusEditorVisible(true)}>
+                <Icon name="sparkle" size={13} color={colors.primaryLight} />
+                <Text style={styles.statusText} numberOfLines={1}>
+                  {activeStatus ? activeStatus.text : "Was ist gerade los?"}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => navigation.navigate("EditProfile")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profil bearbeiten"
+                >
+                  <Text style={styles.editButtonText}>Profil bearbeiten</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.pillButton}
+                  onPress={() => navigation.navigate("QRCode")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mein Nata-Code"
+                >
+                  <Icon name="grid" size={13} color={colors.text} style={styles.pillIcon} />
+                  <Text style={styles.pillButtonText}>Code</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.shareButton}
+                  onPress={handleShare}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profil teilen"
+                >
+                  <Icon name="send" size={15} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {user?.betaTesterNumber ? (
+                <TouchableOpacity style={styles.testerBadge} onPress={handleBetaBadgePress}>
+                  <Icon name="sparkle" size={11} color={colors.primaryLight} />
+                  <Text style={styles.testerBadgeText}>Beta-Tester #{user.betaTesterNumber}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <View style={styles.scoreSection}>
+              <NataScoreCard
+                score={user?.nataScore ?? 0}
+                onPress={() => navigation.navigate("ScoreHistory")}
+              />
+            </View>
+
+            <Text style={styles.postsHeading}>Meine Beiträge</Text>
+          </View>
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? <ActivityIndicator color={colors.primary} style={styles.loadMoreSpinner} /> : null
+        }
+        ListEmptyComponent={
+          postsLoading ? (
+            <PostCardSkeletonList />
+          ) : (
+            <Text style={styles.emptyText}>Noch keine Beiträge.</Text>
+          )
+        }
+      />
+
+      <StatusEditor
+        visible={statusEditorVisible}
+        onClose={() => setStatusEditorVisible(false)}
+        currentText={activeStatus?.text}
+        onSave={(text) => setStatus(user.uid, text)}
+        onClear={() => clearStatus(user.uid)}
+      />
     </View>
   );
 }
@@ -49,82 +311,226 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    alignItems: "center",
-    paddingTop: 80,
-    paddingHorizontal: 24,
   },
-  closeButton: {
-    position: "absolute",
-    top: 56,
-    left: 16,
+  scroll: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
   },
-  closeText: {
-    color: colors.text,
-    fontSize: 20,
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  headerIconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+  },
+  compactHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 34,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  compactAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.xs,
+  },
+  compactAvatarText: {
+    color: "#000",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  compactName: {
+    color: colors.text,
+    ...typography.headline,
+  },
+  identitySection: {
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: spacing.lg,
+  },
+  avatarRing: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     color: "#000",
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "800",
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs + 2,
   },
   displayName: {
     color: colors.text,
-    fontSize: 22,
-    fontWeight: "700",
+    ...typography.title,
+  },
+  verifiedBadge: {
+    marginTop: 2,
   },
   username: {
     color: colors.textMuted,
-    fontSize: 15,
-    marginBottom: 24,
+    ...typography.body,
+    marginTop: 2,
   },
-  scoreCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    alignItems: "center",
-    marginBottom: 24,
-    width: "100%",
-  },
-  scoreLabel: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginBottom: 4,
-  },
-  scoreValue: {
-    color: colors.primary,
-    fontSize: 32,
-    fontWeight: "800",
-  },
-  actionButton: {
-    width: "100%",
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  actionButtonText: {
+  bio: {
     color: colors.text,
-    fontSize: 15,
+    ...typography.body,
+    marginTop: spacing.md,
   },
-  logoutButton: {
-    marginTop: "auto",
-    marginBottom: 32,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+  interestChipsLeft: {
+    justifyContent: "flex-start",
+    marginTop: spacing.sm,
   },
-  logoutButtonText: {
-    color: colors.danger,
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  locationText: {
+    color: colors.textMuted,
+    ...typography.footnote,
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.lg,
+    marginTop: spacing.md,
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  statValue: {
+    color: colors.text,
+    ...typography.headline,
+  },
+  statLabel: {
+    color: colors.textMuted,
+    ...typography.caption,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.lg,
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+  },
+  statusText: {
+    color: colors.text,
+    ...typography.footnote,
     fontWeight: "600",
-    fontSize: 15,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  editButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm + 2,
+  },
+  editButtonText: {
+    color: colors.text,
+    ...typography.subhead,
+    fontWeight: "700",
+  },
+  pillButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+  },
+  pillIcon: {
+    marginRight: 4,
+  },
+  pillButtonText: {
+    color: colors.text,
+    ...typography.subhead,
+    fontWeight: "700",
+  },
+  shareButton: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  testerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: `${colors.primary}44`,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    marginTop: spacing.lg,
+  },
+  testerBadgeText: {
+    color: colors.primaryDark,
+    ...typography.caption,
+  },
+  scoreSection: {
+    marginBottom: spacing.xxl,
+  },
+  postWrapper: {
+    width: "100%",
+  },
+  postsHeading: {
+    color: colors.textMuted,
+    ...typography.sectionLabel,
+    marginBottom: spacing.md,
+  },
+  emptyText: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: spacing.md,
+  },
+  loadMoreSpinner: {
+    marginVertical: spacing.xl,
   },
 });

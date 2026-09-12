@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -8,7 +8,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
+import PrimaryButton from "../../components/PrimaryButton";
+import SocialSignInRow, { socialSignInAvailable } from "../../components/SocialSignInRow";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
 
@@ -18,6 +21,7 @@ export default function SignupScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralUsername, setReferralUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +37,7 @@ export default function SignupScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await signup(username, displayName, email.trim(), password);
+      await signup(username, displayName, email.trim(), password, referralUsername);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
@@ -47,7 +51,22 @@ export default function SignupScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.logo}>👻 Konto erstellen</Text>
+        <View style={styles.header}>
+          <Image source={require("../../../assets/logo-full.png")} style={styles.logoImage} resizeMode="contain" />
+          <Text style={styles.logo}>Konto erstellen</Text>
+          <Text style={styles.greeting}>Schön, dass du zu Nata kommst!</Text>
+        </View>
+
+        {socialSignInAvailable ? (
+          <>
+            <SocialSignInRow buttonStyle={styles.socialButton} />
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>oder mit E-Mail</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </>
+        ) : null}
 
         <TextInput
           style={styles.input}
@@ -81,19 +100,28 @@ export default function SignupScreen({ navigation }) {
           value={password}
           onChangeText={setPassword}
         />
+        <TextInput
+          style={styles.input}
+          placeholder="Einladungscode (optional)"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+          value={referralUsername}
+          onChangeText={setReferralUsername}
+        />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color={colors.background} />
-          ) : (
-            <Text style={styles.buttonText}>Registrieren</Text>
-          )}
-        </TouchableOpacity>
+        <PrimaryButton title="Registrieren" onPress={handleSignup} loading={loading} style={styles.button} />
 
         <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={styles.link}>Bereits registriert? Anmelden</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate("Legal")}>
+          <Text style={styles.legalLink}>
+            Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen und
+            Datenschutzerklärung.
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -124,38 +152,73 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 48,
   },
+  header: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  logoImage: {
+    width: 200,
+    height: 67,
+    marginBottom: 8,
+  },
   logo: {
     fontSize: 28,
     fontWeight: "800",
     color: colors.primary,
     textAlign: "center",
-    marginBottom: 40,
+  },
+  greeting: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: "center",
   },
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
-    borderRadius: 10,
-    paddingHorizontal: 16,
+    borderRadius: 20,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 14,
     fontSize: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
     marginTop: 8,
   },
-  buttonText: {
-    color: "#000",
-    fontWeight: "700",
-    fontSize: 16,
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginHorizontal: 12,
+  },
+  socialButton: {
+    marginBottom: 12,
   },
   link: {
     color: colors.textMuted,
     textAlign: "center",
     marginTop: 20,
+  },
+  legalLink: {
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 16,
+    fontSize: 12,
+    textDecorationLine: "underline",
   },
   error: {
     color: colors.danger,

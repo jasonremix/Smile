@@ -1,0 +1,38 @@
+# Kampagnen-Konfiguration für die Nata-Ads-Automatisierung.
+# Kopiere diese Datei zu config/campaigns.yaml und passe sie an.
+
+account:
+  company: "Nata Inc"
+  default_currency: EUR
+
+# Schwellenwerte für die regelbasierte Optimierung (nata_ads.optimizer).
+# Alle *_cents-Werte in Cent, alle *_pct-Werte als Zahl ohne %-Zeichen.
+optimizer:
+  min_conversions_for_evaluation: 10   # erst ab 10 Conversions bewerten
+  min_spend_cents_for_evaluation: 2000 # oder erst ab 20,00 EUR Spend
+  max_cpa_cents: 500                   # Kampagne pausieren ab 5,00 EUR pro Conversion
+  budget_step_pct: 20                  # max. Budget-Verschiebung pro Lauf
+  min_daily_budget_cents: 500          # 5,00 EUR Untergrenze
+  max_daily_budget_cents: 50000        # 500,00 EUR Obergrenze
+  overspend_alert_pct: 130             # Warnung ab 130 % des Tagesbudgets
+
+campaigns:
+  - name: "Nata – Launch Awareness (Google)"
+    platform: google
+    daily_budget_cents: 3000
+    currency: EUR
+    objective: AWARENESS
+    target_countries: [DE, AT, CH]
+    headline: "Nata ist bald da"
+    body: "Verschwindende Snaps, Storys und Chat. Die erste App von Nata Inc."
+    final_url: "https://nata.app"
+
+  - name: "Nata – Launch Awareness (Meta)"
+    platform: meta
+    daily_budget_cents: 2500
+    currency: EUR
+    objective: AWARENESS
+    target_countries: [DE, AT, CH]
+    headline: "Nata kommt bald"
+    body: "Die erste offizielle App von Nata Inc. Bald verfügbar."
+    final_url: "https://nata.app"

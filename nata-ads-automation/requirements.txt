@@ -1,0 +1,5 @@
+click>=8.1,<9
+PyYAML>=6.0,<7
+python-dotenv>=1.0,<2
+google-ads>=24.0.0,<25
+facebook-business>=20.0.0,<21
