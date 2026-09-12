@@ -1,8 +1,7 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import Icon from "./Icon";
 import { colors } from "../theme/colors";
-import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
@@ -10,16 +9,20 @@ import { typography } from "../theme/typography";
 // innerhalb einer SettingsSection gerendert, die die durchgehende
 // abgerundete Umrandung uebernimmt. isLast (von SettingsSection gesetzt)
 // blendet die Trennlinie der letzten Zeile aus.
-export default function SettingsRow({ icon, label, onPress, badge, tint = colors.primary, isLast }) {
+//
+// Schlichtes einfarbiges Icon statt farbigem Kreis dahinter (vorheriger
+// Stil) - naeher an den durchgehend grauen/schwarzen Zeilen-Icons echter
+// Einstellungen-Bildschirme. "tint" bleibt fuer bewusst rote Zeilen
+// (Konto loeschen, Abmelden) erhalten, faerbt jetzt aber direkt das Icon.
+export default function SettingsRow({ icon, label, onPress, badge, tint, isLast }) {
+  const iconColor = tint || colors.textMuted;
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, !isLast && styles.divider, pressed && styles.pressed]}
     >
-      <View style={[styles.iconCircle, { backgroundColor: `${tint}22` }]}>
-        <Icon name={icon} size={16} color={tint} />
-      </View>
-      <Text style={styles.label}>{label}</Text>
+      <Icon name={icon} size={19} color={iconColor} style={styles.icon} />
+      <Text style={[styles.label, tint && { color: tint }]}>{label}</Text>
       {badge}
       <Text style={styles.chevron}>›</Text>
     </Pressable>
@@ -41,13 +44,9 @@ const styles = StyleSheet.create({
   pressed: {
     backgroundColor: colors.surfaceLight,
   },
-  iconCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.pill,
-    justifyContent: "center",
-    alignItems: "center",
+  icon: {
     marginRight: spacing.md,
+    width: 22,
   },
   label: {
     flex: 1,

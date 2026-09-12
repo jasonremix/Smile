@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BetaBadge from "../components/BetaBadge";
 import Icon from "../components/Icon";
-import ScreenHeader from "../components/ScreenHeader";
 import SettingsRow from "../components/SettingsRow";
 import SettingsSection from "../components/SettingsSection";
 import SettingsToggleRow from "../components/SettingsToggleRow";
@@ -27,6 +27,7 @@ const APP_VERSION = "1.0.1";
 // eigene, uebersichtliche Gruppenliste im iOS-Stil bekommen.
 export default function SettingsScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [quietHours, setQuietHoursState] = useState({ enabled: false, startHour: 22, endHour: 8 });
 
@@ -66,7 +67,12 @@ export default function SettingsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Einstellungen" onBack={() => navigation.goBack()} />
+      <View style={[styles.bigHeader, { paddingTop: insets.top + spacing.sm }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={8} style={styles.backButton}>
+          <Icon name="back" size={18} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.bigTitle}>Einstellungen{"\n"}und Datenschutz</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <TouchableOpacity
           style={styles.profileCard}
@@ -284,6 +290,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  bigHeader: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  backButton: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
+  bigTitle: {
+    color: colors.text,
+    ...typography.hero,
   },
   scroll: {
     paddingHorizontal: spacing.lg,

@@ -9,14 +9,19 @@
 // dem Theme von weiss auf dunkel), sondern das neue "onPrimary" - fest
 // weiss, unabhaengig vom Hell-/Dunkelmodus, da diese Flaechen selbst nie
 // mitkippen.
+// Seite/Karte umgedreht (statt beide fast weiss): background ist jetzt ein
+// helles Graubeige als Seitenhintergrund, surface reines Weiss fuer Karten -
+// die Karten "schweben" dadurch sichtbar vom Seitenhintergrund ab (genau das
+// bekannte iOS-Gruppenlisten-/Einstellungen-Muster), statt kaum erkennbar
+// ineinander zu verschwimmen.
 export const colors = {
-  background: "#FFFFFF",
-  surface: "#F7F5FA",
-  surfaceLight: "#EFEBF5",
+  background: "#F2F0F4",
+  surface: "#FFFFFF",
+  surfaceLight: "#F5F3F8",
   // Fuer Karten-in-Karten (z.B. Statistik-Kacheln innerhalb einer Sektion) -
   // eine Stufe kraeftiger als surfaceLight, damit Verschachtelung sichtbar
   // wird, ohne auf eine Rahmenlinie angewiesen zu sein.
-  surfaceElevated: "#E4DEF0",
+  surfaceElevated: "#EAE6F0",
   // Unveraendert seit dem Kontrast-Audit - bei weissem Text auf primary
   // (Buttons, aktive Tabs) schafft #9333EA 5.38:1 (WCAG AA), bleibt aber
   // sichtbar dasselbe Violett wie zuvor im Dunkelmodus.
@@ -36,7 +41,7 @@ export const colors = {
   // (Zeitstempel, sekundaere Captions) - bewusst NICHT fuer Fliesstext, da
   // der Kontrast dafuer zu niedrig waere.
   textFaint: "#9B94A8",
-  border: "#E4DEF0",
+  border: "#E6E2EB",
   // Unveraendert seit dem Kontrast-Audit (4.83:1 fuer weissen Button-Text) -
   // als reine Textfarbe auf dem neuen hellen Hintergrund weiterhin gut
   // lesbar (~5.3:1).

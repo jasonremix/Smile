@@ -28,7 +28,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     overflow: "hidden",
     marginBottom: spacing.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
 });
