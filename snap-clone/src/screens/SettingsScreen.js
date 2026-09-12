@@ -101,12 +101,10 @@ export default function SettingsScreen({ navigation }) {
           />
           <SettingsRow icon="star" label="Enge Freunde" onPress={() => navigation.navigate("CloseFriends")} />
           <SettingsRow icon="people" label="Meine Kreise" onPress={() => navigation.navigate("Circles")} />
-          <SettingsRow
-            icon="call"
-            label="Anrufe"
-            onPress={() => navigation.navigate("CallHistory")}
-            badge={<BetaBadge style={styles.feedbackBadge} />}
-          />
+        </SettingsSection>
+
+        <Text style={styles.sectionLabel}>Aktivität</Text>
+        <SettingsSection>
           <SettingsRow
             icon="search"
             label="Entdecken"
@@ -115,6 +113,12 @@ export default function SettingsScreen({ navigation }) {
           <SettingsRow icon="bookmark" label="Gespeicherte Beiträge" onPress={() => navigation.navigate("SavedPosts")} />
           <SettingsRow icon="grid" label="Meine Statistik" onPress={() => navigation.navigate("MyStats")} />
           <SettingsRow icon="moment" label="Momente-Archiv" onPress={() => navigation.navigate("MomentsArchive")} />
+          <SettingsRow
+            icon="call"
+            label="Anrufe"
+            onPress={() => navigation.navigate("CallHistory")}
+            badge={<BetaBadge style={styles.feedbackBadge} />}
+          />
           <SettingsRow
             icon="flame"
             label="Challenges"
@@ -139,6 +143,10 @@ export default function SettingsScreen({ navigation }) {
               />
             ) : null;
           })()}
+        </SettingsSection>
+
+        <Text style={styles.sectionLabel}>Creator</Text>
+        <SettingsSection>
           {!user?.verified ? (
             <SettingsRow
               icon="shield"
