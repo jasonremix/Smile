@@ -13,6 +13,7 @@ import { listenIncomingSnaps } from "../services/snapService";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { isChatUnread, useUnreadChats } from "../hooks/useUnreadChats";
+import { getPinnedChatIds, togglePinnedChat } from "../utils/pinnedChats";
 
 function toMillis(timestamp) {
   return timestamp?.toMillis ? timestamp.toMillis() : 0;
@@ -24,17 +25,23 @@ export default function ChatListScreen({ navigation }) {
   const [groups, setGroups] = useState([]);
   const [incomingSnaps, setIncomingSnaps] = useState([]);
   const [blocked, setBlocked] = useState([]);
+  const [pinnedIds, setPinnedIds] = useState([]);
 
   useEffect(() => {
     const unsubGroups = listenGroups(user.uid, setGroups);
     const unsubSnaps = listenIncomingSnaps(user.uid, setIncomingSnaps);
     const unsubBlocked = listenBlockedUsers(user.uid, setBlocked);
+    getPinnedChatIds().then(setPinnedIds);
     return () => {
       unsubGroups();
       unsubSnaps();
       unsubBlocked();
     };
   }, [user.uid]);
+
+  const handleTogglePin = (pinKey) => {
+    togglePinnedChat(pinKey).then(setPinnedIds);
+  };
 
   const blockedIds = useMemo(() => new Set(blocked.map((b) => b.uid)), [blocked]);
 
@@ -74,8 +81,20 @@ export default function ChatListScreen({ navigation }) {
       updatedAtMs: toMillis(group.updatedAt),
     }));
 
-    return [...dmItems, ...groupItems].sort((a, b) => b.updatedAtMs - a.updatedAtMs);
-  }, [chats, groups, blockedIds, user.uid]);
+    // Angepinnte Unterhaltungen (rein lokale Geraete-Praeferenz, siehe
+    // utils/pinnedChats.js) zuerst, jeweils intern weiter nach Aktivitaet
+    // sortiert - kein Firestore-Feld, deshalb kein Regel-Update noetig.
+    const withPin = [...dmItems, ...groupItems].map((item) => ({
+      ...item,
+      pinKey: `${item.type}:${item.id}`,
+      pinned: pinnedIds.includes(`${item.type}:${item.id}`),
+    }));
+
+    return withPin.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.updatedAtMs - a.updatedAtMs;
+    });
+  }, [chats, groups, blockedIds, pinnedIds, user.uid]);
 
   const openNewGroup = () => navigation.navigate("CreateGroup");
 
@@ -125,11 +144,13 @@ export default function ChatListScreen({ navigation }) {
             isMine={item.isMine}
             streakCount={item.streakCount}
             unread={item.unread}
+            pinned={item.pinned}
             onPress={() =>
               item.type === "group"
                 ? navigation.navigate("GroupChat", { groupId: item.groupId, groupName: item.groupName })
                 : navigation.navigate("Chat", { chatId: item.id, otherUser: item.otherUser })
             }
+            onLongPress={() => handleTogglePin(item.pinKey)}
           />
         )}
         ListEmptyComponent={

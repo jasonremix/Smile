@@ -61,12 +61,13 @@ export async function getUserProfile(uid) {
 // Nur die tatsaechlich geaenderten Felder mitschicken (nicht das ganze
 // Profil), damit die Firestore-Regel-Diffs pro Feld greifen und man sich
 // nicht versehentlich an unveraenderten Feldern (z.B. Score) stoert.
-export async function updateProfileFields(uid, { displayName, bio, avatarColor, interests, goals }) {
+export async function updateProfileFields(uid, { displayName, bio, avatarColor, avatarUrl, interests, goals }) {
   const data = {};
   if (displayName !== undefined) data.displayName = displayName.trim();
   if (displayName !== undefined) data.displayNameLower = displayName.trim().toLowerCase();
   if (bio !== undefined) data.bio = bio.trim() ? bio.trim() : null;
   if (avatarColor !== undefined) data.avatarColor = avatarColor;
+  if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
   if (interests !== undefined) data.interests = interests;
   if (goals !== undefined) data.goals = goals;
   if (Object.keys(data).length === 0) return;

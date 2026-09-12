@@ -54,6 +54,10 @@ export default function CameraScreen({ navigation, route }) {
       // Empfaenger-/Timer-Auswahl wie bei Snaps/Momenten) - direkt zurueck
       // zum Beitrag-erstellen-Screen mit dem aufgenommenen Foto.
       navigation.navigate("CreatePost", { photoUri: photo.uri, filter });
+    } else if (intent === "avatar") {
+      // Profilbild: wie beim Beitrag-Foto keine Vorschau/Timer-Auswahl noetig,
+      // direkt zurueck zum Profil-Bearbeiten-Screen mit dem aufgenommenen Foto.
+      navigation.navigate("EditProfile", { photoUri: photo.uri });
     } else if (intent === "nataAiVision") {
       // Nata AI mit Bild: keine Vorschau/Timer noetig, direkt zurueck zum
       // Chat - das Bild wird dort nur inline an Gemini geschickt, nicht
@@ -86,7 +90,7 @@ export default function CameraScreen({ navigation, route }) {
   };
 
   const handlePressIn = () => {
-    if (intent === "post") return; // Beitraege unterstuetzen kein Video.
+    if (intent === "post" || intent === "avatar") return; // Kein Video fuer Beitraege/Profilbild.
     pressTimer.current = setTimeout(startRecording, HOLD_THRESHOLD_MS);
   };
 

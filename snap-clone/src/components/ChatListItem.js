@@ -4,14 +4,25 @@ import Icon from "./Icon";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 
-export default function ChatListItem({ name, avatarColor, lastMessage, isMine, streakCount, unread, onPress }) {
+export default function ChatListItem({
+  name,
+  avatarColor,
+  lastMessage,
+  isMine,
+  streakCount,
+  unread,
+  pinned,
+  onPress,
+  onLongPress,
+}) {
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
+    <TouchableOpacity style={styles.row} onPress={onPress} onLongPress={onLongPress}>
       <View style={[styles.avatar, { backgroundColor: avatarColor || colors.primary }]}>
         <Text style={styles.avatarText}>{(name || "?").charAt(0).toUpperCase()}</Text>
       </View>
       <View style={styles.textContainer}>
         <View style={styles.nameRow}>
+          {pinned ? <Icon name="pin" size={11} color={colors.textMuted} /> : null}
           <Text style={[styles.name, unread && styles.nameUnread]}>{name}</Text>
           {streakCount > 0 ? (
             <View style={styles.streakRow}>

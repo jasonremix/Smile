@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Image,
   Share,
   StyleSheet,
   Text,
@@ -150,9 +151,13 @@ export default function ProfileScreen({ navigation }) {
           { paddingTop: insets.top + spacing.sm, opacity: compactHeaderOpacity },
         ]}
       >
-        <View style={[styles.compactAvatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-          <Text style={styles.compactAvatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-        </View>
+        {user?.avatarUrl ? (
+          <Image source={{ uri: user.avatarUrl }} style={styles.compactAvatar} />
+        ) : (
+          <View style={[styles.compactAvatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+            <Text style={styles.compactAvatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
         <Text style={styles.compactName} numberOfLines={1}>
           {user?.displayName}
         </Text>
@@ -176,9 +181,13 @@ export default function ProfileScreen({ navigation }) {
           <View>
             <View style={styles.identitySection}>
               <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
-                <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
-                  <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
-                </View>
+                {user?.avatarUrl ? (
+                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, { backgroundColor: user?.avatarColor || colors.primary }]}>
+                    <Text style={styles.avatarText}>{(user?.displayName || "?").charAt(0).toUpperCase()}</Text>
+                  </View>
+                )}
               </GradientView>
 
               <View style={styles.nameRow}>

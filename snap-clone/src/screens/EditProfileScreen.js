@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Icon from "../components/Icon";
 import PrimaryButton from "../components/PrimaryButton";
 import ScreenHeader from "../components/ScreenHeader";
 import { useAuth } from "../context/AuthContext";
+import { uploadMedia } from "../services/mediaUpload";
 import { getRestrictionAlert, getRestrictionStatus, recordStrike } from "../services/moderationService";
 import { clearLocation, shareLocationCity, updateProfileFields } from "../services/userService";
 import { checkContent, getBlockAlert } from "../utils/contentFilter";
@@ -30,15 +31,24 @@ try {
   Location = null;
 }
 
-export default function EditProfileScreen({ navigation }) {
+export default function EditProfileScreen({ navigation, route }) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [avatarColor, setAvatarColor] = useState(user?.avatarColor || AVATAR_PALETTE[0]);
+  const [avatarPhotoUri, setAvatarPhotoUri] = useState(null);
   const [interests, setInterests] = useState(user?.interests || []);
   const [saving, setSaving] = useState(false);
   const [locationBusy, setLocationBusy] = useState(false);
   const locationEnabled = !!user?.location?.city;
+
+  // Kommt zurueck von CameraScreen (intent "avatar", siehe handlePickPhoto)
+  // - genau dasselbe Muster wie CreatePostScreen fuer photoUri aus der Kamera.
+  useEffect(() => {
+    if (route.params?.photoUri) {
+      setAvatarPhotoUri(route.params.photoUri);
+    }
+  }, [route.params?.photoUri]);
 
   const toggleInterest = (id) => {
     hapticSelection();
@@ -69,7 +79,18 @@ export default function EditProfileScreen({ navigation }) {
     }
     setSaving(true);
     try {
-      await updateProfileFields(user.uid, { displayName, bio, avatarColor, interests });
+      let avatarUrl;
+      if (avatarPhotoUri) {
+        try {
+          avatarUrl = await uploadMedia(avatarPhotoUri, "stories", user.uid, "photo");
+        } catch (e) {
+          Alert.alert(
+            "Foto-Speicher noch nicht bereit",
+            "Dein neues Profilbild konnte nicht hochgeladen werden - der Foto-Speicher ist noch nicht eingerichtet. Der Rest deiner Änderungen wird trotzdem gespeichert."
+          );
+        }
+      }
+      await updateProfileFields(user.uid, { displayName, bio, avatarColor, avatarUrl, interests });
       navigation.goBack();
     } catch (e) {
       Alert.alert("Fehler", "Profil konnte nicht gespeichert werden. Bitte erneut versuchen.");
@@ -120,10 +141,7 @@ export default function EditProfileScreen({ navigation }) {
   };
 
   const handlePickPhoto = () => {
-    Alert.alert(
-      "Bald verfügbar",
-      "Profilbilder brauchen Foto-Speicher, der gerade eingerichtet wird. Bis dahin kannst du eine Farbe für deinen Avatar wählen."
-    );
+    navigation.navigate("Camera", { intent: "avatar" });
   };
 
   return (
@@ -131,9 +149,13 @@ export default function EditProfileScreen({ navigation }) {
       <ScreenHeader title="Profil bearbeiten" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.avatarWrapper} onPress={handlePickPhoto}>
-          <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-            <Text style={styles.avatarText}>{(displayName || "?").charAt(0).toUpperCase()}</Text>
-          </View>
+          {avatarPhotoUri || user?.avatarUrl ? (
+            <Image source={{ uri: avatarPhotoUri || user.avatarUrl }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+              <Text style={styles.avatarText}>{(displayName || "?").charAt(0).toUpperCase()}</Text>
+            </View>
+          )}
           <View style={styles.avatarEditBadge}>
             <Icon name="camera" size={13} color={colors.text} />
           </View>

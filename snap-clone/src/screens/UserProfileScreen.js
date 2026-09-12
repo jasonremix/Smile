@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GradientView from "../components/GradientView";
 import Icon from "../components/Icon";
 import ChallengeBadgeChips from "../components/ChallengeBadgeChips";
@@ -142,9 +142,13 @@ export default function UserProfileScreen({ route, navigation }) {
       ListHeaderComponent={
         <View>
           <GradientView colors={[colors.primaryLight, colors.primary]} style={styles.avatarRing}>
-            <View style={[styles.avatar, { backgroundColor: profile.avatarColor || colors.primary }]}>
-              <Text style={styles.avatarText}>{(profile.displayName || "?").charAt(0).toUpperCase()}</Text>
-            </View>
+            {profile.avatarUrl ? (
+              <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: profile.avatarColor || colors.primary }]}>
+                <Text style={styles.avatarText}>{(profile.displayName || "?").charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
           </GradientView>
 
           <View style={styles.nameRow}>
