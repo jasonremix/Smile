@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   permissionButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
   },
   topBar: {

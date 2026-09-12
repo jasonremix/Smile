@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   messagesBadgeText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 9,
     fontWeight: "800",
   },
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   feedTabTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   loadMoreSpinner: {
     marginVertical: spacing.xl,

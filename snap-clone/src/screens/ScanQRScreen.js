@@ -216,7 +216,7 @@ export default function ScanQRScreen({ navigation }) {
                   ) : (
                     <TouchableOpacity style={styles.addButton} onPress={handleAdd} disabled={sending}>
                       {sending ? (
-                        <ActivityIndicator color={colors.text} />
+                        <ActivityIndicator color={colors.onPrimary} />
                       ) : (
                         <Text style={styles.addButtonText}>Verbinden</Text>
                       )}
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   permissionButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
   },
   closeButton: {
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceLight,
   },
   addButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
   },
   doneButton: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   doneButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
   },
 });

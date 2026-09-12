@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   categoryTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   textArea: {
     backgroundColor: colors.surface,

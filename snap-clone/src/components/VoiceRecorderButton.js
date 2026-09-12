@@ -74,7 +74,7 @@ export default function VoiceRecorderButton({ onRecorded, disabled }) {
           <Icon name="close" size={14} color={colors.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.sendVoiceButton} onPress={() => stopRecording(true)}>
-          <Icon name="send" size={15} color={colors.text} />
+          <Icon name="send" size={15} color={colors.onPrimary} />
         </TouchableOpacity>
       </View>
     );

@@ -174,7 +174,7 @@ export default function CreatePostScreen({ navigation, route }) {
                 }
               }}
             >
-              <Icon name="plus" size={14} color={colors.text} />
+              <Icon name="plus" size={14} color={colors.onPrimary} />
             </TouchableOpacity>
           </View>
 

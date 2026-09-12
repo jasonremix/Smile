@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   testerBadgeText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "800",
     fontSize: 13,
   },
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     ...shadow.sm,
   },
   shareButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "800",
     fontSize: 16,
   },

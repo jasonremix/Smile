@@ -62,7 +62,7 @@ export default function CirclesScreen({ navigation }) {
         onPress={() => !atLimit && navigation.navigate("CircleEdit", {})}
         disabled={atLimit}
       >
-        <Icon name="plus" size={16} color={colors.text} style={{ marginRight: spacing.sm }} />
+        <Icon name="plus" size={16} color={colors.onPrimary} style={{ marginRight: spacing.sm }} />
         <Text style={styles.createButtonText}>{atLimit ? `Maximal ${MAX_CIRCLES_PER_USER} Kreise` : "Neuer Kreis"}</Text>
       </TouchableOpacity>
     </View>
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceLight,
   },
   createButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
     fontWeight: "700",
   },

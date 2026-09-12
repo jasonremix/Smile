@@ -31,7 +31,7 @@ export default function ChatListItem({
           onTogglePin?.();
         }}
       >
-        <Icon name="pin" size={17} color={colors.text} />
+        <Icon name="pin" size={17} color={colors.onPrimary} />
         <Text style={styles.actionText}>{pinned ? "Lösen" : "Anpinnen"}</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -41,7 +41,7 @@ export default function ChatListItem({
           onDelete?.();
         }}
       >
-        <Icon name="trash" size={17} color={colors.text} />
+        <Icon name="trash" size={17} color={colors.onPrimary} />
         <Text style={styles.actionText}>Löschen</Text>
       </TouchableOpacity>
     </View>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   actionText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 11,
     fontWeight: "700",
   },

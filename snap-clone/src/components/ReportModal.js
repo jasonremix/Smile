@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   timingChipTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   submitButton: {
     backgroundColor: colors.primary,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   submitButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
     fontWeight: "700",
   },

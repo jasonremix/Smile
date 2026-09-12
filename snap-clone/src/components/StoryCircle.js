@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   plusText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "800",
     fontSize: 12,
     lineHeight: 14,

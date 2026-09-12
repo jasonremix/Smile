@@ -267,7 +267,12 @@ export default function SnapPreviewScreen({ route, navigation }) {
                 style={[styles.circleChip, activeCircleId === item.id && styles.circleChipActive]}
                 onPress={() => selectCircle(item)}
               >
-                <Text style={styles.circleChipText}>
+                <Text
+                  style={[
+                    styles.circleChipText,
+                    activeCircleId === item.id && styles.circleChipTextActive,
+                  ]}
+                >
                   {item.emoji || "💜"} {item.name}
                 </Text>
               </TouchableOpacity>
@@ -370,7 +375,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   timerTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
   },
   recipientsPanel: {
@@ -400,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   visibilityTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   pollToggle: {
     flexDirection: "row",
@@ -453,6 +458,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 13,
     fontWeight: "600",
+  },
+  circleChipTextActive: {
+    color: colors.onPrimary,
   },
   panelTitle: {
     color: colors.text,

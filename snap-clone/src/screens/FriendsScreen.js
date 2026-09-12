@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   acceptText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
     fontSize: 13,
   },

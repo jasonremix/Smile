@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
   },
   categoryTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   input: {
     backgroundColor: colors.surfaceLight,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
   },
   actionButtonSecondary: {

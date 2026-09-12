@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   actionButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
   },
 });

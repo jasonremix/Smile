@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   tabTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   content: {
     padding: 20,

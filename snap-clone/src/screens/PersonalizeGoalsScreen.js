@@ -61,7 +61,7 @@ export default function PersonalizeGoalsScreen({ onDone }) {
               <Text style={styles.rowEmoji}>{option.emoji}</Text>
               <Text style={styles.rowLabel}>{option.label}</Text>
               <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                {isSelected ? <Icon name="check" size={11} color={colors.text} /> : null}
+                {isSelected ? <Icon name="check" size={11} color={colors.onPrimary} /> : null}
               </View>
             </TouchableOpacity>
           );

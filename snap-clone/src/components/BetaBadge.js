@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   text: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 0.5,

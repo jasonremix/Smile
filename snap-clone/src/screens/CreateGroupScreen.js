@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   checkmark: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   createButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
     fontSize: 15,
   },

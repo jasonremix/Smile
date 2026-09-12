@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   connectButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
     fontSize: 14,
   },

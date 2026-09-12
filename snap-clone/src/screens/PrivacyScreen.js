@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   segmentTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   row: {
     flexDirection: "row",

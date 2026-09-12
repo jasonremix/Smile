@@ -106,7 +106,7 @@ export default function CommentsScreen({ route, navigation }) {
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-          <Icon name="send" size={16} color={colors.text} />
+          <Icon name="send" size={16} color={colors.onPrimary} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

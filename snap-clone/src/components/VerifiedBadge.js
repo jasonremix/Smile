@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   check: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "900",
   },
 });

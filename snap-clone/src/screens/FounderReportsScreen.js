@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     ...typography.subhead,
   },
   tabTextActive: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   scroll: {
     paddingHorizontal: spacing.xl,

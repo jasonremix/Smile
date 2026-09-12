@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   liftButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.caption,
     fontWeight: "700",
   },
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   actionButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
   },
   replyOnlyButton: {
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   replyOnlyText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
   },
   closeOnlyButton: {

@@ -476,7 +476,7 @@ export default function ChatScreen({ route, navigation }) {
           <VoiceRecorderButton onRecorded={handleSendVoice} />
         ) : (
           <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!text.trim()}>
-            <Icon name={editingMessage ? "check" : "send"} size={16} color={colors.text} />
+            <Icon name={editingMessage ? "check" : "send"} size={16} color={colors.onPrimary} />
           </TouchableOpacity>
         )}
       </View>

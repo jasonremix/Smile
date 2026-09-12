@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   deleteButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
     fontSize: 16,
   },

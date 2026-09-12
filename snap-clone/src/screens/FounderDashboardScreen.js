@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   badgeText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontSize: 11,
     fontWeight: "800",
   },

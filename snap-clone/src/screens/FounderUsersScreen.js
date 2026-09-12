@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   verifyButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
   },
   creatorButton: {
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   liftButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     ...typography.subhead,
   },
   presetRow: {

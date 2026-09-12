@@ -78,7 +78,7 @@ export default function CloseFriendsScreen({ navigation }) {
               </View>
               <Text style={styles.name}>{item.displayName}</Text>
               <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                {isSelected ? <Icon name="check" size={11} color={colors.text} /> : null}
+                {isSelected ? <Icon name="check" size={11} color={colors.onPrimary} /> : null}
               </View>
             </TouchableOpacity>
           );

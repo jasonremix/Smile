@@ -61,10 +61,10 @@ export default function IncomingCallOverlay() {
         <Text style={styles.subtitle}>Nata-Anruf …</Text>
       </View>
       <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={handleDecline}>
-        <Icon name="close" size={18} color={colors.text} />
+        <Icon name="close" size={18} color={colors.onPrimary} />
       </TouchableOpacity>
       <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={handleAccept}>
-        <Icon name="check" size={18} color={colors.text} />
+        <Icon name="check" size={18} color={colors.onPrimary} />
       </TouchableOpacity>
     </View>
   );

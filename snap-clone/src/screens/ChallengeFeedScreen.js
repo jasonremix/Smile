@@ -49,7 +49,7 @@ export default function ChallengeFeedScreen({ navigation, route }) {
         style={styles.fab}
         onPress={() => navigation.navigate("CreatePost", { challengeTag: tag, challengeTitle: title })}
       >
-        <Icon name="plus" size={20} color={colors.text} />
+        <Icon name="plus" size={20} color={colors.onPrimary} />
       </TouchableOpacity>
     </View>
   );

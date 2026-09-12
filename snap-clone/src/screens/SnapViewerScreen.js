@@ -108,7 +108,7 @@ export default function SnapViewerScreen({ route, navigation }) {
           <View style={styles.replayOverlay}>
             <BetaBadge style={styles.replayBadge} />
             <TouchableOpacity style={styles.replayButton} onPress={handleReplay}>
-              <Icon name="repeat" size={15} color={colors.text} style={styles.replayIcon} />
+              <Icon name="repeat" size={15} color={colors.onPrimary} style={styles.replayIcon} />
               <Text style={styles.replayButtonText}>Nochmal ansehen</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.doneButton} onPress={closeSnap}>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   replayButtonText: {
-    color: colors.text,
+    color: colors.onPrimary,
     fontWeight: "700",
     fontSize: 15,
   },
